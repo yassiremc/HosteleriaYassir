@@ -36,9 +36,9 @@ function App() {
         <nav>
           <h2>Menú</h2>
           <ul>
-            <li><a href="#inicio">Inicio</a></li>
-            <li><a href="#reservas">Reservas</a></li>
-            <li><a href="#contacto">Contacto</a></li>
+            <li><a href="#inicio" onClick={closeSidebar}>Inicio</a></li>
+            <li><a href="#reservas" onClick={closeSidebar}>Reservas</a></li>
+            <li><a href="#contacto" onClick={closeSidebar}>Contacto</a></li>
           </ul>
         </nav>
       </aside>
@@ -52,7 +52,7 @@ function App() {
 
       <main className="main-content" id="inicio">
         <h1>Encabezado y barra lateral responsive</h1>
-        <p>Haz clic en el icono de menú para abrir y cerrar la barra lateral en móvil y PC.</p>
+        <p>En móvil la barra lateral se oculta y se abre con el icono; en PC permanece visible.</p>
       </main>
     </div>
   );
