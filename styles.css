@@ -1,0 +1,131 @@
+:root {
+  --header-height: 64px;
+  --sidebar-width: 280px;
+  --bg-dark: #0f172a;
+  --text-light: #f8fafc;
+  --text-dark: #0f172a;
+  --accent: #2563eb;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  color: var(--text-dark);
+  background: #f1f5f9;
+}
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: var(--header-height);
+  padding: 0 16px;
+  background: var(--bg-dark);
+  color: var(--text-light);
+}
+
+.menu-toggle {
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.menu-toggle:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.menu-toggle span {
+  width: 24px;
+  height: 3px;
+  border-radius: 2px;
+  background: #fff;
+  transition: transform 0.2s ease;
+}
+
+.logo-wrap {
+  display: flex;
+  align-items: center;
+}
+
+.logo {
+  width: 120px;
+  height: 40px;
+  object-fit: contain;
+}
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1100;
+  width: min(85vw, var(--sidebar-width));
+  height: 100vh;
+  padding-top: calc(var(--header-height) + 16px);
+  background: #fff;
+  box-shadow: 2px 0 20px rgba(0, 0, 0, 0.2);
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+}
+
+.sidebar.open {
+  transform: translateX(0);
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 16px;
+}
+
+.sidebar-nav a {
+  display: block;
+  padding: 12px;
+  border-radius: 8px;
+  color: var(--text-dark);
+  text-decoration: none;
+}
+
+.sidebar-nav a:hover {
+  background: #e2e8f0;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1050;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.content {
+  padding: 24px 16px;
+}
+
+@media (min-width: 992px) {
+  .site-header {
+    padding: 0 24px;
+  }
+
+  .content {
+    padding: 32px 24px;
+  }
+
+  .sidebar {
+    width: var(--sidebar-width);
+  }
+}
