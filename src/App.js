@@ -246,7 +246,6 @@ function App() {
               {restaurants.map((restaurant) => (
                 <article key={restaurant.id} className="restaurant-card">
                   <h4>{restaurant.name}</h4>
-                  <p>Adreça: {restaurant.address}</p>
                 </article>
               ))}
             </div>
