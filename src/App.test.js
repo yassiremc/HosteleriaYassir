@@ -11,3 +11,11 @@ test('abre la barra lateral al hacer click en el icono del menú', () => {
   expect(sidebarTitle).toBeInTheDocument();
   expect(menuButton).toHaveAttribute('aria-expanded', 'true');
 });
+
+test('muestra visualitzar alumnes y el llistat de alumnes', () => {
+  render(<App />);
+
+  expect(screen.getByRole('heading', { name: /visualitzar alumnes/i })).toBeInTheDocument();
+  expect(screen.getByRole('list', { name: /llistat d'alumnes/i })).toBeInTheDocument();
+  expect(screen.getByText(/rol: cap de sala/i)).toBeInTheDocument();
+});
