@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import logoJoviat from './logo_joviat.webp';
 import './App.css';
 
@@ -31,7 +31,36 @@ const readFirestoreValue = (field) => {
     return field.doubleValue;
   }
 
+  if (Object.prototype.hasOwnProperty.call(field, 'arrayValue')) {
+    return (field.arrayValue.values || []).map(readFirestoreValue);
+  }
+
   return '';
+};
+
+const parseLocation = (rawLocation) => {
+  if (Array.isArray(rawLocation)) {
+    const [lat, lng] = rawLocation;
+    const parsedLat = Number(lat);
+    const parsedLng = Number(lng);
+
+    if (!Number.isNaN(parsedLat) && !Number.isNaN(parsedLng)) {
+      return { lat: parsedLat, lng: parsedLng };
+    }
+  }
+
+  if (typeof rawLocation === 'string') {
+    const matches = rawLocation.match(/-?\d+(?:\.\d+)?/g);
+    if (matches && matches.length >= 2) {
+      const parsedLat = Number(matches[0]);
+      const parsedLng = Number(matches[1]);
+      if (!Number.isNaN(parsedLat) && !Number.isNaN(parsedLng)) {
+        return { lat: parsedLat, lng: parsedLng };
+      }
+    }
+  }
+
+  return null;
 };
 
 function App() {
@@ -39,6 +68,9 @@ function App() {
   const [students, setStudents] = useState([]);
   const [loadingStudents, setLoadingStudents] = useState(true);
   const [studentsError, setStudentsError] = useState('');
+  const [restaurants, setRestaurants] = useState([]);
+  const [loadingRestaurants, setLoadingRestaurants] = useState(true);
+  const [restaurantsError, setRestaurantsError] = useState('');
 
   useEffect(() => {
     const loadStudents = async () => {
@@ -90,8 +122,61 @@ function App() {
       }
     };
 
+    const loadRestaurants = async () => {
+      try {
+        const restaurantResponse = await fetch(`${FIRESTORE_BASE_URL}/Restaurant`);
+        if (!restaurantResponse.ok) {
+          throw new Error('No restaurant docs');
+        }
+
+        const restaurantJson = await restaurantResponse.json();
+        const restaurantDocs = restaurantJson.documents || [];
+
+        const restaurantData = restaurantDocs.map((docItem) => {
+          const fields = docItem.fields || {};
+          const name =
+            readFirestoreValue(fields.Name) ||
+            readFirestoreValue(fields.name) ||
+            'Restaurant sense nom';
+          const locationField = readFirestoreValue(fields.Location) || 'Sense adreça';
+          const coordinates = parseLocation(locationField);
+
+          return {
+            id: docItem.name,
+            name,
+            address: Array.isArray(locationField)
+              ? locationField.join(', ')
+              : String(locationField),
+            coordinates
+          };
+        });
+
+        setRestaurants(restaurantData);
+        setRestaurantsError('');
+      } catch (error) {
+        setRestaurantsError('No s’han pogut carregar els restaurants des de Firebase.');
+      } finally {
+        setLoadingRestaurants(false);
+      }
+    };
+
     loadStudents();
+    loadRestaurants();
   }, []);
+
+  const mapUrl = useMemo(() => {
+    if (!restaurants.length) {
+      return 'https://www.google.com/maps?q=Barcelona&z=13&output=embed';
+    }
+
+    const firstWithCoordinates = restaurants.find((restaurant) => restaurant.coordinates);
+    if (firstWithCoordinates) {
+      const { lat, lng } = firstWithCoordinates.coordinates;
+      return `https://www.google.com/maps?q=${lat},${lng}&z=15&output=embed`;
+    }
+
+    return `https://www.google.com/maps?q=${encodeURIComponent(restaurants[0].name)}&z=15&output=embed`;
+  }, [restaurants]);
 
   const toggleSidebar = () => {
     setIsSidebarOpen((prev) => !prev);
@@ -125,7 +210,7 @@ function App() {
           <h2>Menú</h2>
           <ul>
             <li><a href="#inicio" onClick={closeSidebar}>Inicio</a></li>
-            <li><a href="#reservas" onClick={closeSidebar}>Reservas</a></li>
+            <li><a href="#visualitzar-restaurants" onClick={closeSidebar}>Visalitzar Restaurants</a></li>
             <li><a href="#visualitzar-alumnes" onClick={closeSidebar}>Visualitzar Alumnes</a></li>
           </ul>
         </nav>
@@ -141,6 +226,32 @@ function App() {
       <main className="main-content" id="inicio">
         <h1>Visualització de l’alumnat al restaurant</h1>
         <p>Consulta el rol actual dels alumnes segons la relació guardada a Firebase.</p>
+
+        <section id="visualitzar-restaurants" className="restaurants-section">
+          <h2>Mapa de Google Maps</h2>
+          <div className="map-wrapper">
+            <iframe
+              title="Mapa de restaurants"
+              src={mapUrl}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
+          </div>
+
+          <h3 className="restaurants-subtitle">Restaurants</h3>
+          {loadingRestaurants && <p>Carregant restaurants...</p>}
+          {!loadingRestaurants && restaurantsError && <p>{restaurantsError}</p>}
+          {!loadingRestaurants && !restaurantsError && (
+            <div className="restaurants-list">
+              {restaurants.map((restaurant) => (
+                <article key={restaurant.id} className="restaurant-card">
+                  <h4>{restaurant.name}</h4>
+                  <p>Adreça: {restaurant.address}</p>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
 
         <section id="visualitzar-alumnes" className="students-section">
           <h2>Llistat d&apos;alumnes</h2>
