@@ -65,6 +65,7 @@ const parseLocation = (rawLocation) => {
 
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState('restaurants');
   const [students, setStudents] = useState([]);
   const [loadingStudents, setLoadingStudents] = useState(true);
   const [studentsError, setStudentsError] = useState('');
@@ -144,9 +145,6 @@ function App() {
           return {
             id: docItem.name,
             name,
-            address: Array.isArray(locationField)
-              ? locationField.join(', ')
-              : String(locationField),
             coordinates
           };
         });
@@ -182,7 +180,8 @@ function App() {
     setIsSidebarOpen((prev) => !prev);
   };
 
-  const closeSidebar = () => {
+  const selectSection = (section) => {
+    setActiveSection(section);
     setIsSidebarOpen(false);
   };
 
@@ -209,9 +208,24 @@ function App() {
         <nav>
           <h2>Menú</h2>
           <ul>
-            <li><a href="#inicio" onClick={closeSidebar}>Inicio</a></li>
-            <li><a href="#visualitzar-restaurants" onClick={closeSidebar}>Visalitzar Restaurants</a></li>
-            <li><a href="#visualitzar-alumnes" onClick={closeSidebar}>Visualitzar Alumnes</a></li>
+            <li>
+              <button
+                type="button"
+                className="menu-link"
+                onClick={() => selectSection('restaurants')}
+              >
+                Visalitzar Restaurants
+              </button>
+            </li>
+            <li>
+              <button
+                type="button"
+                className="menu-link"
+                onClick={() => selectSection('students')}
+              >
+                Visualitzar Alumnes
+              </button>
+            </li>
           </ul>
         </nav>
       </aside>
@@ -219,57 +233,61 @@ function App() {
       <button
         type="button"
         className={`overlay ${isSidebarOpen ? 'show' : ''}`}
-        onClick={closeSidebar}
+        onClick={() => setIsSidebarOpen(false)}
         aria-label="Cerrar menú"
       />
 
-      <main className="main-content" id="inicio">
-        <section id="visualitzar-restaurants" className="restaurants-section">
-          <h2>Visualització de l’alumnat al restaurant</h2>
-          <h3 className="restaurants-subtitle">Mapa de Google Maps</h3>
-          <div className="map-wrapper">
-            <iframe
-              title="Mapa de restaurants"
-              src={mapUrl}
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-            />
-          </div>
-
-          <h3 className="restaurants-subtitle">Restaurants</h3>
-          {loadingRestaurants && <p>Carregant restaurants...</p>}
-          {!loadingRestaurants && restaurantsError && <p>{restaurantsError}</p>}
-          {!loadingRestaurants && !restaurantsError && (
-            <div className="restaurants-list">
-              {restaurants.map((restaurant) => (
-                <article key={restaurant.id} className="restaurant-card">
-                  <h4>{restaurant.name}</h4>
-                </article>
-              ))}
+      <main className="main-content">
+        {activeSection === 'restaurants' && (
+          <section className="restaurants-section">
+            <h2>Visualització de l’alumnat al restaurant</h2>
+            <h3 className="restaurants-subtitle">Mapa de Google Maps</h3>
+            <div className="map-wrapper">
+              <iframe
+                title="Mapa de restaurants"
+                src={mapUrl}
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              />
             </div>
-          )}
-        </section>
 
-        <section id="visualitzar-alumnes" className="students-section">
-          <h2>Llistat d&apos;alumnes</h2>
+            <h3 className="restaurants-subtitle">Restaurants</h3>
+            {loadingRestaurants && <p>Carregant restaurants...</p>}
+            {!loadingRestaurants && restaurantsError && <p>{restaurantsError}</p>}
+            {!loadingRestaurants && !restaurantsError && (
+              <div className="restaurants-list">
+                {restaurants.map((restaurant) => (
+                  <article key={restaurant.id} className="restaurant-card">
+                    <h4>{restaurant.name}</h4>
+                  </article>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
 
-          {loadingStudents && <p>Carregant alumnes...</p>}
-          {!loadingStudents && studentsError && <p>{studentsError}</p>}
+        {activeSection === 'students' && (
+          <section className="students-section">
+            <h2>Llistat d&apos;alumnes</h2>
 
-          {!loadingStudents && !studentsError && (
-            <div className="students-grid">
-              {students.map((student) => (
-                <article key={student.id} className="student-card">
-                  <img src={student.imageUrl} alt={`Foto de ${student.name}`} />
-                  <div>
-                    <h3>{student.name}</h3>
-                    <p>Rol: {student.role}</p>
-                  </div>
-                </article>
-              ))}
-            </div>
-          )}
-        </section>
+            {loadingStudents && <p>Carregant alumnes...</p>}
+            {!loadingStudents && studentsError && <p>{studentsError}</p>}
+
+            {!loadingStudents && !studentsError && (
+              <div className="students-grid">
+                {students.map((student) => (
+                  <article key={student.id} className="student-card">
+                    <img src={student.imageUrl} alt={`Foto de ${student.name}`} />
+                    <div>
+                      <h3>{student.name}</h3>
+                      <p>Rol: {student.role}</p>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
       </main>
     </div>
   );

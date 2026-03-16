@@ -92,10 +92,15 @@ body {
   margin-top: 0.75rem;
 }
 
-.sidebar a {
-  text-decoration: none;
+.menu-link {
+  background: none;
+  border: none;
+  padding: 0;
   color: #93c5fd;
   font-weight: 500;
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
 }
 
 .overlay {
