@@ -224,11 +224,9 @@ function App() {
       />
 
       <main className="main-content" id="inicio">
-        <h1>Visualització de l’alumnat al restaurant</h1>
-        <p>Consulta el rol actual dels alumnes segons la relació guardada a Firebase.</p>
-
         <section id="visualitzar-restaurants" className="restaurants-section">
-          <h2>Mapa de Google Maps</h2>
+          <h2>Visualització de l’alumnat al restaurant</h2>
+          <h3 className="restaurants-subtitle">Mapa de Google Maps</h3>
           <div className="map-wrapper">
             <iframe
               title="Mapa de restaurants"
