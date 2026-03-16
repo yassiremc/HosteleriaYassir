@@ -5,8 +5,10 @@ import './App.css';
 const FIREBASE_PROJECT_ID = 'hosteleriajoviat-94129';
 const FIRESTORE_BASE_URL = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents`;
 
-const ALUMNI_IMAGES = {
-  tv50174LXEd82ddvWPSj: 'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?auto=format&fit=crop&w=500&q=80',
+const ALUMNI_IMAGES_BY_NAME = {
+  'elena gilbert': 'https://i.pinimg.com/736x/53/39/cc/5339ccdd5dfb6b834fac3711e943c9b0.jpg',
+  'adriana martinez': 'https://i.pinimg.com/736x/4a/c6/32/4ac632b4e50f78a532be67f7977290db.jpg',
+  'joel fernandez': 'https://preview.redd.it/damon-salvatore-v0-u895ej76t5oe1.jpeg?auto=webp&s=cfa26d2aeeb5e4ab226249197879bca094019625',
   default: 'https://images.unsplash.com/photo-1600880292089-90a7e086ee0c?auto=format&fit=crop&w=500&q=80'
 };
 
@@ -111,7 +113,7 @@ function App() {
               id: docItem.name,
               name: studentName,
               role,
-              imageUrl: ALUMNI_IMAGES[alumniId] || ALUMNI_IMAGES.default
+              imageUrl: ALUMNI_IMAGES_BY_NAME[studentName.toLowerCase()] || ALUMNI_IMAGES_BY_NAME.default
             };
           })
         );
