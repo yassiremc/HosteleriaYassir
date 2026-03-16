@@ -66,6 +66,8 @@ const parseLocation = (rawLocation) => {
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('restaurants');
+  const [studentSearch, setStudentSearch] = useState('');
+  const [restaurantSearch, setRestaurantSearch] = useState('');
   const [students, setStudents] = useState([]);
   const [loadingStudents, setLoadingStudents] = useState(true);
   const [studentsError, setStudentsError] = useState('');
@@ -162,19 +164,41 @@ function App() {
     loadRestaurants();
   }, []);
 
+  const filteredStudents = useMemo(() => {
+    const term = studentSearch.trim().toLowerCase();
+    if (!term) {
+      return students;
+    }
+
+    return students.filter(
+      (student) =>
+        student.name.toLowerCase().includes(term) ||
+        student.role.toLowerCase().includes(term)
+    );
+  }, [students, studentSearch]);
+
+  const filteredRestaurants = useMemo(() => {
+    const term = restaurantSearch.trim().toLowerCase();
+    if (!term) {
+      return restaurants;
+    }
+
+    return restaurants.filter((restaurant) => restaurant.name.toLowerCase().includes(term));
+  }, [restaurants, restaurantSearch]);
+
   const mapUrl = useMemo(() => {
-    if (!restaurants.length) {
+    if (!filteredRestaurants.length) {
       return 'https://www.google.com/maps?q=Barcelona&z=13&output=embed';
     }
 
-    const firstWithCoordinates = restaurants.find((restaurant) => restaurant.coordinates);
+    const firstWithCoordinates = filteredRestaurants.find((restaurant) => restaurant.coordinates);
     if (firstWithCoordinates) {
       const { lat, lng } = firstWithCoordinates.coordinates;
       return `https://www.google.com/maps?q=${lat},${lng}&z=15&output=embed`;
     }
 
-    return `https://www.google.com/maps?q=${encodeURIComponent(restaurants[0].name)}&z=15&output=embed`;
-  }, [restaurants]);
+    return `https://www.google.com/maps?q=${encodeURIComponent(filteredRestaurants[0].name)}&z=15&output=embed`;
+  }, [filteredRestaurants]);
 
   const toggleSidebar = () => {
     setIsSidebarOpen((prev) => !prev);
@@ -242,6 +266,13 @@ function App() {
           <section className="restaurants-section">
             <h2>Visualització de l’alumnat al restaurant</h2>
             <h3 className="restaurants-subtitle">Mapa de Google Maps</h3>
+            <input
+              type="search"
+              className="search-input"
+              placeholder="Buscar restaurant..."
+              value={restaurantSearch}
+              onChange={(event) => setRestaurantSearch(event.target.value)}
+            />
             <div className="map-wrapper">
               <iframe
                 title="Mapa de restaurants"
@@ -256,7 +287,7 @@ function App() {
             {!loadingRestaurants && restaurantsError && <p>{restaurantsError}</p>}
             {!loadingRestaurants && !restaurantsError && (
               <div className="restaurants-list">
-                {restaurants.map((restaurant) => (
+                {filteredRestaurants.map((restaurant) => (
                   <article key={restaurant.id} className="restaurant-card">
                     <h4>{restaurant.name}</h4>
                   </article>
@@ -269,13 +300,20 @@ function App() {
         {activeSection === 'students' && (
           <section className="students-section">
             <h2>Llistat d&apos;alumnes</h2>
+            <input
+              type="search"
+              className="search-input"
+              placeholder="Buscar alumne o rol..."
+              value={studentSearch}
+              onChange={(event) => setStudentSearch(event.target.value)}
+            />
 
             {loadingStudents && <p>Carregant alumnes...</p>}
             {!loadingStudents && studentsError && <p>{studentsError}</p>}
 
             {!loadingStudents && !studentsError && (
               <div className="students-grid">
-                {students.map((student) => (
+                {filteredStudents.map((student) => (
                   <article key={student.id} className="student-card">
                     <img src={student.imageUrl} alt={`Foto de ${student.name}`} />
                     <div>
