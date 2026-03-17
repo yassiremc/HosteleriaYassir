@@ -347,12 +347,12 @@ function App() {
                   ← Tornar al llistat
                 </button>
                 <img src={selectedRestaurant.imageUrl} alt={`Foto de ${selectedRestaurant.name}`} />
-                <h3>Ficha del restaurante</h3>
-                <p><strong>Nombre:</strong> {selectedRestaurant.name}</p>
-                <p><strong>Especialidad:</strong> {selectedRestaurant.specialty}</p>
-                <p><strong>Calle:</strong> {selectedRestaurant.street}</p>
+                <h3>Fitxa del restaurant</h3>
+                <p><strong>Nom:</strong> {selectedRestaurant.name}</p>
+                <p><strong>Especialitat:</strong> {selectedRestaurant.specialty}</p>
+                <p><strong>Carrer:</strong> {selectedRestaurant.street}</p>
 
-                <h4>Alumnos que trabajan ahí</h4>
+                <h4>Alumnes que hi treballen</h4>
                 {studentsForSelectedRestaurant.current.length > 0 ? (
                   <ul>
                     {studentsForSelectedRestaurant.current.map((student) => (
@@ -360,10 +360,10 @@ function App() {
                     ))}
                   </ul>
                 ) : (
-                  <p>No hay alumnos trabajando actualmente.</p>
+                  <p>No hi ha alumnes treballant actualment.</p>
                 )}
 
-                <h4>Alumnos que han trabajado ahí</h4>
+                <h4>Alumnes que hi han treballat</h4>
                 {studentsForSelectedRestaurant.past.length > 0 ? (
                   <ul>
                     {studentsForSelectedRestaurant.past.map((student) => (
@@ -371,7 +371,7 @@ function App() {
                     ))}
                   </ul>
                 ) : (
-                  <p>No hay registros de alumnos anteriores.</p>
+                  <p>No hi ha registres d’alumnes anteriors.</p>
                 )}
               </article>
             )}
@@ -418,10 +418,10 @@ function App() {
                   ← Tornar al llistat
                 </button>
                 <img src={selectedStudent.imageUrl} alt={`Foto de ${selectedStudent.fullName}`} />
-                <h3>Ficha personal</h3>
-                <p><strong>Nombre y apellido:</strong> {selectedStudent.fullName}</p>
-                <p><strong>Dónde trabaja:</strong> {selectedStudent.workplace}</p>
-                <p><strong>Rol en el trabajo:</strong> {selectedStudent.role}</p>
+                <h3>Fitxa personal</h3>
+                <p><strong>Nom i cognoms:</strong> {selectedStudent.fullName}</p>
+                <p><strong>On treballa:</strong> {selectedStudent.workplace}</p>
+                <p><strong>Rol a la feina:</strong> {selectedStudent.role}</p>
               </article>
             )}
           </section>
