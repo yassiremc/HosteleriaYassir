@@ -70,6 +70,7 @@ const parseLocation = (rawLocation) => {
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('restaurants');
+  const [selectedStudent, setSelectedStudent] = useState(null);
   const [studentSearch, setStudentSearch] = useState('');
   const [restaurantSearch, setRestaurantSearch] = useState('');
   const [students, setStudents] = useState([]);
@@ -95,27 +96,61 @@ function App() {
             const relationFields = docItem.fields || {};
             const alumniId = readFirestoreValue(relationFields.id_alumni);
             const role = readFirestoreValue(relationFields.rol) || 'Sense rol';
+            const restaurantId =
+              readFirestoreValue(relationFields.id_restaurant) ||
+              readFirestoreValue(relationFields.id_restaurat) ||
+              readFirestoreValue(relationFields.idRestaurant);
 
-            let studentName = alumniId || 'Alumne sense nom';
+            let studentFirstName = '';
+            let studentLastName = '';
+            let studentDisplayName = alumniId || 'Alumne sense nom';
+
             if (alumniId) {
               const alumniResponse = await fetch(`${FIRESTORE_BASE_URL}/Alumni/${alumniId}`);
               if (alumniResponse.ok) {
                 const alumniJson = await alumniResponse.json();
                 const alumniFields = alumniJson.fields || {};
-                studentName =
+
+                studentFirstName =
                   readFirestoreValue(alumniFields.name) ||
                   readFirestoreValue(alumniFields.nom) ||
                   readFirestoreValue(alumniFields.Nombre) ||
                   readFirestoreValue(alumniFields.Name) ||
-                  studentName;
+                  '';
+
+                studentLastName =
+                  readFirestoreValue(alumniFields.lastName) ||
+                  readFirestoreValue(alumniFields.lastname) ||
+                  readFirestoreValue(alumniFields.surname) ||
+                  readFirestoreValue(alumniFields.apellido) ||
+                  readFirestoreValue(alumniFields.cognom) ||
+                  '';
+
+                studentDisplayName = [studentFirstName, studentLastName].filter(Boolean).join(' ').trim() || studentFirstName || studentDisplayName;
+              }
+            }
+
+            let workplace = 'No disponible';
+            if (restaurantId) {
+              const restaurantResponse = await fetch(`${FIRESTORE_BASE_URL}/Restaurant/${restaurantId}`);
+              if (restaurantResponse.ok) {
+                const restaurantJson = await restaurantResponse.json();
+                const restaurantFields = restaurantJson.fields || {};
+                workplace =
+                  readFirestoreValue(restaurantFields.Name) ||
+                  readFirestoreValue(restaurantFields.name) ||
+                  workplace;
               }
             }
 
             return {
               id: docItem.name,
-              name: studentName,
+              name: studentFirstName || studentDisplayName,
+              lastName: studentLastName,
+              fullName: [studentFirstName, studentLastName].filter(Boolean).join(' ').trim() || studentDisplayName,
               role,
-              imageUrl: ALUMNI_IMAGES_BY_NAME[studentName.toLowerCase()] || ALUMNI_IMAGES_BY_NAME.default
+              workplace,
+              imageUrl: ALUMNI_IMAGES_BY_NAME[studentDisplayName.toLowerCase()] || ALUMNI_IMAGES_BY_NAME.default
             };
           })
         );
@@ -182,8 +217,9 @@ function App() {
 
     return students.filter(
       (student) =>
-        student.name.toLowerCase().includes(term) ||
-        student.role.toLowerCase().includes(term)
+        student.fullName.toLowerCase().includes(term) ||
+        student.role.toLowerCase().includes(term) ||
+        student.workplace.toLowerCase().includes(term)
     );
   }, [students, studentSearch]);
 
@@ -216,6 +252,9 @@ function App() {
 
   const selectSection = (section) => {
     setActiveSection(section);
+    if (section !== 'students') {
+      setSelectedStudent(null);
+    }
     setIsSidebarOpen(false);
   };
 
@@ -322,18 +361,41 @@ function App() {
             {loadingStudents && <p>Carregant alumnes...</p>}
             {!loadingStudents && studentsError && <p>{studentsError}</p>}
 
-            {!loadingStudents && !studentsError && (
+            {!loadingStudents && !studentsError && !selectedStudent && (
               <div className="students-grid">
                 {filteredStudents.map((student) => (
-                  <article key={student.id} className="student-card">
-                    <img src={student.imageUrl} alt={`Foto de ${student.name}`} />
-                    <div>
-                      <h3>{student.name}</h3>
-                      <p>Rol: {student.role}</p>
-                    </div>
+                  <article key={student.id} className="student-card student-card-clickable">
+                    <button
+                      type="button"
+                      className="student-open-button"
+                      onClick={() => setSelectedStudent(student)}
+                    >
+                      <img src={student.imageUrl} alt={`Foto de ${student.fullName}`} />
+                      <div>
+                        <h3>{student.fullName}</h3>
+                        <p>Rol: {student.role}</p>
+                      </div>
+                    </button>
                   </article>
                 ))}
               </div>
+            )}
+
+            {selectedStudent && (
+              <article className="student-profile-card">
+                <button
+                  type="button"
+                  className="back-button"
+                  onClick={() => setSelectedStudent(null)}
+                >
+                  ← Tornar al llistat
+                </button>
+                <img src={selectedStudent.imageUrl} alt={`Foto de ${selectedStudent.fullName}`} />
+                <h3>Ficha personal</h3>
+                <p><strong>Nombre y apellido:</strong> {selectedStudent.fullName}</p>
+                <p><strong>Dónde trabaja:</strong> {selectedStudent.workplace}</p>
+                <p><strong>Rol en el trabajo:</strong> {selectedStudent.role}</p>
+              </article>
             )}
           </section>
         )}

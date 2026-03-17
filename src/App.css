@@ -269,3 +269,49 @@ body {
 .search-input::placeholder {
   color: #94a3b8;
 }
+
+.student-card-clickable {
+  padding: 0;
+}
+
+.student-open-button {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+}
+
+.student-open-button h3 {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.student-profile-card {
+  max-width: 640px;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  background: #111827;
+  padding: 1rem;
+}
+
+.student-profile-card img {
+  width: 100%;
+  max-height: 340px;
+  object-fit: contain;
+  object-position: center top;
+  background: #020617;
+  border-radius: 10px;
+}
+
+.back-button {
+  border: 1px solid #334155;
+  background: #0f172a;
+  color: #93c5fd;
+  border-radius: 8px;
+  padding: 0.45rem 0.7rem;
+  margin-bottom: 0.8rem;
+  cursor: pointer;
+}
