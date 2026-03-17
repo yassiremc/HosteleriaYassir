@@ -315,3 +315,42 @@ body {
   margin-bottom: 0.8rem;
   cursor: pointer;
 }
+
+.restaurant-card-clickable {
+  padding: 0;
+}
+
+.restaurant-open-button {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+}
+
+.restaurant-open-button h4 {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.restaurant-profile-card {
+  max-width: 760px;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  background: #111827;
+  padding: 1rem;
+}
+
+.restaurant-profile-card img {
+  width: 100%;
+  max-height: 320px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.restaurant-profile-card ul {
+  margin-top: 0.5rem;
+  color: #cbd5e1;
+}

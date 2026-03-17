@@ -15,30 +15,14 @@ const ALUMNI_IMAGES_BY_NAME = {
 const DEFAULT_RESTAURANT_IMAGE_URL = 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&w=900&q=80';
 
 const readFirestoreValue = (field) => {
-  if (!field) {
-    return '';
-  }
-
-  if (Object.prototype.hasOwnProperty.call(field, 'stringValue')) {
-    return field.stringValue;
-  }
-
-  if (Object.prototype.hasOwnProperty.call(field, 'booleanValue')) {
-    return field.booleanValue;
-  }
-
-  if (Object.prototype.hasOwnProperty.call(field, 'integerValue')) {
-    return field.integerValue;
-  }
-
-  if (Object.prototype.hasOwnProperty.call(field, 'doubleValue')) {
-    return field.doubleValue;
-  }
-
+  if (!field) return '';
+  if (Object.prototype.hasOwnProperty.call(field, 'stringValue')) return field.stringValue;
+  if (Object.prototype.hasOwnProperty.call(field, 'booleanValue')) return field.booleanValue;
+  if (Object.prototype.hasOwnProperty.call(field, 'integerValue')) return field.integerValue;
+  if (Object.prototype.hasOwnProperty.call(field, 'doubleValue')) return field.doubleValue;
   if (Object.prototype.hasOwnProperty.call(field, 'arrayValue')) {
     return (field.arrayValue.values || []).map(readFirestoreValue);
   }
-
   return '';
 };
 
@@ -47,10 +31,7 @@ const parseLocation = (rawLocation) => {
     const [lat, lng] = rawLocation;
     const parsedLat = Number(lat);
     const parsedLng = Number(lng);
-
-    if (!Number.isNaN(parsedLat) && !Number.isNaN(parsedLng)) {
-      return { lat: parsedLat, lng: parsedLng };
-    }
+    if (!Number.isNaN(parsedLat) && !Number.isNaN(parsedLng)) return { lat: parsedLat, lng: parsedLng };
   }
 
   if (typeof rawLocation === 'string') {
@@ -58,19 +39,24 @@ const parseLocation = (rawLocation) => {
     if (matches && matches.length >= 2) {
       const parsedLat = Number(matches[0]);
       const parsedLng = Number(matches[1]);
-      if (!Number.isNaN(parsedLat) && !Number.isNaN(parsedLng)) {
-        return { lat: parsedLat, lng: parsedLng };
-      }
+      if (!Number.isNaN(parsedLat) && !Number.isNaN(parsedLng)) return { lat: parsedLat, lng: parsedLng };
     }
   }
 
   return null;
 };
 
+const parseBoolean = (value) => {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'string') return value.toLowerCase() === 'true';
+  return false;
+};
+
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('restaurants');
   const [selectedStudent, setSelectedStudent] = useState(null);
+  const [selectedRestaurant, setSelectedRestaurant] = useState(null);
   const [studentSearch, setStudentSearch] = useState('');
   const [restaurantSearch, setRestaurantSearch] = useState('');
   const [students, setStudents] = useState([]);
@@ -81,111 +67,50 @@ function App() {
   const [restaurantsError, setRestaurantsError] = useState('');
 
   useEffect(() => {
-    const loadStudents = async () => {
+    const loadData = async () => {
       try {
-        const relationResponse = await fetch(`${FIRESTORE_BASE_URL}/Rest-Alum`);
-        if (!relationResponse.ok) {
-          throw new Error('No relation docs');
+        const [relationResponse, restaurantResponse] = await Promise.all([
+          fetch(`${FIRESTORE_BASE_URL}/Rest-Alum`),
+          fetch(`${FIRESTORE_BASE_URL}/Restaurant`)
+        ]);
+
+        if (!relationResponse.ok || !restaurantResponse.ok) {
+          throw new Error('No data docs');
         }
 
         const relationJson = await relationResponse.json();
-        const relationDocs = relationJson.documents || [];
-
-        const studentData = await Promise.all(
-          relationDocs.map(async (docItem) => {
-            const relationFields = docItem.fields || {};
-            const alumniId = readFirestoreValue(relationFields.id_alumni);
-            const role = readFirestoreValue(relationFields.rol) || 'Sense rol';
-            const restaurantId =
-              readFirestoreValue(relationFields.id_restaurant) ||
-              readFirestoreValue(relationFields.id_restaurat) ||
-              readFirestoreValue(relationFields.idRestaurant);
-
-            let studentFirstName = '';
-            let studentLastName = '';
-            let studentDisplayName = alumniId || 'Alumne sense nom';
-
-            if (alumniId) {
-              const alumniResponse = await fetch(`${FIRESTORE_BASE_URL}/Alumni/${alumniId}`);
-              if (alumniResponse.ok) {
-                const alumniJson = await alumniResponse.json();
-                const alumniFields = alumniJson.fields || {};
-
-                studentFirstName =
-                  readFirestoreValue(alumniFields.name) ||
-                  readFirestoreValue(alumniFields.nom) ||
-                  readFirestoreValue(alumniFields.Nombre) ||
-                  readFirestoreValue(alumniFields.Name) ||
-                  '';
-
-                studentLastName =
-                  readFirestoreValue(alumniFields.lastName) ||
-                  readFirestoreValue(alumniFields.lastname) ||
-                  readFirestoreValue(alumniFields.surname) ||
-                  readFirestoreValue(alumniFields.apellido) ||
-                  readFirestoreValue(alumniFields.cognom) ||
-                  '';
-
-                studentDisplayName = [studentFirstName, studentLastName].filter(Boolean).join(' ').trim() || studentFirstName || studentDisplayName;
-              }
-            }
-
-            let workplace = 'No disponible';
-            if (restaurantId) {
-              const restaurantResponse = await fetch(`${FIRESTORE_BASE_URL}/Restaurant/${restaurantId}`);
-              if (restaurantResponse.ok) {
-                const restaurantJson = await restaurantResponse.json();
-                const restaurantFields = restaurantJson.fields || {};
-                workplace =
-                  readFirestoreValue(restaurantFields.Name) ||
-                  readFirestoreValue(restaurantFields.name) ||
-                  workplace;
-              }
-            }
-
-            return {
-              id: docItem.name,
-              name: studentFirstName || studentDisplayName,
-              lastName: studentLastName,
-              fullName: [studentFirstName, studentLastName].filter(Boolean).join(' ').trim() || studentDisplayName,
-              role,
-              workplace,
-              imageUrl: ALUMNI_IMAGES_BY_NAME[studentDisplayName.toLowerCase()] || ALUMNI_IMAGES_BY_NAME.default
-            };
-          })
-        );
-
-        setStudents(studentData);
-        setStudentsError('');
-      } catch (error) {
-        setStudentsError('No s’ha pogut carregar el llistat d’alumnes des de Firebase.');
-      } finally {
-        setLoadingStudents(false);
-      }
-    };
-
-    const loadRestaurants = async () => {
-      try {
-        const restaurantResponse = await fetch(`${FIRESTORE_BASE_URL}/Restaurant`);
-        if (!restaurantResponse.ok) {
-          throw new Error('No restaurant docs');
-        }
-
         const restaurantJson = await restaurantResponse.json();
+
+        const relationDocs = relationJson.documents || [];
         const restaurantDocs = restaurantJson.documents || [];
 
+        const restaurantMap = {};
         const restaurantData = restaurantDocs.map((docItem) => {
           const fields = docItem.fields || {};
+          const id = docItem.name.split('/').pop();
           const name =
             readFirestoreValue(fields.Name) ||
             readFirestoreValue(fields.name) ||
             'Restaurant sense nom';
-          const locationField = readFirestoreValue(fields.Location) || 'Sense adreça';
+          const locationField = readFirestoreValue(fields.Location) || '';
           const coordinates = parseLocation(locationField);
+          const specialty =
+            readFirestoreValue(fields.specialty) ||
+            readFirestoreValue(fields.especialidad) ||
+            readFirestoreValue(fields.Specialty) ||
+            'No disponible';
+          const street =
+            readFirestoreValue(fields.calle) ||
+            readFirestoreValue(fields.street) ||
+            readFirestoreValue(fields.address) ||
+            (Array.isArray(locationField) ? locationField.join(', ') : String(locationField || 'No disponible'));
 
-          return {
-            id: docItem.name,
+          const restaurantItem = {
+            id,
+            firestoreName: docItem.name,
             name,
+            specialty,
+            street,
             coordinates,
             imageUrl:
               readFirestoreValue(fields.imageUrl) ||
@@ -194,26 +119,83 @@ function App() {
               readFirestoreValue(fields.url) ||
               DEFAULT_RESTAURANT_IMAGE_URL
           };
+
+          restaurantMap[id] = restaurantItem;
+          return restaurantItem;
         });
 
         setRestaurants(restaurantData);
         setRestaurantsError('');
+        setLoadingRestaurants(false);
+
+        const studentData = await Promise.all(
+          relationDocs.map(async (docItem) => {
+            const fields = docItem.fields || {};
+            const alumniId = readFirestoreValue(fields.id_alumni);
+            const role = readFirestoreValue(fields.rol) || 'Sense rol';
+            const restaurantId =
+              readFirestoreValue(fields.id_restaurant) ||
+              readFirestoreValue(fields.id_restaurat) ||
+              readFirestoreValue(fields.idRestaurant);
+            const currentJob = parseBoolean(readFirestoreValue(fields.current_job));
+
+            let firstName = '';
+            let lastName = '';
+            let fallbackName = alumniId || 'Alumne sense nom';
+
+            if (alumniId) {
+              const alumniResponse = await fetch(`${FIRESTORE_BASE_URL}/Alumni/${alumniId}`);
+              if (alumniResponse.ok) {
+                const alumniJson = await alumniResponse.json();
+                const alumniFields = alumniJson.fields || {};
+                firstName =
+                  readFirestoreValue(alumniFields.name) ||
+                  readFirestoreValue(alumniFields.nom) ||
+                  readFirestoreValue(alumniFields.Nombre) ||
+                  readFirestoreValue(alumniFields.Name) ||
+                  '';
+                lastName =
+                  readFirestoreValue(alumniFields.lastName) ||
+                  readFirestoreValue(alumniFields.lastname) ||
+                  readFirestoreValue(alumniFields.surname) ||
+                  readFirestoreValue(alumniFields.apellido) ||
+                  readFirestoreValue(alumniFields.cognom) ||
+                  '';
+                fallbackName = [firstName, lastName].filter(Boolean).join(' ').trim() || firstName || fallbackName;
+              }
+            }
+
+            const workplace = restaurantMap[restaurantId]?.name || 'No disponible';
+
+            return {
+              id: docItem.name,
+              fullName: [firstName, lastName].filter(Boolean).join(' ').trim() || fallbackName,
+              role,
+              workplace,
+              restaurantId,
+              currentJob,
+              imageUrl: ALUMNI_IMAGES_BY_NAME[fallbackName.toLowerCase()] || ALUMNI_IMAGES_BY_NAME.default
+            };
+          })
+        );
+
+        setStudents(studentData);
+        setStudentsError('');
       } catch (error) {
+        setStudentsError('No s’ha pogut carregar el llistat d’alumnes des de Firebase.');
         setRestaurantsError('No s’han pogut carregar els restaurants des de Firebase.');
       } finally {
+        setLoadingStudents(false);
         setLoadingRestaurants(false);
       }
     };
 
-    loadStudents();
-    loadRestaurants();
+    loadData();
   }, []);
 
   const filteredStudents = useMemo(() => {
     const term = studentSearch.trim().toLowerCase();
-    if (!term) {
-      return students;
-    }
+    if (!term) return students;
 
     return students.filter(
       (student) =>
@@ -225,11 +207,14 @@ function App() {
 
   const filteredRestaurants = useMemo(() => {
     const term = restaurantSearch.trim().toLowerCase();
-    if (!term) {
-      return restaurants;
-    }
+    if (!term) return restaurants;
 
-    return restaurants.filter((restaurant) => restaurant.name.toLowerCase().includes(term));
+    return restaurants.filter(
+      (restaurant) =>
+        restaurant.name.toLowerCase().includes(term) ||
+        restaurant.specialty.toLowerCase().includes(term) ||
+        restaurant.street.toLowerCase().includes(term)
+    );
   }, [restaurants, restaurantSearch]);
 
   const mapUrl = useMemo(() => {
@@ -246,15 +231,24 @@ function App() {
     return `https://www.google.com/maps?q=${encodeURIComponent(filteredRestaurants[0].name)}&z=15&output=embed`;
   }, [filteredRestaurants]);
 
+  const studentsForSelectedRestaurant = useMemo(() => {
+    if (!selectedRestaurant) return { current: [], past: [] };
+
+    const matched = students.filter((student) => student.restaurantId === selectedRestaurant.id);
+    return {
+      current: matched.filter((student) => student.currentJob),
+      past: matched.filter((student) => !student.currentJob)
+    };
+  }, [selectedRestaurant, students]);
+
   const toggleSidebar = () => {
     setIsSidebarOpen((prev) => !prev);
   };
 
   const selectSection = (section) => {
     setActiveSection(section);
-    if (section !== 'students') {
-      setSelectedStudent(null);
-    }
+    if (section !== 'students') setSelectedStudent(null);
+    if (section !== 'restaurants') setSelectedRestaurant(null);
     setIsSidebarOpen(false);
   };
 
@@ -273,7 +267,6 @@ function App() {
           <span />
           <span />
         </button>
-
         <img src={logoJoviat} className="brand-logo" alt="logo_joviat" />
       </header>
 
@@ -282,20 +275,12 @@ function App() {
           <h2>Menú</h2>
           <ul>
             <li>
-              <button
-                type="button"
-                className="menu-link"
-                onClick={() => selectSection('restaurants')}
-              >
+              <button type="button" className="menu-link" onClick={() => selectSection('restaurants')}>
                 Visalitzar Restaurants
               </button>
             </li>
             <li>
-              <button
-                type="button"
-                className="menu-link"
-                onClick={() => selectSection('students')}
-              >
+              <button type="button" className="menu-link" onClick={() => selectSection('students')}>
                 Visualitzar Alumnes
               </button>
             </li>
@@ -334,15 +319,61 @@ function App() {
             <h3 className="restaurants-subtitle">Restaurants</h3>
             {loadingRestaurants && <p>Carregant restaurants...</p>}
             {!loadingRestaurants && restaurantsError && <p>{restaurantsError}</p>}
-            {!loadingRestaurants && !restaurantsError && (
+
+            {!loadingRestaurants && !restaurantsError && !selectedRestaurant && (
               <div className="restaurants-list">
                 {filteredRestaurants.map((restaurant) => (
-                  <article key={restaurant.id} className="restaurant-card">
-                    <img src={restaurant.imageUrl} alt={`Foto de ${restaurant.name}`} />
-                    <h4>{restaurant.name}</h4>
+                  <article key={restaurant.id} className="restaurant-card restaurant-card-clickable">
+                    <button
+                      type="button"
+                      className="restaurant-open-button"
+                      onClick={() => setSelectedRestaurant(restaurant)}
+                    >
+                      <img src={restaurant.imageUrl} alt={`Foto de ${restaurant.name}`} />
+                      <h4>{restaurant.name}</h4>
+                    </button>
                   </article>
                 ))}
               </div>
+            )}
+
+            {selectedRestaurant && (
+              <article className="restaurant-profile-card">
+                <button
+                  type="button"
+                  className="back-button"
+                  onClick={() => setSelectedRestaurant(null)}
+                >
+                  ← Tornar al llistat
+                </button>
+                <img src={selectedRestaurant.imageUrl} alt={`Foto de ${selectedRestaurant.name}`} />
+                <h3>Ficha del restaurante</h3>
+                <p><strong>Nombre:</strong> {selectedRestaurant.name}</p>
+                <p><strong>Especialidad:</strong> {selectedRestaurant.specialty}</p>
+                <p><strong>Calle:</strong> {selectedRestaurant.street}</p>
+
+                <h4>Alumnos que trabajan ahí</h4>
+                {studentsForSelectedRestaurant.current.length > 0 ? (
+                  <ul>
+                    {studentsForSelectedRestaurant.current.map((student) => (
+                      <li key={`current-${student.id}`}>{student.fullName} ({student.role})</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>No hay alumnos trabajando actualmente.</p>
+                )}
+
+                <h4>Alumnos que han trabajado ahí</h4>
+                {studentsForSelectedRestaurant.past.length > 0 ? (
+                  <ul>
+                    {studentsForSelectedRestaurant.past.map((student) => (
+                      <li key={`past-${student.id}`}>{student.fullName} ({student.role})</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>No hay registros de alumnos anteriores.</p>
+                )}
+              </article>
             )}
           </section>
         )}
@@ -383,11 +414,7 @@ function App() {
 
             {selectedStudent && (
               <article className="student-profile-card">
-                <button
-                  type="button"
-                  className="back-button"
-                  onClick={() => setSelectedStudent(null)}
-                >
+                <button type="button" className="back-button" onClick={() => setSelectedStudent(null)}>
                   ← Tornar al llistat
                 </button>
                 <img src={selectedStudent.imageUrl} alt={`Foto de ${selectedStudent.fullName}`} />
