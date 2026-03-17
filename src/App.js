@@ -12,12 +12,7 @@ const ALUMNI_IMAGES_BY_NAME = {
   default: 'https://images.unsplash.com/photo-1600880292089-90a7e086ee0c?auto=format&fit=crop&w=500&q=80'
 };
 
-const RESTAURANT_IMAGES_BY_NAME = {
-  'restaurant japonès niwaka': 'https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&w=900&q=80',
-  'braseria guns&food - ctpm': 'https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=900&q=80',
-  'restaurant gretta gogó': 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=900&q=80',
-  default: 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&w=900&q=80'
-};
+const DEFAULT_RESTAURANT_IMAGE_URL = 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&w=900&q=80';
 
 const readFirestoreValue = (field) => {
   if (!field) {
@@ -157,7 +152,12 @@ function App() {
             id: docItem.name,
             name,
             coordinates,
-            imageUrl: RESTAURANT_IMAGES_BY_NAME[name.toLowerCase()] || RESTAURANT_IMAGES_BY_NAME.default
+            imageUrl:
+              readFirestoreValue(fields.imageUrl) ||
+              readFirestoreValue(fields.image_url) ||
+              readFirestoreValue(fields.foto_url) ||
+              readFirestoreValue(fields.url) ||
+              DEFAULT_RESTAURANT_IMAGE_URL
           };
         });
 
