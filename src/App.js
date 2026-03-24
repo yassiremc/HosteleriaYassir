@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import logoJoviat from './logo_joviat.webp';
 import './App.css';
 
@@ -82,6 +82,8 @@ function App() {
   const [adminTrajectories, setAdminTrajectories] = useState([
     { id: 1, restaurant: '', role: '', current: true }
   ]);
+  const [adminPhotoPreview, setAdminPhotoPreview] = useState('');
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -211,6 +213,12 @@ function App() {
     loadData();
   }, []);
 
+  useEffect(() => () => {
+    if (adminPhotoPreview.startsWith('blob:')) {
+      URL.revokeObjectURL(adminPhotoPreview);
+    }
+  }, [adminPhotoPreview]);
+
   const filteredStudents = useMemo(() => {
     const term = studentSearch.trim().toLowerCase();
     if (!term) return students;
@@ -324,6 +332,23 @@ function App() {
           : trajectory
       ))
     );
+  };
+
+  const openPhotoPicker = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handlePhotoUpload = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const nextPreview = URL.createObjectURL(file);
+    setAdminPhotoPreview((prevPreview) => {
+      if (prevPreview.startsWith('blob:')) {
+        URL.revokeObjectURL(prevPreview);
+      }
+      return nextPreview;
+    });
   };
 
   return (
@@ -563,11 +588,22 @@ function App() {
 
             <div className="admin-top-grid">
               <article className="admin-panel photo-panel">
-                <div className="upload-circle">
-                  <span>+</span>
-                </div>
+                <button type="button" className="upload-circle upload-circle-button" onClick={openPhotoPicker}>
+                  {adminPhotoPreview ? (
+                    <img src={adminPhotoPreview} alt="Previsualització de l'alumne" className="upload-preview-image" />
+                  ) : (
+                    <span>+</span>
+                  )}
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden-file-input"
+                  onChange={handlePhotoUpload}
+                />
                 <h3>Pujar foto</h3>
-                <p>Selecciona una imatge des del disc</p>
+                <p>{adminPhotoPreview ? 'Clica per canviar la imatge' : 'Selecciona una imatge des del disc'}</p>
 
                 <label htmlFor="student-status">Estat de l&apos;alumne</label>
                 <select
