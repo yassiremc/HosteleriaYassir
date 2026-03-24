@@ -77,6 +77,11 @@ function App() {
   const [restaurants, setRestaurants] = useState([]);
   const [loadingRestaurants, setLoadingRestaurants] = useState(true);
   const [restaurantsError, setRestaurantsError] = useState('');
+  const [adminStudentStatus, setAdminStudentStatus] = useState('Alumni (En actiu)');
+  const [adminTrajectoryFilter, setAdminTrajectoryFilter] = useState('');
+  const [adminTrajectories, setAdminTrajectories] = useState([
+    { id: 1, restaurant: '', role: '', current: true }
+  ]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -300,6 +305,27 @@ function App() {
     setIsSidebarOpen(false);
   };
 
+  const addTrajectory = () => {
+    setAdminTrajectories((prev) => [
+      ...prev,
+      { id: Date.now(), restaurant: '', role: '', current: true }
+    ]);
+  };
+
+  const removeTrajectory = (id) => {
+    setAdminTrajectories((prev) => prev.filter((trajectory) => trajectory.id !== id));
+  };
+
+  const updateTrajectory = (id, field, value) => {
+    setAdminTrajectories((prev) =>
+      prev.map((trajectory) => (
+        trajectory.id === id
+          ? { ...trajectory, [field]: value }
+          : trajectory
+      ))
+    );
+  };
+
   return (
     <div className="app-shell">
       <header className="topbar">
@@ -377,6 +403,11 @@ function App() {
             <li>
               <button type="button" className="menu-link" onClick={() => selectSection('students')}>
                 Visualitzar Alumnes
+              </button>
+            </li>
+            <li>
+              <button type="button" className="menu-link" onClick={() => selectSection('add-student')}>
+                Afegir Alumne
               </button>
             </li>
           </ul>
@@ -519,6 +550,122 @@ function App() {
                 <p><strong>Rol a la feina:</strong> {selectedStudent.role}</p>
               </article>
             )}
+          </section>
+        )}
+
+        {activeSection === 'add-student' && (
+          <section className="admin-page">
+            <p className="admin-eyebrow">ADMINISTRACIO</p>
+            <h1>Afegir Alumne</h1>
+            <p className="admin-intro">
+              Dona d&apos;alta un alumne nou, desa la seva foto a storage i relaciona&apos;l amb tants restaurants com calgui.
+            </p>
+
+            <div className="admin-top-grid">
+              <article className="admin-panel photo-panel">
+                <div className="upload-circle">
+                  <span>+</span>
+                </div>
+                <h3>Pujar foto</h3>
+                <p>Selecciona una imatge des del disc</p>
+
+                <label htmlFor="student-status">Estat de l&apos;alumne</label>
+                <select
+                  id="student-status"
+                  value={adminStudentStatus}
+                  onChange={(event) => setAdminStudentStatus(event.target.value)}
+                >
+                  <option>Alumni (En actiu)</option>
+                  <option>Alumni (No actiu)</option>
+                </select>
+              </article>
+
+              <article className="admin-panel info-panel">
+                <h3>Informacio primaria</h3>
+                <label htmlFor="full-name">Nom complet</label>
+                <input id="full-name" type="text" placeholder="Ex. Marc Ribas i Soler" />
+
+                <div className="admin-two-columns">
+                  <div>
+                    <label htmlFor="email">Correu electronic</label>
+                    <input id="email" type="email" placeholder="marc.ribas@exemple.cat" />
+                  </div>
+                  <div>
+                    <label htmlFor="phone">Telefon de contacte</label>
+                    <input id="phone" type="tel" placeholder="+34 600 000 000" />
+                  </div>
+                </div>
+
+                <label htmlFor="linkedin">Perfil Linkedin</label>
+                <input id="linkedin" type="text" placeholder="linkedin.com/in/usuari" />
+              </article>
+            </div>
+
+            <article className="admin-panel trajectory-panel">
+              <div className="trajectory-header">
+                <div>
+                  <p className="admin-eyebrow">TRAJECTORIA PROFESSIONAL</p>
+                  <h2>Restaurants</h2>
+                  <p>Selecciona restaurants existents, el rol i si hi treballa actualment.</p>
+                </div>
+                <button type="button" className="pill-button" onClick={addTrajectory}>
+                  Afegir restaurant
+                </button>
+              </div>
+
+              <label htmlFor="trajectory-filter">Filtrar restaurants pel nom</label>
+              <input
+                id="trajectory-filter"
+                type="search"
+                placeholder="Escriu el nom del restaurant"
+                value={adminTrajectoryFilter}
+                onChange={(event) => setAdminTrajectoryFilter(event.target.value)}
+              />
+
+              {adminTrajectories.map((trajectory, index) => (
+                <div key={trajectory.id} className="trajectory-card">
+                  <div className="trajectory-card-header">
+                    <h3>Restaurant {index + 1}</h3>
+                    {adminTrajectories.length > 1 && (
+                      <button type="button" className="pill-button danger" onClick={() => removeTrajectory(trajectory.id)}>
+                        Eliminar
+                      </button>
+                    )}
+                  </div>
+
+                  <label htmlFor={`restaurant-${trajectory.id}`}>Restaurant</label>
+                  <select
+                    id={`restaurant-${trajectory.id}`}
+                    value={trajectory.restaurant}
+                    onChange={(event) => updateTrajectory(trajectory.id, 'restaurant', event.target.value)}
+                  >
+                    <option value="">Selecciona un restaurant</option>
+                    {filteredRestaurants.map((restaurant) => (
+                      <option key={restaurant.id} value={restaurant.name}>{restaurant.name}</option>
+                    ))}
+                  </select>
+
+                  <label htmlFor={`role-${trajectory.id}`}>Rol</label>
+                  <input
+                    id={`role-${trajectory.id}`}
+                    type="text"
+                    placeholder="Cap de sala, cuina, practiques..."
+                    value={trajectory.role}
+                    onChange={(event) => updateTrajectory(trajectory.id, 'role', event.target.value)}
+                  />
+
+                  <label className="checkbox-line" htmlFor={`current-${trajectory.id}`}>
+                    <input
+                      id={`current-${trajectory.id}`}
+                      type="checkbox"
+                      checked={trajectory.current}
+                      onChange={(event) => updateTrajectory(trajectory.id, 'current', event.target.checked)}
+                    />
+                    Està treballant actualment en aquest restaurant
+                  </label>
+                </div>
+              ))}
+            </article>
           </section>
         )}
       </main>
