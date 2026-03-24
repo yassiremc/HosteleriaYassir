@@ -422,10 +422,11 @@ body {
 }
 
 .admin-page {
-  background: #ece4d8;
-  color: #171717;
+  background: radial-gradient(circle at top, #0f1a2f 0%, #0a1222 70%);
+  color: #e2e8f0;
   border-radius: 22px;
   padding: 2.4rem;
+  border: 1px solid #1e293b;
 }
 
 .admin-eyebrow {
@@ -433,19 +434,19 @@ body {
   letter-spacing: 0.3rem;
   text-transform: uppercase;
   font-weight: 700;
-  color: #8c6738;
+  color: #93c5fd;
 }
 
 .admin-page h1 {
   margin: 0.6rem 0 1rem;
   font-size: clamp(2.2rem, 5vw, 4rem);
   line-height: 1;
-  color: #101010;
+  color: #f8fafc;
 }
 
 .admin-intro {
   margin-bottom: 1.8rem;
-  color: #5f584e;
+  color: #cbd5e1;
   max-width: 900px;
 }
 
@@ -456,10 +457,11 @@ body {
 }
 
 .admin-panel {
-  background: #ece8cf;
+  background: #111b30;
   border-radius: 26px;
   padding: 1.6rem;
-  border: 1px solid #e0d9bf;
+  border: 1px solid #24344f;
+  box-shadow: 0 12px 24px rgba(2, 6, 23, 0.35);
 }
 
 .admin-panel h2,
@@ -476,7 +478,7 @@ body {
 .upload-circle {
   width: 240px;
   height: 240px;
-  border: 2px dashed #dfbe97;
+  border: 2px dashed #3b82f6;
   border-radius: 999px;
   margin: 0 auto 1rem;
   display: grid;
@@ -489,9 +491,9 @@ body {
   width: 64px;
   height: 64px;
   border-radius: 20px;
-  background: #dfcfb3;
+  background: #1e293b;
   font-size: 2rem;
-  color: #926f49;
+  color: #93c5fd;
 }
 
 .photo-panel h3 {
@@ -501,7 +503,7 @@ body {
 
 .photo-panel p {
   margin-top: 0;
-  color: #6f685d;
+  color: #94a3b8;
 }
 
 .admin-page label {
@@ -510,17 +512,22 @@ body {
   text-transform: uppercase;
   font-weight: 700;
   letter-spacing: 0.12rem;
-  color: #6c5d45;
+  color: #bfdbfe;
 }
 
 .admin-page input,
 .admin-page select {
   width: 100%;
-  border: 1px solid #ddd7ce;
-  background: #f1efec;
+  border: 1px solid #334155;
+  background: #0b1426;
+  color: #e2e8f0;
   border-radius: 18px;
   padding: 0.95rem 1.1rem;
   font-size: 1.05rem;
+}
+
+.admin-page input::placeholder {
+  color: #94a3b8;
 }
 
 .admin-two-columns {
@@ -548,9 +555,10 @@ body {
 }
 
 .pill-button {
-  border: none;
+  border: 1px solid #334155;
   border-radius: 999px;
-  background: #f2f0e9;
+  background: #0f172a;
+  color: #e2e8f0;
   padding: 0.8rem 1.4rem;
   font-size: 1.05rem;
   font-weight: 600;
@@ -558,14 +566,16 @@ body {
 }
 
 .pill-button.danger {
-  background: #f3ebe2;
+  background: #3f1d2e;
+  color: #fecdd3;
+  border-color: #7f1d1d;
 }
 
 .trajectory-card {
   margin-top: 1rem;
   border-radius: 28px;
-  background: #efede1;
-  border: 1px solid #dfd8ca;
+  background: #0f172a;
+  border: 1px solid #334155;
   padding: 1rem;
 }
 
