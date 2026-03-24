@@ -30,6 +30,72 @@ body {
   z-index: 20;
 }
 
+.auth-menu-wrapper {
+  margin-left: auto;
+  position: relative;
+}
+
+.auth-button {
+  border: 1px solid #334155;
+  background: #0f172a;
+  color: #e2e8f0;
+  border-radius: 8px;
+  padding: 0.5rem 0.8rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.auth-menu {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  width: min(320px, 82vw);
+  border: 1px solid #334155;
+  border-radius: 12px;
+  background: #111827;
+  padding: 0.85rem;
+  box-shadow: 0 10px 24px rgba(2, 6, 23, 0.55);
+}
+
+.auth-form {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.auth-form label {
+  font-size: 0.9rem;
+}
+
+.auth-form input {
+  border: 1px solid #334155;
+  background: #0f172a;
+  color: #e2e8f0;
+  border-radius: 8px;
+  padding: 0.55rem 0.6rem;
+}
+
+.auth-submit-button,
+.auth-logout-button {
+  border: 1px solid #334155;
+  background: #0f172a;
+  color: #93c5fd;
+  border-radius: 8px;
+  padding: 0.5rem 0.7rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.auth-error {
+  margin: 0.1rem 0;
+  color: #fca5a5;
+  font-size: 0.9rem;
+}
+
+.auth-logged-in p {
+  margin-top: 0;
+  margin-bottom: 0.8rem;
+}
+
 .brand-logo {
   height: 48px;
   width: auto;

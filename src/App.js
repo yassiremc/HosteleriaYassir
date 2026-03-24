@@ -61,6 +61,11 @@ const parseBoolean = (value) => {
 
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isAuthMenuOpen, setIsAuthMenuOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [loginForm, setLoginForm] = useState({ username: '', password: '' });
+  const [loginError, setLoginError] = useState('');
+  const [loggedInUser, setLoggedInUser] = useState('');
   const [activeSection, setActiveSection] = useState('restaurants');
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [selectedRestaurant, setSelectedRestaurant] = useState(null);
@@ -253,6 +258,41 @@ function App() {
     setIsSidebarOpen((prev) => !prev);
   };
 
+  const toggleAuthMenu = () => {
+    setIsAuthMenuOpen((prev) => !prev);
+    setLoginError('');
+  };
+
+  const handleLoginInput = (event) => {
+    const { name, value } = event.target;
+    setLoginForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleLogin = (event) => {
+    event.preventDefault();
+    const username = loginForm.username.trim();
+    const password = loginForm.password.trim();
+
+    if (!username || !password) {
+      setLoginError('Introdueix usuari i contrasenya.');
+      return;
+    }
+
+    setIsLoggedIn(true);
+    setLoggedInUser(username);
+    setLoginForm({ username: '', password: '' });
+    setLoginError('');
+    setIsAuthMenuOpen(false);
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setLoggedInUser('');
+    setLoginForm({ username: '', password: '' });
+    setLoginError('');
+    setIsAuthMenuOpen(false);
+  };
+
   const selectSection = (section) => {
     setActiveSection(section);
     if (section !== 'students') setSelectedStudent(null);
@@ -276,6 +316,53 @@ function App() {
           <span />
         </button>
         <img src={logoJoviat} className="brand-logo" alt="logo_joviat" />
+        <div className="auth-menu-wrapper">
+          <button
+            type="button"
+            className="auth-button"
+            onClick={toggleAuthMenu}
+            aria-expanded={isAuthMenuOpen}
+            aria-controls="auth-menu"
+          >
+            {isLoggedIn ? `👤 ${loggedInUser}` : 'Log in'}
+          </button>
+
+          {isAuthMenuOpen && (
+            <div id="auth-menu" className="auth-menu">
+              {!isLoggedIn ? (
+                <form className="auth-form" onSubmit={handleLogin}>
+                  <label htmlFor="username">Usuari</label>
+                  <input
+                    id="username"
+                    name="username"
+                    type="text"
+                    value={loginForm.username}
+                    onChange={handleLoginInput}
+                    placeholder="Introdueix el teu usuari"
+                  />
+                  <label htmlFor="password">Contrasenya</label>
+                  <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    value={loginForm.password}
+                    onChange={handleLoginInput}
+                    placeholder="Introdueix la contrasenya"
+                  />
+                  {loginError && <p className="auth-error">{loginError}</p>}
+                  <button type="submit" className="auth-submit-button">Entrar</button>
+                </form>
+              ) : (
+                <div className="auth-logged-in">
+                  <p>Has iniciat sessió com <strong>{loggedInUser}</strong>.</p>
+                  <button type="button" className="auth-logout-button" onClick={handleLogout}>
+                    Log out
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </header>
 
       <aside id="main-sidebar" className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
