@@ -9,10 +9,13 @@ const ALUMNI_IMAGES_BY_NAME = {
   'elena gilbert': 'https://i.pinimg.com/736x/53/39/cc/5339ccdd5dfb6b834fac3711e943c9b0.jpg',
   'adriana martinez': 'https://i.pinimg.com/736x/4a/c6/32/4ac632b4e50f78a532be67f7977290db.jpg',
   'joel fernandez': 'https://preview.redd.it/damon-salvatore-v0-u895ej76t5oe1.jpeg?auto=webp&s=cfa26d2aeeb5e4ab226249197879bca094019625',
-  default: 'https://images.unsplash.com/photo-1600880292089-90a7e086ee0c?auto=format&fit=crop&w=500&q=80'
+  default: ''
 };
 
-const DEFAULT_RESTAURANT_IMAGE_URL = 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&w=900&q=80';
+const WHITE_AVATAR_IMAGE =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='512' height='512' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%230f172a'/%3E%3Ccircle cx='256' cy='188' r='92' fill='%23ffffff'/%3E%3Cpath d='M96 452c0-88 72-160 160-160s160 72 160 160' fill='%23ffffff'/%3E%3C/svg%3E";
+
+const DEFAULT_RESTAURANT_IMAGE_URL = WHITE_AVATAR_IMAGE;
 
 
 const RESTAURANT_IMAGES_BY_NAME = {
@@ -194,7 +197,7 @@ function App() {
               workplace,
               restaurantId,
               currentJob,
-              imageUrl: ALUMNI_IMAGES_BY_NAME[fallbackName.toLowerCase()] || ALUMNI_IMAGES_BY_NAME.default
+              imageUrl: ALUMNI_IMAGES_BY_NAME[fallbackName.toLowerCase()] || ALUMNI_IMAGES_BY_NAME.default || WHITE_AVATAR_IMAGE
             };
           })
         );
@@ -497,7 +500,13 @@ function App() {
                       className="restaurant-open-button"
                       onClick={() => setSelectedRestaurant(restaurant)}
                     >
-                      <img src={restaurant.imageUrl} alt={`Foto de ${restaurant.name}`} />
+                      <img
+                        src={restaurant.imageUrl || WHITE_AVATAR_IMAGE}
+                        alt={`Foto de ${restaurant.name}`}
+                        onError={(event) => {
+                          event.currentTarget.src = WHITE_AVATAR_IMAGE;
+                        }}
+                      />
                       <h4>{restaurant.name}</h4>
                     </button>
                   </article>
@@ -514,7 +523,13 @@ function App() {
                 >
                   ← Tornar al llistat
                 </button>
-                <img src={selectedRestaurant.imageUrl} alt={`Foto de ${selectedRestaurant.name}`} />
+                <img
+                  src={selectedRestaurant.imageUrl || WHITE_AVATAR_IMAGE}
+                  alt={`Foto de ${selectedRestaurant.name}`}
+                  onError={(event) => {
+                    event.currentTarget.src = WHITE_AVATAR_IMAGE;
+                  }}
+                />
                 <h3>Fitxa del restaurant</h3>
                 <p><strong>Nom:</strong> {selectedRestaurant.name}</p>
                 <p><strong>Especialitat:</strong> {selectedRestaurant.specialty}</p>
@@ -577,7 +592,13 @@ function App() {
                       className="student-open-button"
                       onClick={() => setSelectedStudent(student)}
                     >
-                      <img src={student.imageUrl} alt={`Foto de ${student.fullName}`} />
+                      <img
+                        src={student.imageUrl || WHITE_AVATAR_IMAGE}
+                        alt={`Foto de ${student.fullName}`}
+                        onError={(event) => {
+                          event.currentTarget.src = WHITE_AVATAR_IMAGE;
+                        }}
+                      />
                       <div>
                         <h3>{student.fullName}</h3>
                         <p>Rol: {student.role}</p>
@@ -593,7 +614,13 @@ function App() {
                 <button type="button" className="back-button" onClick={() => setSelectedStudent(null)}>
                   ← Tornar al llistat
                 </button>
-                <img src={selectedStudent.imageUrl} alt={`Foto de ${selectedStudent.fullName}`} />
+                <img
+                  src={selectedStudent.imageUrl || WHITE_AVATAR_IMAGE}
+                  alt={`Foto de ${selectedStudent.fullName}`}
+                  onError={(event) => {
+                    event.currentTarget.src = WHITE_AVATAR_IMAGE;
+                  }}
+                />
                 <h3>Fitxa personal</h3>
                 <p><strong>Nom i cognoms:</strong> {selectedStudent.fullName}</p>
                 <p><strong>On treballa:</strong> {selectedStudent.workplace}</p>
