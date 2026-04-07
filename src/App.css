@@ -603,6 +603,24 @@ body {
   border-color: #7f1d1d;
 }
 
+.save-student-row {
+  margin-top: 1rem;
+}
+
+.save-student-button {
+  min-width: 180px;
+}
+
+.save-student-error {
+  color: #fecaca !important;
+  margin-top: 0.6rem;
+}
+
+.save-student-success {
+  color: #86efac !important;
+  margin-top: 0.6rem;
+}
+
 .trajectory-card {
   margin-top: 1rem;
   border-radius: 28px;

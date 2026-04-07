@@ -86,6 +86,14 @@ function App() {
     { id: 1, restaurant: '', role: '', current: true }
   ]);
   const [adminPhotoPreview, setAdminPhotoPreview] = useState('');
+  const [adminForm, setAdminForm] = useState({
+    fullName: '',
+    email: '',
+    phone: '',
+    linkedin: ''
+  });
+  const [saveStudentError, setSaveStudentError] = useState('');
+  const [saveStudentSuccess, setSaveStudentSuccess] = useState('');
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -352,6 +360,52 @@ function App() {
       }
       return nextPreview;
     });
+  };
+
+  const handleAdminInputChange = (event) => {
+    const { name, value } = event.target;
+    setAdminForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSaveStudent = () => {
+    const fullName = adminForm.fullName.trim();
+    const email = adminForm.email.trim();
+    const hasValidTrajectory = adminTrajectories.some(
+      (trajectory) => trajectory.restaurant.trim() && trajectory.role.trim()
+    );
+
+    if (!fullName || !email || !hasValidTrajectory) {
+      setSaveStudentSuccess('');
+      setSaveStudentError('Per guardar cal omplir: nom complet, correu electrònic i almenys un restaurant amb rol.');
+      return;
+    }
+
+    const firstTrajectory = adminTrajectories.find(
+      (trajectory) => trajectory.restaurant.trim() && trajectory.role.trim()
+    );
+    const matchedRestaurant = restaurants.find((restaurant) => restaurant.name === firstTrajectory.restaurant);
+
+    const newStudent = {
+      id: `manual-${Date.now()}`,
+      fullName,
+      role: firstTrajectory.role.trim(),
+      workplace: firstTrajectory.restaurant.trim(),
+      restaurantId: matchedRestaurant?.id || '',
+      currentJob: Boolean(firstTrajectory.current),
+      imageUrl: adminPhotoPreview || WHITE_AVATAR_IMAGE
+    };
+
+    setStudents((prev) => [newStudent, ...prev]);
+    setSelectedStudent(newStudent);
+    setActiveSection('students');
+    setSaveStudentError('');
+    setSaveStudentSuccess('Alumne guardat correctament.');
+
+    setAdminForm({ fullName: '', email: '', phone: '', linkedin: '' });
+    setAdminStudentStatus('Alumni (En actiu)');
+    setAdminTrajectoryFilter('');
+    setAdminTrajectories([{ id: 1, restaurant: '', role: '', current: true }]);
+    setAdminPhotoPreview('');
   };
 
   const openStudentProfile = (student) => {
@@ -680,21 +734,49 @@ function App() {
               <article className="admin-panel info-panel">
                 <h3>Informacio primaria</h3>
                 <label htmlFor="full-name">Nom complet</label>
-                <input id="full-name" type="text" placeholder="Ex. Marc Ribas i Soler" />
+                <input
+                  id="full-name"
+                  name="fullName"
+                  type="text"
+                  placeholder="Ex. Marc Ribas i Soler"
+                  value={adminForm.fullName}
+                  onChange={handleAdminInputChange}
+                />
 
                 <div className="admin-two-columns">
                   <div>
                     <label htmlFor="email">Correu electronic</label>
-                    <input id="email" type="email" placeholder="marc.ribas@exemple.cat" />
+                    <input
+                      id="email"
+                      name="email"
+                      type="email"
+                      placeholder="marc.ribas@exemple.cat"
+                      value={adminForm.email}
+                      onChange={handleAdminInputChange}
+                    />
                   </div>
                   <div>
                     <label htmlFor="phone">Telefon de contacte</label>
-                    <input id="phone" type="tel" placeholder="+34 600 000 000" />
+                    <input
+                      id="phone"
+                      name="phone"
+                      type="tel"
+                      placeholder="+34 600 000 000"
+                      value={adminForm.phone}
+                      onChange={handleAdminInputChange}
+                    />
                   </div>
                 </div>
 
                 <label htmlFor="linkedin">Perfil Linkedin</label>
-                <input id="linkedin" type="text" placeholder="linkedin.com/in/usuari" />
+                <input
+                  id="linkedin"
+                  name="linkedin"
+                  type="text"
+                  placeholder="linkedin.com/in/usuari"
+                  value={adminForm.linkedin}
+                  onChange={handleAdminInputChange}
+                />
               </article>
             </div>
 
@@ -763,6 +845,14 @@ function App() {
                 </div>
               ))}
             </article>
+
+            <div className="save-student-row">
+              <button type="button" className="pill-button save-student-button" onClick={handleSaveStudent}>
+                Guardar alumne
+              </button>
+              {saveStudentError && <p className="save-student-error">{saveStudentError}</p>}
+              {saveStudentSuccess && <p className="save-student-success">{saveStudentSuccess}</p>}
+            </div>
           </section>
         )}
       </main>
