@@ -351,6 +351,23 @@ function App() {
     });
   };
 
+  const openStudentProfile = (student) => {
+    setActiveSection('students');
+    setSelectedStudent(student);
+    setSelectedRestaurant(null);
+    setIsSidebarOpen(false);
+  };
+
+  const openRestaurantProfile = (restaurantId) => {
+    const restaurantMatch = restaurants.find((restaurant) => restaurant.id === restaurantId);
+    if (!restaurantMatch) return;
+
+    setActiveSection('restaurants');
+    setSelectedRestaurant(restaurantMatch);
+    setSelectedStudent(null);
+    setIsSidebarOpen(false);
+  };
+
   return (
     <div className="app-shell">
       <header className="topbar">
@@ -507,7 +524,11 @@ function App() {
                 {studentsForSelectedRestaurant.current.length > 0 ? (
                   <ul>
                     {studentsForSelectedRestaurant.current.map((student) => (
-                      <li key={`current-${student.id}`}>{student.fullName} ({student.role})</li>
+                      <li key={`current-${student.id}`}>
+                        <button type="button" className="profile-link-button" onClick={() => openStudentProfile(student)}>
+                          {student.fullName} ({student.role})
+                        </button>
+                      </li>
                     ))}
                   </ul>
                 ) : (
@@ -518,7 +539,11 @@ function App() {
                 {studentsForSelectedRestaurant.past.length > 0 ? (
                   <ul>
                     {studentsForSelectedRestaurant.past.map((student) => (
-                      <li key={`past-${student.id}`}>{student.fullName} ({student.role})</li>
+                      <li key={`past-${student.id}`}>
+                        <button type="button" className="profile-link-button" onClick={() => openStudentProfile(student)}>
+                          {student.fullName} ({student.role})
+                        </button>
+                      </li>
                     ))}
                   </ul>
                 ) : (
@@ -573,6 +598,15 @@ function App() {
                 <p><strong>Nom i cognoms:</strong> {selectedStudent.fullName}</p>
                 <p><strong>On treballa:</strong> {selectedStudent.workplace}</p>
                 <p><strong>Rol a la feina:</strong> {selectedStudent.role}</p>
+                {selectedStudent.restaurantId && (
+                  <button
+                    type="button"
+                    className="profile-link-button"
+                    onClick={() => openRestaurantProfile(selectedStudent.restaurantId)}
+                  >
+                    Veure fitxa del restaurant
+                  </button>
+                )}
               </article>
             )}
           </section>

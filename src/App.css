@@ -421,6 +421,17 @@ body {
   color: #cbd5e1;
 }
 
+.profile-link-button {
+  border: none;
+  background: transparent;
+  color: #93c5fd;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
+}
+
 .admin-page {
   background: radial-gradient(circle at top, #0f1a2f 0%, #0a1222 70%);
   color: #e2e8f0;
