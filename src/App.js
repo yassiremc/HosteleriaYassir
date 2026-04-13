@@ -62,6 +62,12 @@ const parseBoolean = (value) => {
   return false;
 };
 
+const normalizeLinkedinUrl = (value) => {
+  if (!value || value === 'No disponible') return '';
+  if (value.startsWith('http://') || value.startsWith('https://')) return value;
+  return `https://${value}`;
+};
+
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isAuthMenuOpen, setIsAuthMenuOpen] = useState(false);
@@ -383,7 +389,7 @@ function App() {
     setAdminForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSaveStudent = () => {
+  const handleSaveStudent = async () => {
     const fullName = adminForm.fullName.trim();
     const email = adminForm.email.trim();
     const hasValidTrajectory = adminTrajectories.some(
@@ -396,35 +402,91 @@ function App() {
       return;
     }
 
-    const firstTrajectory = adminTrajectories.find(
+    const validTrajectories = adminTrajectories.filter(
       (trajectory) => trajectory.restaurant.trim() && trajectory.role.trim()
     );
+    const firstTrajectory = validTrajectories[0];
     const matchedRestaurant = restaurants.find((restaurant) => restaurant.name === firstTrajectory.restaurant);
+    const [firstName, ...restNames] = fullName.split(' ');
+    const lastName = restNames.join(' ').trim();
+    const alumniId = `alumni_${Date.now()}`;
 
-    const newStudent = {
-      id: `manual-${Date.now()}`,
-      fullName,
-      role: firstTrajectory.role.trim(),
-      workplace: firstTrajectory.restaurant.trim(),
-      restaurantId: matchedRestaurant?.id || '',
-      currentJob: Boolean(firstTrajectory.current),
-      imageUrl: adminPhotoPreview || WHITE_AVATAR_IMAGE,
-      email: adminForm.email.trim(),
-      phone: adminForm.phone.trim() || 'No disponible',
-      linkedin: adminForm.linkedin.trim() || 'No disponible'
-    };
+    try {
+      const alumniPayload = {
+        fields: {
+          name: { stringValue: firstName || fullName },
+          lastName: { stringValue: lastName },
+          email: { stringValue: email },
+          phone: { stringValue: adminForm.phone.trim() || '' },
+          linkedin: { stringValue: adminForm.linkedin.trim() || '' }
+        }
+      };
 
-    setStudents((prev) => [newStudent, ...prev]);
-    setSelectedStudent(newStudent);
-    setActiveSection('students');
-    setSaveStudentError('');
-    setSaveStudentSuccess('Alumne guardat correctament.');
+      const alumniResponse = await fetch(`${FIRESTORE_BASE_URL}/Alumni?documentId=${encodeURIComponent(alumniId)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(alumniPayload)
+      });
 
-    setAdminForm({ fullName: '', email: '', phone: '', linkedin: '' });
-    setAdminStudentStatus('Alumni (En actiu)');
-    setAdminTrajectoryFilter('');
-    setAdminTrajectories([{ id: 1, restaurant: '', role: '', current: true }]);
-    setAdminPhotoPreview('');
+      if (!alumniResponse.ok) {
+        throw new Error('No s’ha pogut guardar l’alumne a Firebase');
+      }
+
+      await Promise.all(
+        validTrajectories.map(async (trajectory, index) => {
+          const restaurant = restaurants.find((item) => item.name === trajectory.restaurant.trim());
+          const relationPayload = {
+            fields: {
+              id_alumni: { stringValue: alumniId },
+              id_restaurant: { stringValue: restaurant?.id || '' },
+              rol: { stringValue: trajectory.role.trim() },
+              current_job: { booleanValue: Boolean(trajectory.current) }
+            }
+          };
+
+          const relationResponse = await fetch(
+            `${FIRESTORE_BASE_URL}/Rest-Alum?documentId=${encodeURIComponent(`manual_${Date.now()}_${index}`)}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(relationPayload)
+            }
+          );
+
+          if (!relationResponse.ok) {
+            throw new Error('No s’ha pogut guardar la relació alumne-restaurant a Firebase');
+          }
+        })
+      );
+
+      const newStudent = {
+        id: `manual-${Date.now()}`,
+        fullName,
+        role: firstTrajectory.role.trim(),
+        workplace: firstTrajectory.restaurant.trim(),
+        restaurantId: matchedRestaurant?.id || '',
+        currentJob: Boolean(firstTrajectory.current),
+        imageUrl: adminPhotoPreview || WHITE_AVATAR_IMAGE,
+        email: adminForm.email.trim(),
+        phone: adminForm.phone.trim() || 'No disponible',
+        linkedin: adminForm.linkedin.trim() || 'No disponible'
+      };
+
+      setStudents((prev) => [newStudent, ...prev]);
+      setSelectedStudent(newStudent);
+      setActiveSection('students');
+      setSaveStudentError('');
+      setSaveStudentSuccess('Alumne guardat correctament a Firebase.');
+
+      setAdminForm({ fullName: '', email: '', phone: '', linkedin: '' });
+      setAdminStudentStatus('Alumni (En actiu)');
+      setAdminTrajectoryFilter('');
+      setAdminTrajectories([{ id: 1, restaurant: '', role: '', current: true }]);
+      setAdminPhotoPreview('');
+    } catch (error) {
+      setSaveStudentSuccess('');
+      setSaveStudentError('No s’ha pogut guardar a Firebase. Revisa la connexió/permisos i torna-ho a provar.');
+    }
   };
 
   const openStudentProfile = (student) => {
@@ -700,7 +762,21 @@ function App() {
                 <p><strong>Rol a la feina:</strong> {selectedStudent.role}</p>
                 <p><strong>Correu electrònic:</strong> {selectedStudent.email || 'No disponible'}</p>
                 <p><strong>Telèfon:</strong> {selectedStudent.phone || 'No disponible'}</p>
-                <p><strong>LinkedIn:</strong> {selectedStudent.linkedin || 'No disponible'}</p>
+                <p>
+                  <strong>LinkedIn:</strong>{' '}
+                  {selectedStudent.linkedin && selectedStudent.linkedin !== 'No disponible' ? (
+                    <a
+                      href={normalizeLinkedinUrl(selectedStudent.linkedin)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="profile-link-button"
+                    >
+                      {selectedStudent.linkedin}
+                    </a>
+                  ) : (
+                    'No disponible'
+                  )}
+                </p>
                 {selectedStudent.restaurantId && (
                   <button
                     type="button"
