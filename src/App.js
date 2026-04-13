@@ -110,6 +110,15 @@ function App() {
   const fileInputRef = useRef(null);
   const profilePhotoInputRef = useRef(null);
   const [profilePhotoStatus, setProfilePhotoStatus] = useState('');
+  const restaurantPhotoInputRef = useRef(null);
+  const [restaurantForm, setRestaurantForm] = useState({
+    name: '',
+    specialty: '',
+    street: ''
+  });
+  const [restaurantPhotoPreview, setRestaurantPhotoPreview] = useState('');
+  const [saveRestaurantError, setSaveRestaurantError] = useState('');
+  const [saveRestaurantSuccess, setSaveRestaurantSuccess] = useState('');
 
   useEffect(() => {
     const loadData = async () => {
@@ -554,6 +563,82 @@ function App() {
     }
   };
 
+  const openRestaurantPhotoPicker = () => {
+    restaurantPhotoInputRef.current?.click();
+  };
+
+  const handleRestaurantPhotoUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const imageDataUrl = await fileToDataUrl(file);
+      setRestaurantPhotoPreview(imageDataUrl);
+    } catch (error) {
+      setSaveRestaurantError('No s’ha pogut carregar la imatge del restaurant.');
+    }
+  };
+
+  const handleRestaurantInputChange = (event) => {
+    const { name, value } = event.target;
+    setRestaurantForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSaveRestaurant = async () => {
+    const name = restaurantForm.name.trim();
+    const specialty = restaurantForm.specialty.trim();
+    const street = restaurantForm.street.trim();
+
+    if (!name || !street) {
+      setSaveRestaurantSuccess('');
+      setSaveRestaurantError('Per guardar el restaurant cal omplir nom i carrer.');
+      return;
+    }
+
+    const restaurantId = `restaurant_${Date.now()}`;
+    const payload = {
+      fields: {
+        Name: { stringValue: name },
+        specialty: { stringValue: specialty || 'No disponible' },
+        street: { stringValue: street },
+        imageUrl: { stringValue: restaurantPhotoPreview || WHITE_AVATAR_IMAGE }
+      }
+    };
+
+    try {
+      const response = await fetch(`${FIRESTORE_BASE_URL}/Restaurant?documentId=${encodeURIComponent(restaurantId)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        throw new Error('No s’ha pogut guardar el restaurant');
+      }
+
+      const newRestaurant = {
+        id: restaurantId,
+        firestoreName: `${FIRESTORE_BASE_URL}/Restaurant/${restaurantId}`,
+        name,
+        specialty: specialty || 'No disponible',
+        street,
+        coordinates: null,
+        imageUrl: restaurantPhotoPreview || WHITE_AVATAR_IMAGE
+      };
+
+      setRestaurants((prev) => [newRestaurant, ...prev]);
+      setSelectedRestaurant(newRestaurant);
+      setActiveSection('restaurants');
+      setSaveRestaurantError('');
+      setSaveRestaurantSuccess('Restaurant guardat correctament a Firebase.');
+      setRestaurantForm({ name: '', specialty: '', street: '' });
+      setRestaurantPhotoPreview('');
+    } catch (error) {
+      setSaveRestaurantSuccess('');
+      setSaveRestaurantError('No s’ha pogut guardar el restaurant a Firebase.');
+    }
+  };
+
   const openStudentProfile = (student) => {
     setActiveSection('students');
     setSelectedStudent(student);
@@ -653,6 +738,11 @@ function App() {
             <li>
               <button type="button" className="menu-link" onClick={() => selectSection('add-student')}>
                 Afegir Alumne
+              </button>
+            </li>
+            <li>
+              <button type="button" className="menu-link" onClick={() => selectSection('add-restaurant')}>
+                Afegir Restaurant
               </button>
             </li>
           </ul>
@@ -1026,6 +1116,76 @@ function App() {
               </button>
               {saveStudentError && <p className="save-student-error">{saveStudentError}</p>}
               {saveStudentSuccess && <p className="save-student-success">{saveStudentSuccess}</p>}
+            </div>
+          </section>
+        )}
+
+        {activeSection === 'add-restaurant' && (
+          <section className="admin-page">
+            <p className="admin-eyebrow">ADMINISTRACIO</p>
+            <h1>Afegir Restaurant</h1>
+            <p className="admin-intro">Afegeix un restaurant nou amb les seves dades bàsiques.</p>
+
+            <div className="admin-top-grid">
+              <article className="admin-panel photo-panel">
+                <button type="button" className="upload-circle upload-circle-button" onClick={openRestaurantPhotoPicker}>
+                  {restaurantPhotoPreview ? (
+                    <img src={restaurantPhotoPreview} alt="Previsualització del restaurant" className="upload-preview-image" />
+                  ) : (
+                    <span>+</span>
+                  )}
+                </button>
+                <input
+                  ref={restaurantPhotoInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden-file-input"
+                  onChange={handleRestaurantPhotoUpload}
+                />
+                <h3>Pujar foto</h3>
+                <p>{restaurantPhotoPreview ? 'Clica per canviar la imatge' : 'Selecciona una imatge des del disc'}</p>
+              </article>
+
+              <article className="admin-panel info-panel">
+                <h3>Informacio primaria</h3>
+                <label htmlFor="restaurant-name">Nom del restaurant</label>
+                <input
+                  id="restaurant-name"
+                  name="name"
+                  type="text"
+                  placeholder="Ex. Restaurant Nova Brasa"
+                  value={restaurantForm.name}
+                  onChange={handleRestaurantInputChange}
+                />
+
+                <label htmlFor="restaurant-specialty">Especialitat</label>
+                <input
+                  id="restaurant-specialty"
+                  name="specialty"
+                  type="text"
+                  placeholder="Ex. Cuina mediterrània"
+                  value={restaurantForm.specialty}
+                  onChange={handleRestaurantInputChange}
+                />
+
+                <label htmlFor="restaurant-street">Carrer</label>
+                <input
+                  id="restaurant-street"
+                  name="street"
+                  type="text"
+                  placeholder="Ex. Carrer Major 15, Manresa"
+                  value={restaurantForm.street}
+                  onChange={handleRestaurantInputChange}
+                />
+              </article>
+            </div>
+
+            <div className="save-student-row">
+              <button type="button" className="pill-button save-student-button" onClick={handleSaveRestaurant}>
+                Guardar restaurant
+              </button>
+              {saveRestaurantError && <p className="save-student-error">{saveRestaurantError}</p>}
+              {saveRestaurantSuccess && <p className="save-student-success">{saveRestaurantSuccess}</p>}
             </div>
           </section>
         )}
