@@ -173,12 +173,13 @@ function App() {
             let firstName = '';
             let lastName = '';
             let fallbackName = alumniId || 'Alumne sense nom';
+            let alumniFields = {};
 
             if (alumniId) {
               const alumniResponse = await fetch(`${FIRESTORE_BASE_URL}/Alumni/${alumniId}`);
               if (alumniResponse.ok) {
                 const alumniJson = await alumniResponse.json();
-                const alumniFields = alumniJson.fields || {};
+                alumniFields = alumniJson.fields || {};
                 firstName =
                   readFirestoreValue(alumniFields.name) ||
                   readFirestoreValue(alumniFields.nom) ||
@@ -205,7 +206,22 @@ function App() {
               workplace,
               restaurantId,
               currentJob,
-              imageUrl: ALUMNI_IMAGES_BY_NAME[fallbackName.toLowerCase()] || ALUMNI_IMAGES_BY_NAME.default || WHITE_AVATAR_IMAGE
+              imageUrl: ALUMNI_IMAGES_BY_NAME[fallbackName.toLowerCase()] || ALUMNI_IMAGES_BY_NAME.default || WHITE_AVATAR_IMAGE,
+              email:
+                readFirestoreValue(alumniFields?.email) ||
+                readFirestoreValue(alumniFields?.correu) ||
+                readFirestoreValue(alumniFields?.mail) ||
+                'No disponible',
+              phone:
+                readFirestoreValue(alumniFields?.phone) ||
+                readFirestoreValue(alumniFields?.telefon) ||
+                readFirestoreValue(alumniFields?.telefono) ||
+                'No disponible',
+              linkedin:
+                readFirestoreValue(alumniFields?.linkedin) ||
+                readFirestoreValue(alumniFields?.linkedIn) ||
+                readFirestoreValue(alumniFields?.linkedin_url) ||
+                'No disponible'
             };
           })
         );
@@ -392,7 +408,10 @@ function App() {
       workplace: firstTrajectory.restaurant.trim(),
       restaurantId: matchedRestaurant?.id || '',
       currentJob: Boolean(firstTrajectory.current),
-      imageUrl: adminPhotoPreview || WHITE_AVATAR_IMAGE
+      imageUrl: adminPhotoPreview || WHITE_AVATAR_IMAGE,
+      email: adminForm.email.trim(),
+      phone: adminForm.phone.trim() || 'No disponible',
+      linkedin: adminForm.linkedin.trim() || 'No disponible'
     };
 
     setStudents((prev) => [newStudent, ...prev]);
@@ -679,6 +698,9 @@ function App() {
                 <p><strong>Nom i cognoms:</strong> {selectedStudent.fullName}</p>
                 <p><strong>On treballa:</strong> {selectedStudent.workplace}</p>
                 <p><strong>Rol a la feina:</strong> {selectedStudent.role}</p>
+                <p><strong>Correu electrònic:</strong> {selectedStudent.email || 'No disponible'}</p>
+                <p><strong>Telèfon:</strong> {selectedStudent.phone || 'No disponible'}</p>
+                <p><strong>LinkedIn:</strong> {selectedStudent.linkedin || 'No disponible'}</p>
                 {selectedStudent.restaurantId && (
                   <button
                     type="button"
