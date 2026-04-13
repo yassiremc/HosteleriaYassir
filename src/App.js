@@ -68,6 +68,13 @@ const normalizeLinkedinUrl = (value) => {
   return `https://${value}`;
 };
 
+const fileToDataUrl = (file) => new Promise((resolve, reject) => {
+  const reader = new FileReader();
+  reader.onload = () => resolve(String(reader.result || ''));
+  reader.onerror = () => reject(new Error('No s’ha pogut llegir la imatge'));
+  reader.readAsDataURL(file);
+});
+
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isAuthMenuOpen, setIsAuthMenuOpen] = useState(false);
@@ -101,6 +108,8 @@ function App() {
   const [saveStudentError, setSaveStudentError] = useState('');
   const [saveStudentSuccess, setSaveStudentSuccess] = useState('');
   const fileInputRef = useRef(null);
+  const profilePhotoInputRef = useRef(null);
+  const [profilePhotoStatus, setProfilePhotoStatus] = useState('');
 
   useEffect(() => {
     const loadData = async () => {
@@ -207,12 +216,18 @@ function App() {
 
             return {
               id: docItem.name,
+              alumniId,
               fullName: [firstName, lastName].filter(Boolean).join(' ').trim() || fallbackName,
               role,
               workplace,
               restaurantId,
               currentJob,
-              imageUrl: ALUMNI_IMAGES_BY_NAME[fallbackName.toLowerCase()] || ALUMNI_IMAGES_BY_NAME.default || WHITE_AVATAR_IMAGE,
+              imageUrl:
+                readFirestoreValue(alumniFields?.imageUrl) ||
+                readFirestoreValue(alumniFields?.image_url) ||
+                ALUMNI_IMAGES_BY_NAME[fallbackName.toLowerCase()] ||
+                ALUMNI_IMAGES_BY_NAME.default ||
+                WHITE_AVATAR_IMAGE,
               email:
                 readFirestoreValue(alumniFields?.email) ||
                 readFirestoreValue(alumniFields?.correu) ||
@@ -251,6 +266,10 @@ function App() {
       URL.revokeObjectURL(adminPhotoPreview);
     }
   }, [adminPhotoPreview]);
+
+  useEffect(() => {
+    setProfilePhotoStatus('');
+  }, [selectedStudent?.id]);
 
   const filteredStudents = useMemo(() => {
     const term = studentSearch.trim().toLowerCase();
@@ -461,6 +480,7 @@ function App() {
 
       const newStudent = {
         id: `manual-${Date.now()}`,
+        alumniId,
         fullName,
         role: firstTrajectory.role.trim(),
         workplace: firstTrajectory.restaurant.trim(),
@@ -486,6 +506,51 @@ function App() {
     } catch (error) {
       setSaveStudentSuccess('');
       setSaveStudentError('No s’ha pogut guardar a Firebase. Revisa la connexió/permisos i torna-ho a provar.');
+    }
+  };
+
+  const openProfilePhotoPicker = () => {
+    profilePhotoInputRef.current?.click();
+  };
+
+  const handleProfilePhotoChange = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file || !selectedStudent) return;
+
+    try {
+      const imageDataUrl = await fileToDataUrl(file);
+
+      if (selectedStudent.alumniId) {
+        const patchPayload = {
+          fields: {
+            imageUrl: { stringValue: imageDataUrl }
+          }
+        };
+        const patchResponse = await fetch(
+          `${FIRESTORE_BASE_URL}/Alumni/${encodeURIComponent(selectedStudent.alumniId)}?updateMask.fieldPaths=imageUrl`,
+          {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(patchPayload)
+          }
+        );
+
+        if (!patchResponse.ok) {
+          throw new Error('No s’ha pogut actualitzar la foto a Firebase');
+        }
+      }
+
+      setStudents((prev) =>
+        prev.map((student) => (
+          student.id === selectedStudent.id
+            ? { ...student, imageUrl: imageDataUrl }
+            : student
+        ))
+      );
+      setSelectedStudent((prev) => (prev ? { ...prev, imageUrl: imageDataUrl } : prev));
+      setProfilePhotoStatus('Foto actualitzada correctament.');
+    } catch (error) {
+      setProfilePhotoStatus('No s’ha pogut actualitzar la foto.');
     }
   };
 
@@ -756,6 +821,17 @@ function App() {
                     event.currentTarget.src = WHITE_AVATAR_IMAGE;
                   }}
                 />
+                <button type="button" className="profile-link-button" onClick={openProfilePhotoPicker}>
+                  Canviar foto de perfil
+                </button>
+                <input
+                  ref={profilePhotoInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden-file-input"
+                  onChange={handleProfilePhotoChange}
+                />
+                {profilePhotoStatus && <p>{profilePhotoStatus}</p>}
                 <h3>Fitxa personal</h3>
                 <p><strong>Nom i cognoms:</strong> {selectedStudent.fullName}</p>
                 <p><strong>On treballa:</strong> {selectedStudent.workplace}</p>
