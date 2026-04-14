@@ -378,6 +378,12 @@ function App() {
     };
   }, [selectedRestaurant, students]);
 
+  const getRestaurantImageById = (restaurantId) => {
+    if (!restaurantId) return WHITE_AVATAR_IMAGE;
+    const restaurant = restaurants.find((item) => item.id === restaurantId);
+    return restaurant?.imageUrl || WHITE_AVATAR_IMAGE;
+  };
+
   const toggleSidebar = () => {
     setIsSidebarOpen((prev) => !prev);
   };
@@ -965,6 +971,7 @@ function App() {
                 ← Tornar al llistat
               </button>
               <img
+                className="restaurant-hero-image"
                 src={selectedRestaurant.imageUrl || WHITE_AVATAR_IMAGE}
                 alt={`Foto de ${selectedRestaurant.name}`}
                 onError={(event) => {
@@ -984,7 +991,15 @@ function App() {
               {studentsForSelectedRestaurant.current.length > 0 ? (
                 <ul>
                   {studentsForSelectedRestaurant.current.map((student) => (
-                    <li key={`current-${student.id}`}>
+                    <li key={`current-${student.id}`} className="profile-linked-item">
+                      <img
+                        className="profile-linked-thumb"
+                        src={student.imageUrl || WHITE_AVATAR_IMAGE}
+                        alt={`Foto de ${student.fullName}`}
+                        onError={(event) => {
+                          event.currentTarget.src = WHITE_AVATAR_IMAGE;
+                        }}
+                      />
                       <button
                         type="button"
                         className="profile-link-button"
@@ -1002,7 +1017,15 @@ function App() {
               {studentsForSelectedRestaurant.past.length > 0 ? (
                 <ul>
                   {studentsForSelectedRestaurant.past.map((student) => (
-                    <li key={`past-${student.id}`}>
+                    <li key={`past-${student.id}`} className="profile-linked-item">
+                      <img
+                        className="profile-linked-thumb"
+                        src={student.imageUrl || WHITE_AVATAR_IMAGE}
+                        alt={`Foto de ${student.fullName}`}
+                        onError={(event) => {
+                          event.currentTarget.src = WHITE_AVATAR_IMAGE;
+                        }}
+                      />
                       <button
                         type="button"
                         className="profile-link-button"
@@ -1027,6 +1050,7 @@ function App() {
                 ← Tornar al llistat
               </button>
               <img
+                className="student-hero-image"
                 src={selectedStudent.imageUrl || WHITE_AVATAR_IMAGE}
                 alt={`Foto de ${selectedStudent.fullName}`}
                 onError={(event) => {
@@ -1069,7 +1093,15 @@ function App() {
               {restaurantsForSelectedStudent.length > 0 ? (
                 <ul>
                   {restaurantsForSelectedStudent.map((restaurantItem) => (
-                    <li key={`${restaurantItem.restaurantId}-${restaurantItem.workplace}`}>
+                    <li key={`${restaurantItem.restaurantId}-${restaurantItem.workplace}`} className="profile-linked-item">
+                      <img
+                        className="profile-linked-thumb"
+                        src={getRestaurantImageById(restaurantItem.restaurantId)}
+                        alt={`Foto de ${restaurantItem.workplace}`}
+                        onError={(event) => {
+                          event.currentTarget.src = WHITE_AVATAR_IMAGE;
+                        }}
+                      />
                       {restaurantItem.restaurantId ? (
                         <button
                           type="button"
@@ -1088,13 +1120,23 @@ function App() {
                 <p>No hi ha restaurants vinculats.</p>
               )}
               {selectedStudent.restaurantId && (
-                <button
-                  type="button"
-                  className="profile-link-button"
-                  onClick={() => openRestaurantProfile(selectedStudent.restaurantId)}
-                >
-                  Veure fitxa del restaurant
-                </button>
+                <div className="profile-linked-item profile-linked-item-standalone">
+                  <img
+                    className="profile-linked-thumb"
+                    src={getRestaurantImageById(selectedStudent.restaurantId)}
+                    alt="Foto del restaurant"
+                    onError={(event) => {
+                      event.currentTarget.src = WHITE_AVATAR_IMAGE;
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="profile-link-button"
+                    onClick={() => openRestaurantProfile(selectedStudent.restaurantId)}
+                  >
+                    Veure fitxa del restaurant
+                  </button>
+                </div>
               )}
             </article>
           </section>

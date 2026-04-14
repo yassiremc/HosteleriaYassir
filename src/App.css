@@ -363,7 +363,7 @@ body {
   padding: 1rem;
 }
 
-.student-profile-card img {
+.student-profile-card .student-hero-image {
   width: 100%;
   max-height: 340px;
   object-fit: contain;
@@ -409,7 +409,7 @@ body {
   padding: 1rem;
 }
 
-.restaurant-profile-card img {
+.restaurant-profile-card .restaurant-hero-image {
   width: 100%;
   max-height: 320px;
   object-fit: cover;
@@ -430,6 +430,30 @@ body {
   cursor: pointer;
   padding: 0;
   font: inherit;
+}
+
+.profile-linked-item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.profile-linked-item + .profile-linked-item {
+  margin-top: 0.45rem;
+}
+
+.profile-linked-item-standalone {
+  margin-top: 0.8rem;
+}
+
+.profile-linked-thumb {
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  object-fit: cover;
+  background: #020617;
+  border: 1px solid #334155;
+  flex-shrink: 0;
 }
 
 .admin-page {
