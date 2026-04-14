@@ -30,6 +30,72 @@ body {
   z-index: 20;
 }
 
+.auth-menu-wrapper {
+  margin-left: auto;
+  position: relative;
+}
+
+.auth-button {
+  border: 1px solid #334155;
+  background: #0f172a;
+  color: #e2e8f0;
+  border-radius: 8px;
+  padding: 0.5rem 0.8rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.auth-menu {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  width: min(320px, 82vw);
+  border: 1px solid #334155;
+  border-radius: 12px;
+  background: #111827;
+  padding: 0.85rem;
+  box-shadow: 0 10px 24px rgba(2, 6, 23, 0.55);
+}
+
+.auth-form {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.auth-form label {
+  font-size: 0.9rem;
+}
+
+.auth-form input {
+  border: 1px solid #334155;
+  background: #0f172a;
+  color: #e2e8f0;
+  border-radius: 8px;
+  padding: 0.55rem 0.6rem;
+}
+
+.auth-submit-button,
+.auth-logout-button {
+  border: 1px solid #334155;
+  background: #0f172a;
+  color: #93c5fd;
+  border-radius: 8px;
+  padding: 0.5rem 0.7rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.auth-error {
+  margin: 0.1rem 0;
+  color: #fca5a5;
+  font-size: 0.9rem;
+}
+
+.auth-logged-in p {
+  margin-top: 0;
+  margin-bottom: 0.8rem;
+}
+
 .brand-logo {
   height: 48px;
   width: auto;
@@ -353,4 +419,269 @@ body {
 .restaurant-profile-card ul {
   margin-top: 0.5rem;
   color: #cbd5e1;
+}
+
+.profile-link-button {
+  border: none;
+  background: transparent;
+  color: #93c5fd;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
+}
+
+.admin-page {
+  background: radial-gradient(circle at top, #0f1a2f 0%, #0a1222 70%);
+  color: #e2e8f0;
+  border-radius: 22px;
+  padding: 2.4rem;
+  border: 1px solid #1e293b;
+}
+
+.admin-eyebrow {
+  margin: 0;
+  letter-spacing: 0.3rem;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: #93c5fd;
+}
+
+.admin-page h1 {
+  margin: 0.6rem 0 1rem;
+  font-size: clamp(2.2rem, 5vw, 4rem);
+  line-height: 1;
+  color: #f8fafc;
+}
+
+.admin-intro {
+  margin-bottom: 1.8rem;
+  color: #cbd5e1;
+  max-width: 900px;
+}
+
+.admin-top-grid {
+  display: grid;
+  grid-template-columns: minmax(240px, 320px) 1fr;
+  gap: 1rem;
+}
+
+.admin-panel {
+  background: #111b30;
+  border-radius: 26px;
+  padding: 1.6rem;
+  border: 1px solid #24344f;
+  box-shadow: 0 12px 24px rgba(2, 6, 23, 0.35);
+}
+
+.admin-panel h2,
+.admin-panel h3 {
+  margin: 0 0 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2rem;
+}
+
+.photo-panel {
+  text-align: center;
+}
+
+.upload-circle {
+  width: 240px;
+  height: 240px;
+  border: 2px dashed #3b82f6;
+  border-radius: 999px;
+  margin: 0 auto 1rem;
+  display: grid;
+  place-items: center;
+}
+
+.upload-circle-button {
+  background: #0b1426;
+  cursor: pointer;
+  padding: 0;
+}
+
+.upload-circle-button:hover {
+  border-color: #60a5fa;
+}
+
+.upload-preview-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 999px;
+}
+
+.hidden-file-input {
+  display: none;
+}
+
+.upload-circle span {
+  display: inline-grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
+  background: #1e293b;
+  font-size: 2rem;
+  color: #93c5fd;
+}
+
+.photo-panel h3 {
+  margin-bottom: 0.3rem;
+  font-size: 1.9rem;
+}
+
+.photo-panel p {
+  margin-top: 0;
+  color: #94a3b8;
+}
+
+.admin-page label {
+  display: block;
+  margin: 0.8rem 0 0.4rem;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.12rem;
+  color: #bfdbfe;
+}
+
+.admin-page input,
+.admin-page select {
+  width: 100%;
+  border: 1px solid #334155;
+  background: #0b1426;
+  color: #e2e8f0;
+  border-radius: 18px;
+  padding: 0.95rem 1.1rem;
+  font-size: 1.05rem;
+}
+
+.admin-page input::placeholder {
+  color: #94a3b8;
+}
+
+.admin-two-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.trajectory-panel {
+  margin-top: 1rem;
+}
+
+.trajectory-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+}
+
+.trajectory-header h2 {
+  margin: 0.3rem 0 0.2rem;
+  text-transform: none;
+  font-size: 3.2rem;
+  letter-spacing: normal;
+}
+
+.pill-button {
+  border: 1px solid #334155;
+  border-radius: 999px;
+  background: #0f172a;
+  color: #e2e8f0;
+  padding: 0.8rem 1.4rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pill-button.danger {
+  background: #3f1d2e;
+  color: #fecdd3;
+  border-color: #7f1d1d;
+}
+
+.save-student-row {
+  margin-top: 1rem;
+}
+
+.save-student-button {
+  min-width: 180px;
+}
+
+.save-student-error {
+  color: #fecaca !important;
+  margin-top: 0.6rem;
+}
+
+.save-student-success {
+  color: #86efac !important;
+  margin-top: 0.6rem;
+}
+
+.trajectory-card {
+  margin-top: 1rem;
+  border-radius: 28px;
+  background: #0f172a;
+  border: 1px solid #334155;
+  padding: 1rem;
+}
+
+.trajectory-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.trajectory-card-header h3 {
+  margin: 0;
+  text-transform: none;
+  letter-spacing: normal;
+  font-size: 3.2rem;
+}
+
+.checkbox-line {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  font-weight: 500 !important;
+}
+
+.checkbox-line input {
+  width: auto;
+}
+
+@media (max-width: 860px) {
+  .admin-page {
+    padding: 1rem;
+  }
+
+  .admin-top-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-two-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .upload-circle {
+    width: min(70vw, 240px);
+    height: min(70vw, 240px);
+  }
+
+  .trajectory-header,
+  .trajectory-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .trajectory-header h2,
+  .trajectory-card-header h3 {
+    font-size: 2.1rem;
+  }
 }
