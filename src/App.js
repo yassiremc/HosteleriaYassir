@@ -1,18 +1,24 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import logoJoviat from './logo_joviat.webp';
 import './App.css';
 
 const FIREBASE_PROJECT_ID = 'hosteleriajoviat-94129';
 const FIRESTORE_BASE_URL = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents`;
+const ADMIN_USERS = ['admin', 'yassir', 'professor'];
+const ADMIN_EMAIL = 'admin@gmail.com';
+const ADMIN_PASSWORD = 'admin12345';
 
 const ALUMNI_IMAGES_BY_NAME = {
   'elena gilbert': 'https://i.pinimg.com/736x/53/39/cc/5339ccdd5dfb6b834fac3711e943c9b0.jpg',
   'adriana martinez': 'https://i.pinimg.com/736x/4a/c6/32/4ac632b4e50f78a532be67f7977290db.jpg',
   'joel fernandez': 'https://preview.redd.it/damon-salvatore-v0-u895ej76t5oe1.jpeg?auto=webp&s=cfa26d2aeeb5e4ab226249197879bca094019625',
-  default: 'https://images.unsplash.com/photo-1600880292089-90a7e086ee0c?auto=format&fit=crop&w=500&q=80'
+  default: ''
 };
 
-const DEFAULT_RESTAURANT_IMAGE_URL = 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&w=900&q=80';
+const WHITE_AVATAR_IMAGE =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='512' height='512' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%230f172a'/%3E%3Ccircle cx='256' cy='188' r='92' fill='%23ffffff'/%3E%3Cpath d='M96 452c0-88 72-160 160-160s160 72 160 160' fill='%23ffffff'/%3E%3C/svg%3E";
+
+const DEFAULT_RESTAURANT_IMAGE_URL = WHITE_AVATAR_IMAGE;
 
 
 const RESTAURANT_IMAGES_BY_NAME = {
@@ -59,8 +65,27 @@ const parseBoolean = (value) => {
   return false;
 };
 
+const normalizeLinkedinUrl = (value) => {
+  if (!value || value === 'No disponible') return '';
+  if (value.startsWith('http://') || value.startsWith('https://')) return value;
+  return `https://${value}`;
+};
+
+const fileToDataUrl = (file) => new Promise((resolve, reject) => {
+  const reader = new FileReader();
+  reader.onload = () => resolve(String(reader.result || ''));
+  reader.onerror = () => reject(new Error('No s’ha pogut llegir la imatge'));
+  reader.readAsDataURL(file);
+});
+
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isAuthMenuOpen, setIsAuthMenuOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [loginForm, setLoginForm] = useState({ username: '', password: '' });
+  const [loginError, setLoginError] = useState('');
+  const [loggedInUser, setLoggedInUser] = useState('');
   const [activeSection, setActiveSection] = useState('restaurants');
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [selectedRestaurant, setSelectedRestaurant] = useState(null);
@@ -72,6 +97,36 @@ function App() {
   const [restaurants, setRestaurants] = useState([]);
   const [loadingRestaurants, setLoadingRestaurants] = useState(true);
   const [restaurantsError, setRestaurantsError] = useState('');
+  const [adminStudentStatus, setAdminStudentStatus] = useState('Alumni (En actiu)');
+  const [adminTrajectoryFilter, setAdminTrajectoryFilter] = useState('');
+  const [adminTrajectories, setAdminTrajectories] = useState([
+    { id: 1, restaurant: '', role: '', current: true }
+  ]);
+  const [adminPhotoPreview, setAdminPhotoPreview] = useState('');
+  const [adminForm, setAdminForm] = useState({
+    fullName: '',
+    email: '',
+    phone: '',
+    linkedin: ''
+  });
+  const [saveStudentError, setSaveStudentError] = useState('');
+  const [saveStudentSuccess, setSaveStudentSuccess] = useState('');
+  const fileInputRef = useRef(null);
+  const profilePhotoInputRef = useRef(null);
+  const [profilePhotoStatus, setProfilePhotoStatus] = useState('');
+  const restaurantPhotoInputRef = useRef(null);
+  const [restaurantForm, setRestaurantForm] = useState({
+    name: '',
+    specialty: '',
+    street: '',
+    email: '',
+    phone: ''
+  });
+  const [restaurantPhotoPreview, setRestaurantPhotoPreview] = useState('');
+  const [saveRestaurantError, setSaveRestaurantError] = useState('');
+  const [saveRestaurantSuccess, setSaveRestaurantSuccess] = useState('');
+  const [studentProfileSourceRestaurantId, setStudentProfileSourceRestaurantId] = useState(null);
+  const [pendingAdminSection, setPendingAdminSection] = useState('');
 
   useEffect(() => {
     const loadData = async () => {
@@ -119,6 +174,15 @@ function App() {
             specialty,
             street,
             coordinates,
+            email:
+              readFirestoreValue(fields.email) ||
+              readFirestoreValue(fields.correu) ||
+              'No disponible',
+            phone:
+              readFirestoreValue(fields.phone) ||
+              readFirestoreValue(fields.telefon) ||
+              readFirestoreValue(fields.telefono) ||
+              'No disponible',
             imageUrl:
               RESTAURANT_IMAGES_BY_NAME[name.toLowerCase()] ||
               readFirestoreValue(fields.imageUrl) ||
@@ -150,12 +214,13 @@ function App() {
             let firstName = '';
             let lastName = '';
             let fallbackName = alumniId || 'Alumne sense nom';
+            let alumniFields = {};
 
             if (alumniId) {
               const alumniResponse = await fetch(`${FIRESTORE_BASE_URL}/Alumni/${alumniId}`);
               if (alumniResponse.ok) {
                 const alumniJson = await alumniResponse.json();
-                const alumniFields = alumniJson.fields || {};
+                alumniFields = alumniJson.fields || {};
                 firstName =
                   readFirestoreValue(alumniFields.name) ||
                   readFirestoreValue(alumniFields.nom) ||
@@ -177,12 +242,33 @@ function App() {
 
             return {
               id: docItem.name,
+              alumniId,
               fullName: [firstName, lastName].filter(Boolean).join(' ').trim() || fallbackName,
               role,
               workplace,
               restaurantId,
               currentJob,
-              imageUrl: ALUMNI_IMAGES_BY_NAME[fallbackName.toLowerCase()] || ALUMNI_IMAGES_BY_NAME.default
+              imageUrl:
+                readFirestoreValue(alumniFields?.imageUrl) ||
+                readFirestoreValue(alumniFields?.image_url) ||
+                ALUMNI_IMAGES_BY_NAME[fallbackName.toLowerCase()] ||
+                ALUMNI_IMAGES_BY_NAME.default ||
+                WHITE_AVATAR_IMAGE,
+              email:
+                readFirestoreValue(alumniFields?.email) ||
+                readFirestoreValue(alumniFields?.correu) ||
+                readFirestoreValue(alumniFields?.mail) ||
+                'No disponible',
+              phone:
+                readFirestoreValue(alumniFields?.phone) ||
+                readFirestoreValue(alumniFields?.telefon) ||
+                readFirestoreValue(alumniFields?.telefono) ||
+                'No disponible',
+              linkedin:
+                readFirestoreValue(alumniFields?.linkedin) ||
+                readFirestoreValue(alumniFields?.linkedIn) ||
+                readFirestoreValue(alumniFields?.linkedin_url) ||
+                'No disponible'
             };
           })
         );
@@ -200,6 +286,16 @@ function App() {
 
     loadData();
   }, []);
+
+  useEffect(() => () => {
+    if (adminPhotoPreview.startsWith('blob:')) {
+      URL.revokeObjectURL(adminPhotoPreview);
+    }
+  }, [adminPhotoPreview]);
+
+  useEffect(() => {
+    setProfilePhotoStatus('');
+  }, [selectedStudent?.id]);
 
   const filteredStudents = useMemo(() => {
     const term = studentSearch.trim().toLowerCase();
@@ -230,14 +326,48 @@ function App() {
       return 'https://www.google.com/maps?q=Barcelona&z=13&output=embed';
     }
 
-    const firstWithCoordinates = filteredRestaurants.find((restaurant) => restaurant.coordinates);
-    if (firstWithCoordinates) {
-      const { lat, lng } = firstWithCoordinates.coordinates;
-      return `https://www.google.com/maps?q=${lat},${lng}&z=15&output=embed`;
-    }
-
-    return `https://www.google.com/maps?q=${encodeURIComponent(filteredRestaurants[0].name)}&z=15&output=embed`;
+    const allPinsQuery = filteredRestaurants
+      .map((restaurant) => (
+        restaurant.coordinates
+          ? `${restaurant.coordinates.lat},${restaurant.coordinates.lng}`
+          : restaurant.name
+      ))
+      .join('|');
+    return `https://www.google.com/maps?q=${encodeURIComponent(allPinsQuery)}&z=13&output=embed`;
   }, [filteredRestaurants]);
+
+  const restaurantProfileMapUrl = useMemo(() => {
+    if (!selectedRestaurant) return '';
+    if (selectedRestaurant.coordinates) {
+      const { lat, lng } = selectedRestaurant.coordinates;
+      return `https://www.google.com/maps?q=${lat},${lng}&z=16&output=embed`;
+    }
+    return `https://www.google.com/maps?q=${encodeURIComponent(selectedRestaurant.name)}&z=16&output=embed`;
+  }, [selectedRestaurant]);
+
+  const restaurantsForSelectedStudent = useMemo(() => {
+    if (!selectedStudent) return [];
+
+    const relatedRows = students.filter((student) => {
+      if (selectedStudent.alumniId && student.alumniId) {
+        return student.alumniId === selectedStudent.alumniId;
+      }
+      return student.id === selectedStudent.id;
+    });
+
+    const uniqueByRestaurant = new Map();
+    relatedRows.forEach((item) => {
+      if (!item.restaurantId && !item.workplace) return;
+      const key = item.restaurantId || item.workplace;
+      uniqueByRestaurant.set(key, {
+        restaurantId: item.restaurantId,
+        workplace: item.workplace,
+        role: item.role,
+        currentJob: item.currentJob
+      });
+    });
+    return Array.from(uniqueByRestaurant.values());
+  }, [selectedStudent, students]);
 
   const studentsForSelectedRestaurant = useMemo(() => {
     if (!selectedRestaurant) return { current: [], past: [] };
@@ -253,11 +383,375 @@ function App() {
     setIsSidebarOpen((prev) => !prev);
   };
 
+  const toggleAuthMenu = () => {
+    setIsAuthMenuOpen((prev) => !prev);
+    setLoginError('');
+  };
+
+  const handleLoginInput = (event) => {
+    const { name, value } = event.target;
+    setLoginForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleLogin = (event) => {
+    event.preventDefault();
+    const username = loginForm.username.trim();
+    const password = loginForm.password.trim();
+
+    if (!username || !password) {
+      setLoginError('Introdueix usuari i contrasenya.');
+      return;
+    }
+
+    const normalizedUsername = username.toLowerCase();
+    const isKnownAdminUser = ADMIN_USERS.includes(normalizedUsername);
+    const isConfiguredAdminLogin =
+      (normalizedUsername === 'admin' || normalizedUsername === ADMIN_EMAIL) &&
+      password === ADMIN_PASSWORD;
+    const isAdminAlias = normalizedUsername === 'admin' || normalizedUsername === ADMIN_EMAIL;
+
+    if (isAdminAlias && !isConfiguredAdminLogin) {
+      setLoginError('Contrasenya d’admin incorrecta.');
+      return;
+    }
+
+    setIsLoggedIn(true);
+    setIsAdmin(isKnownAdminUser || isConfiguredAdminLogin);
+    setLoggedInUser(username);
+    setLoginForm({ username: '', password: '' });
+    setLoginError('');
+    setIsAuthMenuOpen(false);
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setIsAdmin(false);
+    setLoggedInUser('');
+    setLoginForm({ username: '', password: '' });
+    setLoginError('');
+    setIsAuthMenuOpen(false);
+  };
+
   const selectSection = (section) => {
+    const adminSections = ['add-student', 'add-restaurant', 'manage-entries'];
+    if (adminSections.includes(section) && !(isLoggedIn && isAdmin)) {
+      setPendingAdminSection(section);
+      setActiveSection('admin-lock');
+      setIsSidebarOpen(false);
+      return;
+    }
+
     setActiveSection(section);
-    if (section !== 'students') setSelectedStudent(null);
-    if (section !== 'restaurants') setSelectedRestaurant(null);
+    setPendingAdminSection('');
+    if (['students', 'restaurants', 'add-student', 'add-restaurant', 'manage-entries'].includes(section)) {
+      setSelectedStudent(null);
+      setSelectedRestaurant(null);
+    }
     setIsSidebarOpen(false);
+  };
+
+  const addTrajectory = () => {
+    setAdminTrajectories((prev) => [
+      ...prev,
+      { id: Date.now(), restaurant: '', role: '', current: true }
+    ]);
+  };
+
+  const removeTrajectory = (id) => {
+    setAdminTrajectories((prev) => prev.filter((trajectory) => trajectory.id !== id));
+  };
+
+  const updateTrajectory = (id, field, value) => {
+    setAdminTrajectories((prev) =>
+      prev.map((trajectory) => (
+        trajectory.id === id
+          ? { ...trajectory, [field]: value }
+          : trajectory
+      ))
+    );
+  };
+
+  const openPhotoPicker = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handlePhotoUpload = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const nextPreview = URL.createObjectURL(file);
+    setAdminPhotoPreview((prevPreview) => {
+      if (prevPreview.startsWith('blob:')) {
+        URL.revokeObjectURL(prevPreview);
+      }
+      return nextPreview;
+    });
+  };
+
+  const handleAdminInputChange = (event) => {
+    const { name, value } = event.target;
+    setAdminForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSaveStudent = async () => {
+    const fullName = adminForm.fullName.trim();
+    const email = adminForm.email.trim();
+    const hasValidTrajectory = adminTrajectories.some(
+      (trajectory) => trajectory.restaurant.trim() && trajectory.role.trim()
+    );
+
+    if (!fullName || !email || !hasValidTrajectory) {
+      setSaveStudentSuccess('');
+      setSaveStudentError('Per guardar cal omplir: nom complet, correu electrònic i almenys un restaurant amb rol.');
+      return;
+    }
+
+    const validTrajectories = adminTrajectories.filter(
+      (trajectory) => trajectory.restaurant.trim() && trajectory.role.trim()
+    );
+    const firstTrajectory = validTrajectories[0];
+    const matchedRestaurant = restaurants.find((restaurant) => restaurant.name === firstTrajectory.restaurant);
+    const [firstName, ...restNames] = fullName.split(' ');
+    const lastName = restNames.join(' ').trim();
+    const alumniId = `alumni_${Date.now()}`;
+
+    try {
+      const alumniPayload = {
+        fields: {
+          name: { stringValue: firstName || fullName },
+          lastName: { stringValue: lastName },
+          email: { stringValue: email },
+          phone: { stringValue: adminForm.phone.trim() || '' },
+          linkedin: { stringValue: adminForm.linkedin.trim() || '' }
+        }
+      };
+
+      const alumniResponse = await fetch(`${FIRESTORE_BASE_URL}/Alumni?documentId=${encodeURIComponent(alumniId)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(alumniPayload)
+      });
+
+      if (!alumniResponse.ok) {
+        throw new Error('No s’ha pogut guardar l’alumne a Firebase');
+      }
+
+      await Promise.all(
+        validTrajectories.map(async (trajectory, index) => {
+          const restaurant = restaurants.find((item) => item.name === trajectory.restaurant.trim());
+          const relationPayload = {
+            fields: {
+              id_alumni: { stringValue: alumniId },
+              id_restaurant: { stringValue: restaurant?.id || '' },
+              rol: { stringValue: trajectory.role.trim() },
+              current_job: { booleanValue: Boolean(trajectory.current) }
+            }
+          };
+
+          const relationResponse = await fetch(
+            `${FIRESTORE_BASE_URL}/Rest-Alum?documentId=${encodeURIComponent(`manual_${Date.now()}_${index}`)}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(relationPayload)
+            }
+          );
+
+          if (!relationResponse.ok) {
+            throw new Error('No s’ha pogut guardar la relació alumne-restaurant a Firebase');
+          }
+        })
+      );
+
+      const newStudent = {
+        id: `manual-${Date.now()}`,
+        alumniId,
+        fullName,
+        role: firstTrajectory.role.trim(),
+        workplace: firstTrajectory.restaurant.trim(),
+        restaurantId: matchedRestaurant?.id || '',
+        currentJob: Boolean(firstTrajectory.current),
+        imageUrl: adminPhotoPreview || WHITE_AVATAR_IMAGE,
+        email: adminForm.email.trim(),
+        phone: adminForm.phone.trim() || 'No disponible',
+        linkedin: adminForm.linkedin.trim() || 'No disponible'
+      };
+
+      setStudents((prev) => [newStudent, ...prev]);
+      openStudentProfile(newStudent);
+      setSaveStudentError('');
+      setSaveStudentSuccess('Alumne guardat correctament a Firebase.');
+
+      setAdminForm({ fullName: '', email: '', phone: '', linkedin: '' });
+      setAdminStudentStatus('Alumni (En actiu)');
+      setAdminTrajectoryFilter('');
+      setAdminTrajectories([{ id: 1, restaurant: '', role: '', current: true }]);
+      setAdminPhotoPreview('');
+    } catch (error) {
+      setSaveStudentSuccess('');
+      setSaveStudentError('No s’ha pogut guardar a Firebase. Revisa la connexió/permisos i torna-ho a provar.');
+    }
+  };
+
+  const openProfilePhotoPicker = () => {
+    profilePhotoInputRef.current?.click();
+  };
+
+  const handleProfilePhotoChange = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file || !selectedStudent) return;
+
+    try {
+      const imageDataUrl = await fileToDataUrl(file);
+
+      if (selectedStudent.alumniId) {
+        const patchPayload = {
+          fields: {
+            imageUrl: { stringValue: imageDataUrl }
+          }
+        };
+        const patchResponse = await fetch(
+          `${FIRESTORE_BASE_URL}/Alumni/${encodeURIComponent(selectedStudent.alumniId)}?updateMask.fieldPaths=imageUrl`,
+          {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(patchPayload)
+          }
+        );
+
+        if (!patchResponse.ok) {
+          throw new Error('No s’ha pogut actualitzar la foto a Firebase');
+        }
+      }
+
+      setStudents((prev) =>
+        prev.map((student) => (
+          student.id === selectedStudent.id
+            ? { ...student, imageUrl: imageDataUrl }
+            : student
+        ))
+      );
+      setSelectedStudent((prev) => (prev ? { ...prev, imageUrl: imageDataUrl } : prev));
+      setProfilePhotoStatus('Foto actualitzada correctament.');
+    } catch (error) {
+      setProfilePhotoStatus('No s’ha pogut actualitzar la foto.');
+    }
+  };
+
+  const openRestaurantPhotoPicker = () => {
+    restaurantPhotoInputRef.current?.click();
+  };
+
+  const handleRestaurantPhotoUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const imageDataUrl = await fileToDataUrl(file);
+      setRestaurantPhotoPreview(imageDataUrl);
+    } catch (error) {
+      setSaveRestaurantError('No s’ha pogut carregar la imatge del restaurant.');
+    }
+  };
+
+  const handleRestaurantInputChange = (event) => {
+    const { name, value } = event.target;
+    setRestaurantForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSaveRestaurant = async () => {
+    const name = restaurantForm.name.trim();
+    const specialty = restaurantForm.specialty.trim();
+    const street = restaurantForm.street.trim();
+    const email = (restaurantForm.email || '').trim();
+    const phone = (restaurantForm.phone || '').trim();
+
+    if (!name || !street) {
+      setSaveRestaurantSuccess('');
+      setSaveRestaurantError('Per guardar el restaurant cal omplir nom i carrer.');
+      return;
+    }
+
+    const restaurantId = `restaurant_${Date.now()}`;
+    const payload = {
+      fields: {
+        Name: { stringValue: name },
+        specialty: { stringValue: specialty || 'No disponible' },
+        street: { stringValue: street },
+        email: { stringValue: email },
+        phone: { stringValue: phone },
+        imageUrl: { stringValue: restaurantPhotoPreview || WHITE_AVATAR_IMAGE }
+      }
+    };
+
+    try {
+      const response = await fetch(`${FIRESTORE_BASE_URL}/Restaurant?documentId=${encodeURIComponent(restaurantId)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        throw new Error('No s’ha pogut guardar el restaurant');
+      }
+
+      const newRestaurant = {
+        id: restaurantId,
+        firestoreName: `${FIRESTORE_BASE_URL}/Restaurant/${restaurantId}`,
+        name,
+        specialty: specialty || 'No disponible',
+        street,
+        email: email || 'No disponible',
+        phone: phone || 'No disponible',
+        coordinates: null,
+        imageUrl: restaurantPhotoPreview || WHITE_AVATAR_IMAGE
+      };
+
+      setRestaurants((prev) => [newRestaurant, ...prev]);
+      openRestaurantProfile(newRestaurant.id);
+      setSaveRestaurantError('');
+      setSaveRestaurantSuccess('Restaurant guardat correctament a Firebase.');
+      setRestaurantForm({ name: '', specialty: '', street: '', email: '', phone: '' });
+      setRestaurantPhotoPreview('');
+    } catch (error) {
+      setSaveRestaurantSuccess('');
+      setSaveRestaurantError('No s’ha pogut guardar el restaurant a Firebase.');
+    }
+  };
+
+  const openStudentProfile = (student) => {
+    setStudentProfileSourceRestaurantId(null);
+    setActiveSection('student-profile');
+    setSelectedStudent(student);
+    setSelectedRestaurant(null);
+    setIsSidebarOpen(false);
+  };
+
+  const openStudentProfileFromRestaurant = (student, restaurantId) => {
+    setStudentProfileSourceRestaurantId(restaurantId || null);
+    setActiveSection('student-profile');
+    setSelectedStudent(student);
+    setSelectedRestaurant(null);
+    setIsSidebarOpen(false);
+  };
+
+  const openRestaurantProfile = (restaurantId) => {
+    const restaurantMatch = restaurants.find((restaurant) => restaurant.id === restaurantId);
+    if (!restaurantMatch) return;
+
+    setActiveSection('restaurant-profile');
+    setSelectedRestaurant(restaurantMatch);
+    setSelectedStudent(null);
+    setStudentProfileSourceRestaurantId(null);
+    setIsSidebarOpen(false);
+  };
+
+  const handleBackFromStudentProfile = () => {
+    if (studentProfileSourceRestaurantId) {
+      openRestaurantProfile(studentProfileSourceRestaurantId);
+      return;
+    }
+    selectSection('students');
   };
 
   return (
@@ -276,6 +770,53 @@ function App() {
           <span />
         </button>
         <img src={logoJoviat} className="brand-logo" alt="logo_joviat" />
+        <div className="auth-menu-wrapper">
+          <button
+            type="button"
+            className="auth-button"
+            onClick={toggleAuthMenu}
+            aria-expanded={isAuthMenuOpen}
+            aria-controls="auth-menu"
+          >
+            {isLoggedIn ? `👤 ${loggedInUser}` : 'Log in'}
+          </button>
+
+          {isAuthMenuOpen && (
+            <div id="auth-menu" className="auth-menu">
+              {!isLoggedIn ? (
+                <form className="auth-form" onSubmit={handleLogin}>
+                  <label htmlFor="username">Usuari</label>
+                  <input
+                    id="username"
+                    name="username"
+                    type="text"
+                    value={loginForm.username}
+                    onChange={handleLoginInput}
+                    placeholder="Introdueix el teu usuari"
+                  />
+                  <label htmlFor="password">Contrasenya</label>
+                  <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    value={loginForm.password}
+                    onChange={handleLoginInput}
+                    placeholder="Introdueix la contrasenya"
+                  />
+                  {loginError && <p className="auth-error">{loginError}</p>}
+                  <button type="submit" className="auth-submit-button">Entrar</button>
+                </form>
+              ) : (
+                <div className="auth-logged-in">
+                  <p>Has iniciat sessió com <strong>{loggedInUser}</strong>.</p>
+                  <button type="button" className="auth-logout-button" onClick={handleLogout}>
+                    Log out
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </header>
 
       <aside id="main-sidebar" className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
@@ -290,6 +831,21 @@ function App() {
             <li>
               <button type="button" className="menu-link" onClick={() => selectSection('students')}>
                 Visualitzar Alumnes
+              </button>
+            </li>
+            <li>
+              <button type="button" className="menu-link" onClick={() => selectSection('add-student')}>
+                Afegir Alumne
+              </button>
+            </li>
+            <li>
+              <button type="button" className="menu-link" onClick={() => selectSection('add-restaurant')}>
+                Afegir Restaurant
+              </button>
+            </li>
+            <li>
+              <button type="button" className="menu-link" onClick={() => selectSection('manage-entries')}>
+                Gestionar altes
               </button>
             </li>
           </ul>
@@ -335,9 +891,15 @@ function App() {
                     <button
                       type="button"
                       className="restaurant-open-button"
-                      onClick={() => setSelectedRestaurant(restaurant)}
+                      onClick={() => openRestaurantProfile(restaurant.id)}
                     >
-                      <img src={restaurant.imageUrl} alt={`Foto de ${restaurant.name}`} />
+                      <img
+                        src={restaurant.imageUrl || WHITE_AVATAR_IMAGE}
+                        alt={`Foto de ${restaurant.name}`}
+                        onError={(event) => {
+                          event.currentTarget.src = WHITE_AVATAR_IMAGE;
+                        }}
+                      />
                       <h4>{restaurant.name}</h4>
                     </button>
                   </article>
@@ -345,44 +907,6 @@ function App() {
               </div>
             )}
 
-            {selectedRestaurant && (
-              <article className="restaurant-profile-card">
-                <button
-                  type="button"
-                  className="back-button"
-                  onClick={() => setSelectedRestaurant(null)}
-                >
-                  ← Tornar al llistat
-                </button>
-                <img src={selectedRestaurant.imageUrl} alt={`Foto de ${selectedRestaurant.name}`} />
-                <h3>Fitxa del restaurant</h3>
-                <p><strong>Nom:</strong> {selectedRestaurant.name}</p>
-                <p><strong>Especialitat:</strong> {selectedRestaurant.specialty}</p>
-                <p><strong>Carrer:</strong> {selectedRestaurant.street}</p>
-
-                <h4>Alumnes que hi treballen</h4>
-                {studentsForSelectedRestaurant.current.length > 0 ? (
-                  <ul>
-                    {studentsForSelectedRestaurant.current.map((student) => (
-                      <li key={`current-${student.id}`}>{student.fullName} ({student.role})</li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p>No hi ha alumnes treballant actualment.</p>
-                )}
-
-                <h4>Alumnes que hi han treballat</h4>
-                {studentsForSelectedRestaurant.past.length > 0 ? (
-                  <ul>
-                    {studentsForSelectedRestaurant.past.map((student) => (
-                      <li key={`past-${student.id}`}>{student.fullName} ({student.role})</li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p>No hi ha registres d’alumnes anteriors.</p>
-                )}
-              </article>
-            )}
           </section>
         )}
 
@@ -407,9 +931,15 @@ function App() {
                     <button
                       type="button"
                       className="student-open-button"
-                      onClick={() => setSelectedStudent(student)}
+                      onClick={() => openStudentProfile(student)}
                     >
-                      <img src={student.imageUrl} alt={`Foto de ${student.fullName}`} />
+                      <img
+                        src={student.imageUrl || WHITE_AVATAR_IMAGE}
+                        alt={`Foto de ${student.fullName}`}
+                        onError={(event) => {
+                          event.currentTarget.src = WHITE_AVATAR_IMAGE;
+                        }}
+                      />
                       <div>
                         <h3>{student.fullName}</h3>
                         <p>Rol: {student.role}</p>
@@ -420,18 +950,440 @@ function App() {
               </div>
             )}
 
-            {selectedStudent && (
-              <article className="student-profile-card">
-                <button type="button" className="back-button" onClick={() => setSelectedStudent(null)}>
-                  ← Tornar al llistat
+          </section>
+        )}
+
+        {activeSection === 'restaurant-profile' && selectedRestaurant && (
+          <section className="restaurants-section">
+            <article className="restaurant-profile-card">
+              <button type="button" className="back-button" onClick={() => selectSection('restaurants')}>
+                ← Tornar al llistat
+              </button>
+              <img
+                src={selectedRestaurant.imageUrl || WHITE_AVATAR_IMAGE}
+                alt={`Foto de ${selectedRestaurant.name}`}
+                onError={(event) => {
+                  event.currentTarget.src = WHITE_AVATAR_IMAGE;
+                }}
+              />
+              <h3>Fitxa del restaurant</h3>
+              <p><strong>Nom:</strong> {selectedRestaurant.name}</p>
+              <p><strong>Especialitat:</strong> {selectedRestaurant.specialty}</p>
+              <p><strong>Carrer:</strong> {selectedRestaurant.street}</p>
+              <p><strong>Correu electrònic:</strong> {selectedRestaurant.email || 'No disponible'}</p>
+              <p><strong>Telèfon:</strong> {selectedRestaurant.phone || 'No disponible'}</p>
+              <div className="map-wrapper">
+                <iframe title="Mapa de la fitxa del restaurant" src={restaurantProfileMapUrl} loading="lazy" />
+              </div>
+              <h4>Alumnes que hi treballen</h4>
+              {studentsForSelectedRestaurant.current.length > 0 ? (
+                <ul>
+                  {studentsForSelectedRestaurant.current.map((student) => (
+                    <li key={`current-${student.id}`}>
+                      <button
+                        type="button"
+                        className="profile-link-button"
+                        onClick={() => openStudentProfileFromRestaurant(student, selectedRestaurant.id)}
+                      >
+                        {student.fullName} ({student.role})
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p>No hi ha alumnes treballant actualment.</p>
+              )}
+              <h4>Alumnes que hi han treballat</h4>
+              {studentsForSelectedRestaurant.past.length > 0 ? (
+                <ul>
+                  {studentsForSelectedRestaurant.past.map((student) => (
+                    <li key={`past-${student.id}`}>
+                      <button
+                        type="button"
+                        className="profile-link-button"
+                        onClick={() => openStudentProfileFromRestaurant(student, selectedRestaurant.id)}
+                      >
+                        {student.fullName} ({student.role})
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p>No hi ha registres d’alumnes anteriors.</p>
+              )}
+            </article>
+          </section>
+        )}
+
+        {activeSection === 'student-profile' && selectedStudent && (
+          <section className="students-section">
+            <article className="student-profile-card">
+              <button type="button" className="back-button" onClick={handleBackFromStudentProfile}>
+                ← Tornar al llistat
+              </button>
+              <img
+                src={selectedStudent.imageUrl || WHITE_AVATAR_IMAGE}
+                alt={`Foto de ${selectedStudent.fullName}`}
+                onError={(event) => {
+                  event.currentTarget.src = WHITE_AVATAR_IMAGE;
+                }}
+              />
+              <button type="button" className="profile-link-button" onClick={openProfilePhotoPicker}>
+                Canviar foto de perfil
+              </button>
+              <input
+                ref={profilePhotoInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden-file-input"
+                onChange={handleProfilePhotoChange}
+              />
+              {profilePhotoStatus && <p>{profilePhotoStatus}</p>}
+              <h3>Fitxa personal</h3>
+              <p><strong>Nom i cognoms:</strong> {selectedStudent.fullName}</p>
+              <p><strong>On treballa:</strong> {selectedStudent.workplace}</p>
+              <p><strong>Rol a la feina:</strong> {selectedStudent.role}</p>
+              <p><strong>Correu electrònic:</strong> {selectedStudent.email || 'No disponible'}</p>
+              <p><strong>Telèfon:</strong> {selectedStudent.phone || 'No disponible'}</p>
+              <p>
+                <strong>LinkedIn:</strong>{' '}
+                {selectedStudent.linkedin && selectedStudent.linkedin !== 'No disponible' ? (
+                  <a
+                    href={normalizeLinkedinUrl(selectedStudent.linkedin)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="profile-link-button"
+                  >
+                    {selectedStudent.linkedin}
+                  </a>
+                ) : (
+                  'No disponible'
+                )}
+              </p>
+              <h4>Restaurants on treballa o ha treballat</h4>
+              {restaurantsForSelectedStudent.length > 0 ? (
+                <ul>
+                  {restaurantsForSelectedStudent.map((restaurantItem) => (
+                    <li key={`${restaurantItem.restaurantId}-${restaurantItem.workplace}`}>
+                      {restaurantItem.restaurantId ? (
+                        <button
+                          type="button"
+                          className="profile-link-button"
+                          onClick={() => openRestaurantProfile(restaurantItem.restaurantId)}
+                        >
+                          {restaurantItem.workplace} · {restaurantItem.role} {restaurantItem.currentJob ? '(Actual)' : '(Anterior)'}
+                        </button>
+                      ) : (
+                        <span>{restaurantItem.workplace} · {restaurantItem.role} {restaurantItem.currentJob ? '(Actual)' : '(Anterior)'}</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p>No hi ha restaurants vinculats.</p>
+              )}
+              {selectedStudent.restaurantId && (
+                <button
+                  type="button"
+                  className="profile-link-button"
+                  onClick={() => openRestaurantProfile(selectedStudent.restaurantId)}
+                >
+                  Veure fitxa del restaurant
                 </button>
-                <img src={selectedStudent.imageUrl} alt={`Foto de ${selectedStudent.fullName}`} />
-                <h3>Fitxa personal</h3>
-                <p><strong>Nom i cognoms:</strong> {selectedStudent.fullName}</p>
-                <p><strong>On treballa:</strong> {selectedStudent.workplace}</p>
-                <p><strong>Rol a la feina:</strong> {selectedStudent.role}</p>
+              )}
+            </article>
+          </section>
+        )}
+
+        {activeSection === 'add-student' && (
+          <section className="admin-page">
+            <p className="admin-eyebrow">ADMINISTRACIO</p>
+            <h1>Afegir Alumne</h1>
+            <p className="admin-intro">
+              Dona d&apos;alta un alumne nou, desa la seva foto a storage i relaciona&apos;l amb tants restaurants com calgui.
+            </p>
+
+            <div className="admin-top-grid">
+              <article className="admin-panel photo-panel">
+                <button type="button" className="upload-circle upload-circle-button" onClick={openPhotoPicker}>
+                  {adminPhotoPreview ? (
+                    <img src={adminPhotoPreview} alt="Previsualització de l'alumne" className="upload-preview-image" />
+                  ) : (
+                    <span>+</span>
+                  )}
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden-file-input"
+                  onChange={handlePhotoUpload}
+                />
+                <h3>Pujar foto</h3>
+                <p>{adminPhotoPreview ? 'Clica per canviar la imatge' : 'Selecciona una imatge des del disc'}</p>
+
+                <label htmlFor="student-status">Estat de l&apos;alumne</label>
+                <select
+                  id="student-status"
+                  value={adminStudentStatus}
+                  onChange={(event) => setAdminStudentStatus(event.target.value)}
+                >
+                  <option>Alumni (En actiu)</option>
+                  <option>Alumni (No actiu)</option>
+                </select>
               </article>
-            )}
+
+              <article className="admin-panel info-panel">
+                <h3>Informacio primaria</h3>
+                <label htmlFor="full-name">Nom complet</label>
+                <input
+                  id="full-name"
+                  name="fullName"
+                  type="text"
+                  placeholder="Ex. Marc Ribas i Soler"
+                  value={adminForm.fullName}
+                  onChange={handleAdminInputChange}
+                />
+
+                <div className="admin-two-columns">
+                  <div>
+                    <label htmlFor="email">Correu electronic</label>
+                    <input
+                      id="email"
+                      name="email"
+                      type="email"
+                      placeholder="marc.ribas@exemple.cat"
+                      value={adminForm.email}
+                      onChange={handleAdminInputChange}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="phone">Telefon de contacte</label>
+                    <input
+                      id="phone"
+                      name="phone"
+                      type="tel"
+                      placeholder="+34 600 000 000"
+                      value={adminForm.phone}
+                      onChange={handleAdminInputChange}
+                    />
+                  </div>
+                </div>
+
+                <label htmlFor="linkedin">Perfil Linkedin</label>
+                <input
+                  id="linkedin"
+                  name="linkedin"
+                  type="text"
+                  placeholder="linkedin.com/in/usuari"
+                  value={adminForm.linkedin}
+                  onChange={handleAdminInputChange}
+                />
+              </article>
+            </div>
+
+            <article className="admin-panel trajectory-panel">
+              <div className="trajectory-header">
+                <div>
+                  <p className="admin-eyebrow">TRAJECTORIA PROFESSIONAL</p>
+                  <h2>Restaurants</h2>
+                  <p>Selecciona restaurants existents, el rol i si hi treballa actualment.</p>
+                </div>
+                <button type="button" className="pill-button" onClick={addTrajectory}>
+                  Afegir restaurant
+                </button>
+              </div>
+
+              <label htmlFor="trajectory-filter">Filtrar restaurants pel nom</label>
+              <input
+                id="trajectory-filter"
+                type="search"
+                placeholder="Escriu el nom del restaurant"
+                value={adminTrajectoryFilter}
+                onChange={(event) => setAdminTrajectoryFilter(event.target.value)}
+              />
+
+              {adminTrajectories.map((trajectory, index) => (
+                <div key={trajectory.id} className="trajectory-card">
+                  <div className="trajectory-card-header">
+                    <h3>Restaurant {index + 1}</h3>
+                    {adminTrajectories.length > 1 && (
+                      <button type="button" className="pill-button danger" onClick={() => removeTrajectory(trajectory.id)}>
+                        Eliminar
+                      </button>
+                    )}
+                  </div>
+
+                  <label htmlFor={`restaurant-${trajectory.id}`}>Restaurant</label>
+                  <select
+                    id={`restaurant-${trajectory.id}`}
+                    value={trajectory.restaurant}
+                    onChange={(event) => updateTrajectory(trajectory.id, 'restaurant', event.target.value)}
+                  >
+                    <option value="">Selecciona un restaurant</option>
+                    {filteredRestaurants.map((restaurant) => (
+                      <option key={restaurant.id} value={restaurant.name}>{restaurant.name}</option>
+                    ))}
+                  </select>
+
+                  <label htmlFor={`role-${trajectory.id}`}>Rol</label>
+                  <input
+                    id={`role-${trajectory.id}`}
+                    type="text"
+                    placeholder="Cap de sala, cuina, practiques..."
+                    value={trajectory.role}
+                    onChange={(event) => updateTrajectory(trajectory.id, 'role', event.target.value)}
+                  />
+
+                  <label className="checkbox-line" htmlFor={`current-${trajectory.id}`}>
+                    <input
+                      id={`current-${trajectory.id}`}
+                      type="checkbox"
+                      checked={trajectory.current}
+                      onChange={(event) => updateTrajectory(trajectory.id, 'current', event.target.checked)}
+                    />
+                    Està treballant actualment en aquest restaurant
+                  </label>
+                </div>
+              ))}
+            </article>
+
+            <div className="save-student-row">
+              <button type="button" className="pill-button save-student-button" onClick={handleSaveStudent}>
+                Guardar alumne
+              </button>
+              {saveStudentError && <p className="save-student-error">{saveStudentError}</p>}
+              {saveStudentSuccess && <p className="save-student-success">{saveStudentSuccess}</p>}
+            </div>
+          </section>
+        )}
+
+        {activeSection === 'add-restaurant' && (
+          <section className="admin-page">
+            <p className="admin-eyebrow">ADMINISTRACIO</p>
+            <h1>Afegir Restaurant</h1>
+            <p className="admin-intro">Afegeix un restaurant nou amb les seves dades bàsiques.</p>
+
+            <div className="admin-top-grid">
+              <article className="admin-panel photo-panel">
+                <button type="button" className="upload-circle upload-circle-button" onClick={openRestaurantPhotoPicker}>
+                  {restaurantPhotoPreview ? (
+                    <img src={restaurantPhotoPreview} alt="Previsualització del restaurant" className="upload-preview-image" />
+                  ) : (
+                    <span>+</span>
+                  )}
+                </button>
+                <input
+                  ref={restaurantPhotoInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden-file-input"
+                  onChange={handleRestaurantPhotoUpload}
+                />
+                <h3>Pujar foto</h3>
+                <p>{restaurantPhotoPreview ? 'Clica per canviar la imatge' : 'Selecciona una imatge des del disc'}</p>
+              </article>
+
+              <article className="admin-panel info-panel">
+                <h3>Informacio primaria</h3>
+                <label htmlFor="restaurant-name">Nom del restaurant</label>
+                <input
+                  id="restaurant-name"
+                  name="name"
+                  type="text"
+                  placeholder="Ex. Restaurant Nova Brasa"
+                  value={restaurantForm.name}
+                  onChange={handleRestaurantInputChange}
+                />
+
+                <label htmlFor="restaurant-specialty">Especialitat</label>
+                <input
+                  id="restaurant-specialty"
+                  name="specialty"
+                  type="text"
+                  placeholder="Ex. Cuina mediterrània"
+                  value={restaurantForm.specialty}
+                  onChange={handleRestaurantInputChange}
+                />
+
+                <label htmlFor="restaurant-street">Carrer</label>
+                <input
+                  id="restaurant-street"
+                  name="street"
+                  type="text"
+                  placeholder="Ex. Carrer Major 15, Manresa"
+                  value={restaurantForm.street}
+                  onChange={handleRestaurantInputChange}
+                />
+
+                <label htmlFor="restaurant-email">Correu electrònic</label>
+                <input
+                  id="restaurant-email"
+                  name="email"
+                  type="email"
+                  placeholder="contacte@restaurant.cat"
+                  value={restaurantForm.email || ''}
+                  onChange={handleRestaurantInputChange}
+                />
+
+                <label htmlFor="restaurant-phone">Telèfon</label>
+                <input
+                  id="restaurant-phone"
+                  name="phone"
+                  type="text"
+                  placeholder="+34 600 000 000"
+                  value={restaurantForm.phone || ''}
+                  onChange={handleRestaurantInputChange}
+                />
+              </article>
+            </div>
+
+            <div className="save-student-row">
+              <button type="button" className="pill-button save-student-button" onClick={handleSaveRestaurant}>
+                Guardar restaurant
+              </button>
+              {saveRestaurantError && <p className="save-student-error">{saveRestaurantError}</p>}
+              {saveRestaurantSuccess && <p className="save-student-success">{saveRestaurantSuccess}</p>}
+            </div>
+          </section>
+        )}
+
+        {activeSection === 'manage-entries' && (
+          <section className="admin-page">
+            <p className="admin-eyebrow">ADMINISTRACIO</p>
+            <h1>Gestionar altes</h1>
+            <p className="admin-intro">Revisa els darrers alumnes i restaurants creats.</p>
+            <article className="admin-panel">
+              <h3>Últims alumnes</h3>
+              <ul>
+                {students.slice(0, 10).map((student) => (
+                  <li key={`manage-student-${student.id}`}>{student.fullName}</li>
+                ))}
+              </ul>
+              <h3>Últims restaurants</h3>
+              <ul>
+                {restaurants.slice(0, 10).map((restaurant) => (
+                  <li key={`manage-restaurant-${restaurant.id}`}>{restaurant.name}</li>
+                ))}
+              </ul>
+            </article>
+          </section>
+        )}
+
+        {activeSection === 'admin-lock' && (
+          <section className="admin-page">
+            <p className="admin-eyebrow">ADMINISTRACIO</p>
+            <h1>Accés restringit</h1>
+            <p className="admin-intro">
+              Per accedir a <strong>{pendingAdminSection || 'aquesta secció'}</strong> has de fer login amb un usuari admin.
+            </p>
+            <button
+              type="button"
+              className="pill-button"
+              onClick={() => setIsAuthMenuOpen(true)}
+            >
+              Obrir login
+            </button>
           </section>
         )}
       </main>
