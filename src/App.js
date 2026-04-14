@@ -119,6 +119,7 @@ function App() {
   const [restaurantPhotoPreview, setRestaurantPhotoPreview] = useState('');
   const [saveRestaurantError, setSaveRestaurantError] = useState('');
   const [saveRestaurantSuccess, setSaveRestaurantSuccess] = useState('');
+  const [studentProfileSourceRestaurantId, setStudentProfileSourceRestaurantId] = useState(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -640,6 +641,15 @@ function App() {
   };
 
   const openStudentProfile = (student) => {
+    setStudentProfileSourceRestaurantId(null);
+    setActiveSection('student-profile');
+    setSelectedStudent(student);
+    setSelectedRestaurant(null);
+    setIsSidebarOpen(false);
+  };
+
+  const openStudentProfileFromRestaurant = (student, restaurantId) => {
+    setStudentProfileSourceRestaurantId(restaurantId || null);
     setActiveSection('student-profile');
     setSelectedStudent(student);
     setSelectedRestaurant(null);
@@ -653,7 +663,16 @@ function App() {
     setActiveSection('restaurant-profile');
     setSelectedRestaurant(restaurantMatch);
     setSelectedStudent(null);
+    setStudentProfileSourceRestaurantId(null);
     setIsSidebarOpen(false);
+  };
+
+  const handleBackFromStudentProfile = () => {
+    if (studentProfileSourceRestaurantId) {
+      openRestaurantProfile(studentProfileSourceRestaurantId);
+      return;
+    }
+    selectSection('students');
   };
 
   return (
@@ -872,7 +891,11 @@ function App() {
                 <ul>
                   {studentsForSelectedRestaurant.current.map((student) => (
                     <li key={`current-${student.id}`}>
-                      <button type="button" className="profile-link-button" onClick={() => openStudentProfile(student)}>
+                      <button
+                        type="button"
+                        className="profile-link-button"
+                        onClick={() => openStudentProfileFromRestaurant(student, selectedRestaurant.id)}
+                      >
                         {student.fullName} ({student.role})
                       </button>
                     </li>
@@ -886,7 +909,11 @@ function App() {
                 <ul>
                   {studentsForSelectedRestaurant.past.map((student) => (
                     <li key={`past-${student.id}`}>
-                      <button type="button" className="profile-link-button" onClick={() => openStudentProfile(student)}>
+                      <button
+                        type="button"
+                        className="profile-link-button"
+                        onClick={() => openStudentProfileFromRestaurant(student, selectedRestaurant.id)}
+                      >
                         {student.fullName} ({student.role})
                       </button>
                     </li>
@@ -902,7 +929,7 @@ function App() {
         {activeSection === 'student-profile' && selectedStudent && (
           <section className="students-section">
             <article className="student-profile-card">
-              <button type="button" className="back-button" onClick={() => selectSection('students')}>
+              <button type="button" className="back-button" onClick={handleBackFromStudentProfile}>
                 ← Tornar al llistat
               </button>
               <img
