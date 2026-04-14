@@ -124,6 +124,7 @@ function App() {
   const [saveRestaurantError, setSaveRestaurantError] = useState('');
   const [saveRestaurantSuccess, setSaveRestaurantSuccess] = useState('');
   const [studentProfileSourceRestaurantId, setStudentProfileSourceRestaurantId] = useState(null);
+  const [pendingAdminSection, setPendingAdminSection] = useState('');
 
   useEffect(() => {
     const loadData = async () => {
@@ -418,7 +419,16 @@ function App() {
   };
 
   const selectSection = (section) => {
+    const adminSections = ['add-student', 'add-restaurant', 'manage-entries'];
+    if (adminSections.includes(section) && !(isLoggedIn && isAdmin)) {
+      setPendingAdminSection(section);
+      setActiveSection('admin-lock');
+      setIsSidebarOpen(false);
+      return;
+    }
+
     setActiveSection(section);
+    setPendingAdminSection('');
     if (['students', 'restaurants', 'add-student', 'add-restaurant', 'manage-entries'].includes(section)) {
       setSelectedStudent(null);
       setSelectedRestaurant(null);
@@ -809,25 +819,21 @@ function App() {
                 Visualitzar Alumnes
               </button>
             </li>
-            {isLoggedIn && isAdmin && (
-              <>
-                <li>
-                  <button type="button" className="menu-link" onClick={() => selectSection('add-student')}>
-                    Afegir Alumne
-                  </button>
-                </li>
-                <li>
-                  <button type="button" className="menu-link" onClick={() => selectSection('add-restaurant')}>
-                    Afegir Restaurant
-                  </button>
-                </li>
-                <li>
-                  <button type="button" className="menu-link" onClick={() => selectSection('manage-entries')}>
-                    Gestionar altes
-                  </button>
-                </li>
-              </>
-            )}
+            <li>
+              <button type="button" className="menu-link" onClick={() => selectSection('add-student')}>
+                Afegir Alumne
+              </button>
+            </li>
+            <li>
+              <button type="button" className="menu-link" onClick={() => selectSection('add-restaurant')}>
+                Afegir Restaurant
+              </button>
+            </li>
+            <li>
+              <button type="button" className="menu-link" onClick={() => selectSection('manage-entries')}>
+                Gestionar altes
+              </button>
+            </li>
           </ul>
         </nav>
       </aside>
@@ -1347,6 +1353,23 @@ function App() {
                 ))}
               </ul>
             </article>
+          </section>
+        )}
+
+        {activeSection === 'admin-lock' && (
+          <section className="admin-page">
+            <p className="admin-eyebrow">ADMINISTRACIO</p>
+            <h1>Accés restringit</h1>
+            <p className="admin-intro">
+              Per accedir a <strong>{pendingAdminSection || 'aquesta secció'}</strong> has de fer login amb un usuari admin.
+            </p>
+            <button
+              type="button"
+              className="pill-button"
+              onClick={() => setIsAuthMenuOpen(true)}
+            >
+              Obrir login
+            </button>
           </section>
         )}
       </main>
