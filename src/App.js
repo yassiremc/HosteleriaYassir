@@ -4,7 +4,6 @@ import './App.css';
 
 const FIREBASE_PROJECT_ID = 'hosteleriajoviat-94129';
 const FIRESTORE_BASE_URL = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents`;
-const ADMIN_USERS = ['admin', 'yassir', 'professor'];
 const ADMIN_EMAIL = 'admin@gmail.com';
 const ADMIN_PASSWORD = 'admin12345';
 
@@ -404,7 +403,6 @@ function App() {
     }
 
     const normalizedUsername = username.toLowerCase();
-    const isKnownAdminUser = ADMIN_USERS.includes(normalizedUsername);
     const isConfiguredAdminLogin =
       (normalizedUsername === 'admin' || normalizedUsername === ADMIN_EMAIL) &&
       password === ADMIN_PASSWORD;
@@ -416,7 +414,7 @@ function App() {
     }
 
     setIsLoggedIn(true);
-    setIsAdmin(isKnownAdminUser || isConfiguredAdminLogin);
+    setIsAdmin(isConfiguredAdminLogin);
     setLoggedInUser(username);
     setLoginForm({ username: '', password: '' });
     setLoginError('');
