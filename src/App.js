@@ -427,6 +427,9 @@ function App() {
     setIsLoggedIn(false);
     setIsAdmin(false);
     setLoggedInUser('');
+    if (['add-student', 'add-restaurant', 'manage-entries', 'admin-lock'].includes(activeSection)) {
+      setActiveSection('restaurants');
+    }
     setLoginForm({ username: '', password: '' });
     setLoginError('');
     setIsAuthMenuOpen(false);
@@ -833,21 +836,25 @@ function App() {
                 Visualitzar Alumnes
               </button>
             </li>
-            <li>
-              <button type="button" className="menu-link" onClick={() => selectSection('add-student')}>
-                Afegir Alumne
-              </button>
-            </li>
-            <li>
-              <button type="button" className="menu-link" onClick={() => selectSection('add-restaurant')}>
-                Afegir Restaurant
-              </button>
-            </li>
-            <li>
-              <button type="button" className="menu-link" onClick={() => selectSection('manage-entries')}>
-                Gestionar altes
-              </button>
-            </li>
+            {isLoggedIn && isAdmin && (
+              <>
+                <li>
+                  <button type="button" className="menu-link" onClick={() => selectSection('add-student')}>
+                    Afegir Alumne
+                  </button>
+                </li>
+                <li>
+                  <button type="button" className="menu-link" onClick={() => selectSection('add-restaurant')}>
+                    Afegir Restaurant
+                  </button>
+                </li>
+                <li>
+                  <button type="button" className="menu-link" onClick={() => selectSection('manage-entries')}>
+                    Gestionar altes
+                  </button>
+                </li>
+              </>
+            )}
           </ul>
         </nav>
       </aside>
