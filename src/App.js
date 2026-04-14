@@ -369,8 +369,10 @@ function App() {
 
   const selectSection = (section) => {
     setActiveSection(section);
-    if (section !== 'students') setSelectedStudent(null);
-    if (section !== 'restaurants') setSelectedRestaurant(null);
+    if (['students', 'restaurants', 'add-student', 'add-restaurant'].includes(section)) {
+      setSelectedStudent(null);
+      setSelectedRestaurant(null);
+    }
     setIsSidebarOpen(false);
   };
 
@@ -502,8 +504,7 @@ function App() {
       };
 
       setStudents((prev) => [newStudent, ...prev]);
-      setSelectedStudent(newStudent);
-      setActiveSection('students');
+      openStudentProfile(newStudent);
       setSaveStudentError('');
       setSaveStudentSuccess('Alumne guardat correctament a Firebase.');
 
@@ -627,8 +628,7 @@ function App() {
       };
 
       setRestaurants((prev) => [newRestaurant, ...prev]);
-      setSelectedRestaurant(newRestaurant);
-      setActiveSection('restaurants');
+      openRestaurantProfile(newRestaurant.id);
       setSaveRestaurantError('');
       setSaveRestaurantSuccess('Restaurant guardat correctament a Firebase.');
       setRestaurantForm({ name: '', specialty: '', street: '' });
@@ -640,7 +640,7 @@ function App() {
   };
 
   const openStudentProfile = (student) => {
-    setActiveSection('students');
+    setActiveSection('student-profile');
     setSelectedStudent(student);
     setSelectedRestaurant(null);
     setIsSidebarOpen(false);
@@ -650,7 +650,7 @@ function App() {
     const restaurantMatch = restaurants.find((restaurant) => restaurant.id === restaurantId);
     if (!restaurantMatch) return;
 
-    setActiveSection('restaurants');
+    setActiveSection('restaurant-profile');
     setSelectedRestaurant(restaurantMatch);
     setSelectedStudent(null);
     setIsSidebarOpen(false);
@@ -788,7 +788,7 @@ function App() {
                     <button
                       type="button"
                       className="restaurant-open-button"
-                      onClick={() => setSelectedRestaurant(restaurant)}
+                      onClick={() => openRestaurantProfile(restaurant.id)}
                     >
                       <img
                         src={restaurant.imageUrl || WHITE_AVATAR_IMAGE}
@@ -804,58 +804,6 @@ function App() {
               </div>
             )}
 
-            {selectedRestaurant && (
-              <article className="restaurant-profile-card">
-                <button
-                  type="button"
-                  className="back-button"
-                  onClick={() => setSelectedRestaurant(null)}
-                >
-                  ← Tornar al llistat
-                </button>
-                <img
-                  src={selectedRestaurant.imageUrl || WHITE_AVATAR_IMAGE}
-                  alt={`Foto de ${selectedRestaurant.name}`}
-                  onError={(event) => {
-                    event.currentTarget.src = WHITE_AVATAR_IMAGE;
-                  }}
-                />
-                <h3>Fitxa del restaurant</h3>
-                <p><strong>Nom:</strong> {selectedRestaurant.name}</p>
-                <p><strong>Especialitat:</strong> {selectedRestaurant.specialty}</p>
-                <p><strong>Carrer:</strong> {selectedRestaurant.street}</p>
-
-                <h4>Alumnes que hi treballen</h4>
-                {studentsForSelectedRestaurant.current.length > 0 ? (
-                  <ul>
-                    {studentsForSelectedRestaurant.current.map((student) => (
-                      <li key={`current-${student.id}`}>
-                        <button type="button" className="profile-link-button" onClick={() => openStudentProfile(student)}>
-                          {student.fullName} ({student.role})
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p>No hi ha alumnes treballant actualment.</p>
-                )}
-
-                <h4>Alumnes que hi han treballat</h4>
-                {studentsForSelectedRestaurant.past.length > 0 ? (
-                  <ul>
-                    {studentsForSelectedRestaurant.past.map((student) => (
-                      <li key={`past-${student.id}`}>
-                        <button type="button" className="profile-link-button" onClick={() => openStudentProfile(student)}>
-                          {student.fullName} ({student.role})
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p>No hi ha registres d’alumnes anteriors.</p>
-                )}
-              </article>
-            )}
           </section>
         )}
 
@@ -880,7 +828,7 @@ function App() {
                     <button
                       type="button"
                       className="student-open-button"
-                      onClick={() => setSelectedStudent(student)}
+                      onClick={() => openStudentProfile(student)}
                     >
                       <img
                         src={student.imageUrl || WHITE_AVATAR_IMAGE}
@@ -899,61 +847,113 @@ function App() {
               </div>
             )}
 
-            {selectedStudent && (
-              <article className="student-profile-card">
-                <button type="button" className="back-button" onClick={() => setSelectedStudent(null)}>
-                  ← Tornar al llistat
-                </button>
-                <img
-                  src={selectedStudent.imageUrl || WHITE_AVATAR_IMAGE}
-                  alt={`Foto de ${selectedStudent.fullName}`}
-                  onError={(event) => {
-                    event.currentTarget.src = WHITE_AVATAR_IMAGE;
-                  }}
-                />
-                <button type="button" className="profile-link-button" onClick={openProfilePhotoPicker}>
-                  Canviar foto de perfil
-                </button>
-                <input
-                  ref={profilePhotoInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden-file-input"
-                  onChange={handleProfilePhotoChange}
-                />
-                {profilePhotoStatus && <p>{profilePhotoStatus}</p>}
-                <h3>Fitxa personal</h3>
-                <p><strong>Nom i cognoms:</strong> {selectedStudent.fullName}</p>
-                <p><strong>On treballa:</strong> {selectedStudent.workplace}</p>
-                <p><strong>Rol a la feina:</strong> {selectedStudent.role}</p>
-                <p><strong>Correu electrònic:</strong> {selectedStudent.email || 'No disponible'}</p>
-                <p><strong>Telèfon:</strong> {selectedStudent.phone || 'No disponible'}</p>
-                <p>
-                  <strong>LinkedIn:</strong>{' '}
-                  {selectedStudent.linkedin && selectedStudent.linkedin !== 'No disponible' ? (
-                    <a
-                      href={normalizeLinkedinUrl(selectedStudent.linkedin)}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="profile-link-button"
-                    >
-                      {selectedStudent.linkedin}
-                    </a>
-                  ) : (
-                    'No disponible'
-                  )}
-                </p>
-                {selectedStudent.restaurantId && (
-                  <button
-                    type="button"
+          </section>
+        )}
+
+        {activeSection === 'restaurant-profile' && selectedRestaurant && (
+          <section className="restaurants-section">
+            <article className="restaurant-profile-card">
+              <button type="button" className="back-button" onClick={() => selectSection('restaurants')}>
+                ← Tornar al llistat
+              </button>
+              <img
+                src={selectedRestaurant.imageUrl || WHITE_AVATAR_IMAGE}
+                alt={`Foto de ${selectedRestaurant.name}`}
+                onError={(event) => {
+                  event.currentTarget.src = WHITE_AVATAR_IMAGE;
+                }}
+              />
+              <h3>Fitxa del restaurant</h3>
+              <p><strong>Nom:</strong> {selectedRestaurant.name}</p>
+              <p><strong>Especialitat:</strong> {selectedRestaurant.specialty}</p>
+              <p><strong>Carrer:</strong> {selectedRestaurant.street}</p>
+              <h4>Alumnes que hi treballen</h4>
+              {studentsForSelectedRestaurant.current.length > 0 ? (
+                <ul>
+                  {studentsForSelectedRestaurant.current.map((student) => (
+                    <li key={`current-${student.id}`}>
+                      <button type="button" className="profile-link-button" onClick={() => openStudentProfile(student)}>
+                        {student.fullName} ({student.role})
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p>No hi ha alumnes treballant actualment.</p>
+              )}
+              <h4>Alumnes que hi han treballat</h4>
+              {studentsForSelectedRestaurant.past.length > 0 ? (
+                <ul>
+                  {studentsForSelectedRestaurant.past.map((student) => (
+                    <li key={`past-${student.id}`}>
+                      <button type="button" className="profile-link-button" onClick={() => openStudentProfile(student)}>
+                        {student.fullName} ({student.role})
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p>No hi ha registres d’alumnes anteriors.</p>
+              )}
+            </article>
+          </section>
+        )}
+
+        {activeSection === 'student-profile' && selectedStudent && (
+          <section className="students-section">
+            <article className="student-profile-card">
+              <button type="button" className="back-button" onClick={() => selectSection('students')}>
+                ← Tornar al llistat
+              </button>
+              <img
+                src={selectedStudent.imageUrl || WHITE_AVATAR_IMAGE}
+                alt={`Foto de ${selectedStudent.fullName}`}
+                onError={(event) => {
+                  event.currentTarget.src = WHITE_AVATAR_IMAGE;
+                }}
+              />
+              <button type="button" className="profile-link-button" onClick={openProfilePhotoPicker}>
+                Canviar foto de perfil
+              </button>
+              <input
+                ref={profilePhotoInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden-file-input"
+                onChange={handleProfilePhotoChange}
+              />
+              {profilePhotoStatus && <p>{profilePhotoStatus}</p>}
+              <h3>Fitxa personal</h3>
+              <p><strong>Nom i cognoms:</strong> {selectedStudent.fullName}</p>
+              <p><strong>On treballa:</strong> {selectedStudent.workplace}</p>
+              <p><strong>Rol a la feina:</strong> {selectedStudent.role}</p>
+              <p><strong>Correu electrònic:</strong> {selectedStudent.email || 'No disponible'}</p>
+              <p><strong>Telèfon:</strong> {selectedStudent.phone || 'No disponible'}</p>
+              <p>
+                <strong>LinkedIn:</strong>{' '}
+                {selectedStudent.linkedin && selectedStudent.linkedin !== 'No disponible' ? (
+                  <a
+                    href={normalizeLinkedinUrl(selectedStudent.linkedin)}
+                    target="_blank"
+                    rel="noreferrer"
                     className="profile-link-button"
-                    onClick={() => openRestaurantProfile(selectedStudent.restaurantId)}
                   >
-                    Veure fitxa del restaurant
-                  </button>
+                    {selectedStudent.linkedin}
+                  </a>
+                ) : (
+                  'No disponible'
                 )}
-              </article>
-            )}
+              </p>
+              {selectedStudent.restaurantId && (
+                <button
+                  type="button"
+                  className="profile-link-button"
+                  onClick={() => openRestaurantProfile(selectedStudent.restaurantId)}
+                >
+                  Veure fitxa del restaurant
+                </button>
+              )}
+            </article>
           </section>
         )}
 
