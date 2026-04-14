@@ -4,6 +4,7 @@ import './App.css';
 
 const FIREBASE_PROJECT_ID = 'hosteleriajoviat-94129';
 const FIRESTORE_BASE_URL = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents`;
+const ADMIN_USERS = ['admin', 'yassir', 'professor'];
 
 const ALUMNI_IMAGES_BY_NAME = {
   'elena gilbert': 'https://i.pinimg.com/736x/53/39/cc/5339ccdd5dfb6b834fac3711e943c9b0.jpg',
@@ -79,6 +80,7 @@ function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isAuthMenuOpen, setIsAuthMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [loginForm, setLoginForm] = useState({ username: '', password: '' });
   const [loginError, setLoginError] = useState('');
   const [loggedInUser, setLoggedInUser] = useState('');
@@ -114,7 +116,9 @@ function App() {
   const [restaurantForm, setRestaurantForm] = useState({
     name: '',
     specialty: '',
-    street: ''
+    street: '',
+    email: '',
+    phone: ''
   });
   const [restaurantPhotoPreview, setRestaurantPhotoPreview] = useState('');
   const [saveRestaurantError, setSaveRestaurantError] = useState('');
@@ -167,6 +171,15 @@ function App() {
             specialty,
             street,
             coordinates,
+            email:
+              readFirestoreValue(fields.email) ||
+              readFirestoreValue(fields.correu) ||
+              'No disponible',
+            phone:
+              readFirestoreValue(fields.phone) ||
+              readFirestoreValue(fields.telefon) ||
+              readFirestoreValue(fields.telefono) ||
+              'No disponible',
             imageUrl:
               RESTAURANT_IMAGES_BY_NAME[name.toLowerCase()] ||
               readFirestoreValue(fields.imageUrl) ||
@@ -310,14 +323,48 @@ function App() {
       return 'https://www.google.com/maps?q=Barcelona&z=13&output=embed';
     }
 
-    const firstWithCoordinates = filteredRestaurants.find((restaurant) => restaurant.coordinates);
-    if (firstWithCoordinates) {
-      const { lat, lng } = firstWithCoordinates.coordinates;
-      return `https://www.google.com/maps?q=${lat},${lng}&z=15&output=embed`;
-    }
-
-    return `https://www.google.com/maps?q=${encodeURIComponent(filteredRestaurants[0].name)}&z=15&output=embed`;
+    const allPinsQuery = filteredRestaurants
+      .map((restaurant) => (
+        restaurant.coordinates
+          ? `${restaurant.coordinates.lat},${restaurant.coordinates.lng}`
+          : restaurant.name
+      ))
+      .join('|');
+    return `https://www.google.com/maps?q=${encodeURIComponent(allPinsQuery)}&z=13&output=embed`;
   }, [filteredRestaurants]);
+
+  const restaurantProfileMapUrl = useMemo(() => {
+    if (!selectedRestaurant) return '';
+    if (selectedRestaurant.coordinates) {
+      const { lat, lng } = selectedRestaurant.coordinates;
+      return `https://www.google.com/maps?q=${lat},${lng}&z=16&output=embed`;
+    }
+    return `https://www.google.com/maps?q=${encodeURIComponent(selectedRestaurant.name)}&z=16&output=embed`;
+  }, [selectedRestaurant]);
+
+  const restaurantsForSelectedStudent = useMemo(() => {
+    if (!selectedStudent) return [];
+
+    const relatedRows = students.filter((student) => {
+      if (selectedStudent.alumniId && student.alumniId) {
+        return student.alumniId === selectedStudent.alumniId;
+      }
+      return student.id === selectedStudent.id;
+    });
+
+    const uniqueByRestaurant = new Map();
+    relatedRows.forEach((item) => {
+      if (!item.restaurantId && !item.workplace) return;
+      const key = item.restaurantId || item.workplace;
+      uniqueByRestaurant.set(key, {
+        restaurantId: item.restaurantId,
+        workplace: item.workplace,
+        role: item.role,
+        currentJob: item.currentJob
+      });
+    });
+    return Array.from(uniqueByRestaurant.values());
+  }, [selectedStudent, students]);
 
   const studentsForSelectedRestaurant = useMemo(() => {
     if (!selectedRestaurant) return { current: [], past: [] };
@@ -354,6 +401,7 @@ function App() {
     }
 
     setIsLoggedIn(true);
+    setIsAdmin(ADMIN_USERS.includes(username.toLowerCase()));
     setLoggedInUser(username);
     setLoginForm({ username: '', password: '' });
     setLoginError('');
@@ -362,6 +410,7 @@ function App() {
 
   const handleLogout = () => {
     setIsLoggedIn(false);
+    setIsAdmin(false);
     setLoggedInUser('');
     setLoginForm({ username: '', password: '' });
     setLoginError('');
@@ -370,7 +419,7 @@ function App() {
 
   const selectSection = (section) => {
     setActiveSection(section);
-    if (['students', 'restaurants', 'add-student', 'add-restaurant'].includes(section)) {
+    if (['students', 'restaurants', 'add-student', 'add-restaurant', 'manage-entries'].includes(section)) {
       setSelectedStudent(null);
       setSelectedRestaurant(null);
     }
@@ -590,6 +639,8 @@ function App() {
     const name = restaurantForm.name.trim();
     const specialty = restaurantForm.specialty.trim();
     const street = restaurantForm.street.trim();
+    const email = (restaurantForm.email || '').trim();
+    const phone = (restaurantForm.phone || '').trim();
 
     if (!name || !street) {
       setSaveRestaurantSuccess('');
@@ -603,6 +654,8 @@ function App() {
         Name: { stringValue: name },
         specialty: { stringValue: specialty || 'No disponible' },
         street: { stringValue: street },
+        email: { stringValue: email },
+        phone: { stringValue: phone },
         imageUrl: { stringValue: restaurantPhotoPreview || WHITE_AVATAR_IMAGE }
       }
     };
@@ -624,6 +677,8 @@ function App() {
         name,
         specialty: specialty || 'No disponible',
         street,
+        email: email || 'No disponible',
+        phone: phone || 'No disponible',
         coordinates: null,
         imageUrl: restaurantPhotoPreview || WHITE_AVATAR_IMAGE
       };
@@ -632,7 +687,7 @@ function App() {
       openRestaurantProfile(newRestaurant.id);
       setSaveRestaurantError('');
       setSaveRestaurantSuccess('Restaurant guardat correctament a Firebase.');
-      setRestaurantForm({ name: '', specialty: '', street: '' });
+      setRestaurantForm({ name: '', specialty: '', street: '', email: '', phone: '' });
       setRestaurantPhotoPreview('');
     } catch (error) {
       setSaveRestaurantSuccess('');
@@ -754,16 +809,25 @@ function App() {
                 Visualitzar Alumnes
               </button>
             </li>
-            <li>
-              <button type="button" className="menu-link" onClick={() => selectSection('add-student')}>
-                Afegir Alumne
-              </button>
-            </li>
-            <li>
-              <button type="button" className="menu-link" onClick={() => selectSection('add-restaurant')}>
-                Afegir Restaurant
-              </button>
-            </li>
+            {isLoggedIn && isAdmin && (
+              <>
+                <li>
+                  <button type="button" className="menu-link" onClick={() => selectSection('add-student')}>
+                    Afegir Alumne
+                  </button>
+                </li>
+                <li>
+                  <button type="button" className="menu-link" onClick={() => selectSection('add-restaurant')}>
+                    Afegir Restaurant
+                  </button>
+                </li>
+                <li>
+                  <button type="button" className="menu-link" onClick={() => selectSection('manage-entries')}>
+                    Gestionar altes
+                  </button>
+                </li>
+              </>
+            )}
           </ul>
         </nav>
       </aside>
@@ -886,6 +950,11 @@ function App() {
               <p><strong>Nom:</strong> {selectedRestaurant.name}</p>
               <p><strong>Especialitat:</strong> {selectedRestaurant.specialty}</p>
               <p><strong>Carrer:</strong> {selectedRestaurant.street}</p>
+              <p><strong>Correu electrònic:</strong> {selectedRestaurant.email || 'No disponible'}</p>
+              <p><strong>Telèfon:</strong> {selectedRestaurant.phone || 'No disponible'}</p>
+              <div className="map-wrapper">
+                <iframe title="Mapa de la fitxa del restaurant" src={restaurantProfileMapUrl} loading="lazy" />
+              </div>
               <h4>Alumnes que hi treballen</h4>
               {studentsForSelectedRestaurant.current.length > 0 ? (
                 <ul>
@@ -971,6 +1040,28 @@ function App() {
                   'No disponible'
                 )}
               </p>
+              <h4>Restaurants on treballa o ha treballat</h4>
+              {restaurantsForSelectedStudent.length > 0 ? (
+                <ul>
+                  {restaurantsForSelectedStudent.map((restaurantItem) => (
+                    <li key={`${restaurantItem.restaurantId}-${restaurantItem.workplace}`}>
+                      {restaurantItem.restaurantId ? (
+                        <button
+                          type="button"
+                          className="profile-link-button"
+                          onClick={() => openRestaurantProfile(restaurantItem.restaurantId)}
+                        >
+                          {restaurantItem.workplace} · {restaurantItem.role} {restaurantItem.currentJob ? '(Actual)' : '(Anterior)'}
+                        </button>
+                      ) : (
+                        <span>{restaurantItem.workplace} · {restaurantItem.role} {restaurantItem.currentJob ? '(Actual)' : '(Anterior)'}</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p>No hi ha restaurants vinculats.</p>
+              )}
               {selectedStudent.restaurantId && (
                 <button
                   type="button"
@@ -1204,6 +1295,26 @@ function App() {
                   value={restaurantForm.street}
                   onChange={handleRestaurantInputChange}
                 />
+
+                <label htmlFor="restaurant-email">Correu electrònic</label>
+                <input
+                  id="restaurant-email"
+                  name="email"
+                  type="email"
+                  placeholder="contacte@restaurant.cat"
+                  value={restaurantForm.email || ''}
+                  onChange={handleRestaurantInputChange}
+                />
+
+                <label htmlFor="restaurant-phone">Telèfon</label>
+                <input
+                  id="restaurant-phone"
+                  name="phone"
+                  type="text"
+                  placeholder="+34 600 000 000"
+                  value={restaurantForm.phone || ''}
+                  onChange={handleRestaurantInputChange}
+                />
               </article>
             </div>
 
@@ -1214,6 +1325,28 @@ function App() {
               {saveRestaurantError && <p className="save-student-error">{saveRestaurantError}</p>}
               {saveRestaurantSuccess && <p className="save-student-success">{saveRestaurantSuccess}</p>}
             </div>
+          </section>
+        )}
+
+        {activeSection === 'manage-entries' && (
+          <section className="admin-page">
+            <p className="admin-eyebrow">ADMINISTRACIO</p>
+            <h1>Gestionar altes</h1>
+            <p className="admin-intro">Revisa els darrers alumnes i restaurants creats.</p>
+            <article className="admin-panel">
+              <h3>Últims alumnes</h3>
+              <ul>
+                {students.slice(0, 10).map((student) => (
+                  <li key={`manage-student-${student.id}`}>{student.fullName}</li>
+                ))}
+              </ul>
+              <h3>Últims restaurants</h3>
+              <ul>
+                {restaurants.slice(0, 10).map((restaurant) => (
+                  <li key={`manage-restaurant-${restaurant.id}`}>{restaurant.name}</li>
+                ))}
+              </ul>
+            </article>
           </section>
         )}
       </main>
