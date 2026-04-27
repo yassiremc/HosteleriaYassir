@@ -1005,7 +1005,7 @@ function App() {
                         className="profile-link-button"
                         onClick={() => openStudentProfileFromRestaurant(student, selectedRestaurant.id)}
                       >
-                        {student.fullName} ({student.role})
+                        Veure fitxa de l&apos;alumne: {student.fullName} ({student.role})
                       </button>
                     </li>
                   ))}
@@ -1031,7 +1031,7 @@ function App() {
                         className="profile-link-button"
                         onClick={() => openStudentProfileFromRestaurant(student, selectedRestaurant.id)}
                       >
-                        {student.fullName} ({student.role})
+                        Veure fitxa de l&apos;alumne: {student.fullName} ({student.role})
                       </button>
                     </li>
                   ))}
@@ -1094,22 +1094,24 @@ function App() {
                 <ul>
                   {restaurantsForSelectedStudent.map((restaurantItem) => (
                     <li key={`${restaurantItem.restaurantId}-${restaurantItem.workplace}`} className="profile-linked-item">
-                      <img
-                        className="profile-linked-thumb"
-                        src={getRestaurantImageById(restaurantItem.restaurantId)}
-                        alt={`Foto de ${restaurantItem.workplace}`}
-                        onError={(event) => {
-                          event.currentTarget.src = WHITE_AVATAR_IMAGE;
-                        }}
-                      />
                       {restaurantItem.restaurantId ? (
-                        <button
-                          type="button"
-                          className="profile-link-button"
-                          onClick={() => openRestaurantProfile(restaurantItem.restaurantId)}
-                        >
-                          {restaurantItem.workplace} · {restaurantItem.role} {restaurantItem.currentJob ? '(Actual)' : '(Anterior)'}
-                        </button>
+                        <>
+                          <img
+                            className="profile-linked-thumb"
+                            src={getRestaurantImageById(restaurantItem.restaurantId)}
+                            alt={`Foto de ${restaurantItem.workplace}`}
+                            onError={(event) => {
+                              event.currentTarget.src = WHITE_AVATAR_IMAGE;
+                            }}
+                          />
+                          <button
+                            type="button"
+                            className="profile-link-button"
+                            onClick={() => openRestaurantProfile(restaurantItem.restaurantId)}
+                          >
+                            {restaurantItem.workplace} · {restaurantItem.role} {restaurantItem.currentJob ? '(Actual)' : '(Anterior)'}
+                          </button>
+                        </>
                       ) : (
                         <span>{restaurantItem.workplace} · {restaurantItem.role} {restaurantItem.currentJob ? '(Actual)' : '(Anterior)'}</span>
                       )}
