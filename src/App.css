@@ -5,8 +5,8 @@
 body {
   margin: 0;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: #0b1120;
-  color: #e2e8f0;
+  background: #050709;
+  color: #111827;
 }
 
 .app-shell {
@@ -19,9 +19,9 @@ body {
   top: 0;
   left: 0;
   right: 0;
-  height: 72px;
-  background: rgba(15, 23, 42, 0.95);
-  border-bottom: 1px solid #1f2937;
+  height: 84px;
+  background: #050709;
+  border-bottom: 1px solid #101826;
   backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
@@ -36,13 +36,14 @@ body {
 }
 
 .auth-button {
-  border: 1px solid #334155;
-  background: #0f172a;
-  color: #e2e8f0;
+  border: none;
+  background: transparent;
+  color: #f8fafc;
   border-radius: 8px;
   padding: 0.5rem 0.8rem;
   cursor: pointer;
-  font-weight: 600;
+  font-weight: 700;
+  letter-spacing: 0.04em;
 }
 
 .auth-menu {
@@ -97,7 +98,7 @@ body {
 }
 
 .brand-logo {
-  height: 48px;
+  height: 90px;
   width: auto;
   object-fit: contain;
 }
@@ -125,11 +126,11 @@ body {
 
 .sidebar {
   position: fixed;
-  top: 72px;
+  top: 84px;
   left: 0;
   width: min(80vw, 290px);
   height: calc(100vh - 72px);
-  background: #0f172a;
+  background: #050709;
   border-right: 1px solid #1f2937;
   box-shadow: 4px 0 16px rgba(2, 6, 23, 0.65);
   transform: translateX(-100%);
@@ -145,7 +146,9 @@ body {
 .sidebar h2 {
   margin-top: 0;
   margin-bottom: 1rem;
-  font-size: 1.1rem;
+  font-size: 2.8rem;
+  letter-spacing: 0.03em;
+  color: #fff;
 }
 
 .sidebar ul {
@@ -161,12 +164,21 @@ body {
 .menu-link {
   background: none;
   border: none;
-  padding: 0;
-  color: #93c5fd;
-  font-weight: 500;
+  padding: 0.65rem 0.8rem;
+  color: #e4d1ad;
+  font-weight: 700;
   font: inherit;
   cursor: pointer;
   text-align: left;
+  width: 100%;
+  border-radius: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.menu-link:hover {
+  background: #e4d1ad;
+  color: #1a1a1a;
 }
 
 .overlay {
@@ -187,7 +199,7 @@ body {
 
 .main-content {
   padding: 104px 1rem 2rem;
-  max-width: 960px;
+  max-width: 1700px;
   margin: 0 auto;
   text-align: left;
 }
@@ -216,13 +228,119 @@ body {
 
   .main-content {
     margin-left: min(80vw, 290px);
-    max-width: calc(960px + min(80vw, 290px));
-    padding: 104px 2rem 2rem;
+    max-width: calc(1700px + min(80vw, 290px));
+    padding: 108px 2rem 2rem;
   }
 
   .topbar {
     padding: 0 1.5rem;
   }
+}
+
+.main-content > section {
+  background: #d9d3c8;
+  border-radius: 0;
+  min-height: calc(100vh - 140px);
+  padding: 2.5rem 2rem;
+}
+
+.sidebar-brand {
+  text-align: center;
+  margin-bottom: 1.4rem;
+}
+
+.sidebar-brand p {
+  margin-top: 0;
+  margin-bottom: 0.8rem;
+  color: #a99c84;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  font-size: 0.8rem;
+}
+
+.language-switch {
+  display: inline-flex;
+  border: 1px solid #423f39;
+  border-radius: 999px;
+  padding: 0.2rem;
+  gap: 0.15rem;
+}
+
+.language-pill {
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: #a99c84;
+  padding: 0.35rem 0.65rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.language-pill.active {
+  background: #e4d1ad;
+  color: #111827;
+}
+
+.auth-button-logged {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.15rem;
+}
+
+.auth-button-logged img {
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  object-fit: cover;
+  border: 2px solid #e4d1ad;
+}
+
+.auth-button-logged small {
+  color: #cbd5e1;
+}
+
+.home-hero {
+  min-height: 78vh;
+  background-size: cover;
+  background-position: center;
+  border-radius: 0;
+  display: flex;
+  align-items: flex-end;
+  padding: 2rem;
+}
+
+.home-hero-content {
+  max-width: 600px;
+  color: #fff;
+}
+
+.home-hero-content p {
+  color: #e4d1ad;
+  letter-spacing: 0.18em;
+  font-weight: 700;
+}
+
+.home-hero-content h1 {
+  font-size: clamp(2.4rem, 6vw, 5rem);
+  line-height: 1.04;
+  margin: 0 0 1.4rem;
+}
+
+.home-cta-row {
+  display: flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.home-cta-row button {
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  padding: 0.8rem 1.2rem;
+  font-weight: 800;
+  border-radius: 12px;
+  cursor: pointer;
 }
 
 .students-section {

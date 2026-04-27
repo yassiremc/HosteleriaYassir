@@ -18,6 +18,7 @@ const WHITE_AVATAR_IMAGE =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='512' height='512' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%230f172a'/%3E%3Ccircle cx='256' cy='188' r='92' fill='%23ffffff'/%3E%3Cpath d='M96 452c0-88 72-160 160-160s160 72 160 160' fill='%23ffffff'/%3E%3C/svg%3E";
 
 const DEFAULT_RESTAURANT_IMAGE_URL = WHITE_AVATAR_IMAGE;
+const HOME_HERO_IMAGE = 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1800&q=80';
 
 
 const RESTAURANT_IMAGES_BY_NAME = {
@@ -85,7 +86,8 @@ function App() {
   const [loginForm, setLoginForm] = useState({ username: '', password: '' });
   const [loginError, setLoginError] = useState('');
   const [loggedInUser, setLoggedInUser] = useState('');
-  const [activeSection, setActiveSection] = useState('restaurants');
+  const [activeSection, setActiveSection] = useState('home');
+  const [activeLanguage, setActiveLanguage] = useState('ca');
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [selectedRestaurant, setSelectedRestaurant] = useState(null);
   const [studentSearch, setStudentSearch] = useState('');
@@ -428,6 +430,8 @@ function App() {
   };
 
   const handleLogout = () => {
+    const shouldLogout = window.confirm('Vols tancar la sessió ara?');
+    if (!shouldLogout) return;
     setIsLoggedIn(false);
     setIsAdmin(false);
     setLoggedInUser('');
@@ -776,7 +780,6 @@ function App() {
           <span />
           <span />
         </button>
-        <img src={logoJoviat} className="brand-logo" alt="logo_joviat" />
         <div className="auth-menu-wrapper">
           <button
             type="button"
@@ -785,7 +788,15 @@ function App() {
             aria-expanded={isAuthMenuOpen}
             aria-controls="auth-menu"
           >
-            {isLoggedIn ? `👤 ${loggedInUser}` : 'Log in'}
+            {isLoggedIn ? (
+              <span className="auth-button-logged">
+                {!isAdmin && <img src={selectedStudent?.imageUrl || WHITE_AVATAR_IMAGE} alt="Avatar usuari" />}
+                <strong>{isAdmin ? 'LOGOUT' : loggedInUser}</strong>
+                {!isAdmin && <small>{loggedInUser}</small>}
+              </span>
+            ) : (
+              'LOGIN'
+            )}
           </button>
 
           {isAuthMenuOpen && (
@@ -828,16 +839,37 @@ function App() {
 
       <aside id="main-sidebar" className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
         <nav>
-          <h2>Menú</h2>
+          <div className="sidebar-brand">
+            <h2>JOVIAT</h2>
+            <img src={logoJoviat} className="brand-logo" alt="logo_joviat" />
+            <p>ALUMNI NETWORK</p>
+            <div className="language-switch">
+              {['ca', 'es', 'en'].map((lang) => (
+                <button
+                  key={lang}
+                  type="button"
+                  className={`language-pill ${activeLanguage === lang ? 'active' : ''}`}
+                  onClick={() => setActiveLanguage(lang)}
+                >
+                  {lang.toUpperCase()}
+                </button>
+              ))}
+            </div>
+          </div>
           <ul>
             <li>
+              <button type="button" className="menu-link" onClick={() => selectSection('home')}>
+                Inici
+              </button>
+            </li>
+            <li>
               <button type="button" className="menu-link" onClick={() => selectSection('restaurants')}>
-                Visalitzar Restaurants
+                Restaurants
               </button>
             </li>
             <li>
               <button type="button" className="menu-link" onClick={() => selectSection('students')}>
-                Visualitzar Alumnes
+                Alumnes
               </button>
             </li>
             {isLoggedIn && isAdmin && (
@@ -871,6 +903,21 @@ function App() {
       />
 
       <main className="main-content">
+        {activeSection === 'home' && (
+          <section className="home-section">
+            <div className="home-hero" style={{ backgroundImage: `linear-gradient(rgba(5,5,5,0.65), rgba(5,5,5,0.45)), url(${HOME_HERO_IMAGE})` }}>
+              <div className="home-hero-content">
+                <p>CICLE FORMATIU HOTELERIA</p>
+                <h1>Descobreix fins on arriba la xarxa de la Joviat</h1>
+                <div className="home-cta-row">
+                  <button type="button" onClick={() => selectSection('restaurants')}>EXPLORAR RESTAURANTS</button>
+                  <button type="button" onClick={() => selectSection('students')}>EXPLORAR ALUMNES</button>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
         {activeSection === 'restaurants' && (
           <section className="restaurants-section">
             <h2>Visualització de l’alumnat al restaurant</h2>
