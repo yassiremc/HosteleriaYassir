@@ -97,12 +97,6 @@ body {
   margin-bottom: 0.8rem;
 }
 
-.brand-logo {
-  height: 90px;
-  width: auto;
-  object-fit: contain;
-}
-
 .menu-button {
   width: 42px;
   height: 42px;

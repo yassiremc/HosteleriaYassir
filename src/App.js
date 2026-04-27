@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import logoJoviat from './logo_joviat.webp';
 import './App.css';
 
 const FIREBASE_PROJECT_ID = 'hosteleriajoviat-94129';
@@ -841,7 +840,6 @@ function App() {
         <nav>
           <div className="sidebar-brand">
             <h2>JOVIAT</h2>
-            <img src={logoJoviat} className="brand-logo" alt="logo_joviat" />
             <p>ALUMNI NETWORK</p>
             <div className="language-switch">
               {['ca', 'es', 'en'].map((lang) => (
