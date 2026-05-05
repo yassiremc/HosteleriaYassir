@@ -19,6 +19,75 @@ const WHITE_AVATAR_IMAGE =
 const DEFAULT_RESTAURANT_IMAGE_URL = WHITE_AVATAR_IMAGE;
 const HOME_HERO_IMAGE = 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1800&q=80';
 
+const TRANSLATIONS = {
+  ca: {
+    login: 'LOGIN',
+    logout: 'LOGOUT',
+    menuHome: 'Inici',
+    menuRestaurants: 'Restaurants',
+    menuStudents: 'Alumnes',
+    menuAddStudent: 'Afegir Alumne',
+    menuAddRestaurant: 'Afegir Restaurant',
+    menuManageEntries: 'Gestionar altes',
+    heroEyebrow: 'CICLE FORMATIU HOTELERIA',
+    heroTitle: 'Descobreix fins on arriba la xarxa de la Joviat',
+    exploreRestaurants: 'EXPLORAR RESTAURANTS',
+    exploreStudents: 'EXPLORAR ALUMNES',
+    restaurantsTitle: 'Visualització de l’alumnat al restaurant',
+    mapTitle: 'Mapa de Google Maps',
+    searchRestaurant: 'Buscar restaurant...',
+    studentsTitle: "Llistat d'alumnes",
+    searchStudent: 'Buscar alumne o rol...',
+    username: 'Usuari',
+    password: 'Contrasenya',
+    enter: 'Entrar'
+  },
+  es: {
+    login: 'INICIAR SESIÓN',
+    logout: 'CERRAR SESIÓN',
+    menuHome: 'Inicio',
+    menuRestaurants: 'Restaurantes',
+    menuStudents: 'Alumnos',
+    menuAddStudent: 'Añadir Alumno',
+    menuAddRestaurant: 'Añadir Restaurante',
+    menuManageEntries: 'Gestionar altas',
+    heroEyebrow: 'CICLO FORMATIVO HOSTELERÍA',
+    heroTitle: 'Descubre hasta dónde llega la red de Joviat',
+    exploreRestaurants: 'EXPLORAR RESTAURANTES',
+    exploreStudents: 'EXPLORAR ALUMNOS',
+    restaurantsTitle: 'Visualización del alumnado en el restaurante',
+    mapTitle: 'Mapa de Google Maps',
+    searchRestaurant: 'Buscar restaurante...',
+    studentsTitle: 'Listado de alumnos',
+    searchStudent: 'Buscar alumno o rol...',
+    username: 'Usuario',
+    password: 'Contraseña',
+    enter: 'Entrar'
+  },
+  en: {
+    login: 'LOGIN',
+    logout: 'LOGOUT',
+    menuHome: 'Home',
+    menuRestaurants: 'Restaurants',
+    menuStudents: 'Students',
+    menuAddStudent: 'Add Student',
+    menuAddRestaurant: 'Add Restaurant',
+    menuManageEntries: 'Manage Entries',
+    heroEyebrow: 'HOSPITALITY PROGRAM',
+    heroTitle: 'Discover how far the Joviat network reaches',
+    exploreRestaurants: 'EXPLORE RESTAURANTS',
+    exploreStudents: 'EXPLORE STUDENTS',
+    restaurantsTitle: 'Student presence by restaurant',
+    mapTitle: 'Google Maps',
+    searchRestaurant: 'Search restaurant...',
+    studentsTitle: 'Student list',
+    searchStudent: 'Search student or role...',
+    username: 'Username',
+    password: 'Password',
+    enter: 'Sign in'
+  }
+};
+
 
 const RESTAURANT_IMAGES_BY_NAME = {
   'restaurant japonès niwaka': 'https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&w=1200&q=80',
@@ -127,6 +196,7 @@ function App() {
   const [saveRestaurantSuccess, setSaveRestaurantSuccess] = useState('');
   const [studentProfileSourceRestaurantId, setStudentProfileSourceRestaurantId] = useState(null);
   const [pendingAdminSection, setPendingAdminSection] = useState('');
+  const t = (key) => TRANSLATIONS[activeLanguage]?.[key] || TRANSLATIONS.ca[key] || key;
 
   useEffect(() => {
     const loadData = async () => {
@@ -794,7 +864,7 @@ function App() {
                 {!isAdmin && <small>{loggedInUser}</small>}
               </span>
             ) : (
-              'LOGIN'
+              t('login')
             )}
           </button>
 
@@ -802,7 +872,7 @@ function App() {
             <div id="auth-menu" className="auth-menu">
               {!isLoggedIn ? (
                 <form className="auth-form" onSubmit={handleLogin}>
-                  <label htmlFor="username">Usuari</label>
+                  <label htmlFor="username">{t('username')}</label>
                   <input
                     id="username"
                     name="username"
@@ -811,7 +881,7 @@ function App() {
                     onChange={handleLoginInput}
                     placeholder="Introdueix el teu usuari"
                   />
-                  <label htmlFor="password">Contrasenya</label>
+                  <label htmlFor="password">{t('password')}</label>
                   <input
                     id="password"
                     name="password"
@@ -821,14 +891,12 @@ function App() {
                     placeholder="Introdueix la contrasenya"
                   />
                   {loginError && <p className="auth-error">{loginError}</p>}
-                  <button type="submit" className="auth-submit-button">Entrar</button>
+                  <button type="submit" className="auth-submit-button">{t('enter')}</button>
                 </form>
               ) : (
                 <div className="auth-logged-in">
                   <p>Has iniciat sessió com <strong>{loggedInUser}</strong>.</p>
-                  <button type="button" className="auth-logout-button" onClick={handleLogout}>
-                    Log out
-                  </button>
+                  <button type="button" className="auth-logout-button" onClick={handleLogout}>{t('logout')}</button>
                 </div>
               )}
             </div>
@@ -857,34 +925,34 @@ function App() {
           <ul>
             <li>
               <button type="button" className="menu-link" onClick={() => selectSection('home')}>
-                Inici
+                {t('menuHome')}
               </button>
             </li>
             <li>
               <button type="button" className="menu-link" onClick={() => selectSection('restaurants')}>
-                Restaurants
+                {t('menuRestaurants')}
               </button>
             </li>
             <li>
               <button type="button" className="menu-link" onClick={() => selectSection('students')}>
-                Alumnes
+                {t('menuStudents')}
               </button>
             </li>
             {isLoggedIn && isAdmin && (
               <>
                 <li>
                   <button type="button" className="menu-link" onClick={() => selectSection('add-student')}>
-                    Afegir Alumne
+                    {t('menuAddStudent')}
                   </button>
                 </li>
                 <li>
                   <button type="button" className="menu-link" onClick={() => selectSection('add-restaurant')}>
-                    Afegir Restaurant
+                    {t('menuAddRestaurant')}
                   </button>
                 </li>
                 <li>
                   <button type="button" className="menu-link" onClick={() => selectSection('manage-entries')}>
-                    Gestionar altes
+                    {t('menuManageEntries')}
                   </button>
                 </li>
               </>
@@ -905,11 +973,11 @@ function App() {
           <section className="home-section">
             <div className="home-hero" style={{ backgroundImage: `linear-gradient(rgba(5,5,5,0.65), rgba(5,5,5,0.45)), url(${HOME_HERO_IMAGE})` }}>
               <div className="home-hero-content">
-                <p>CICLE FORMATIU HOTELERIA</p>
-                <h1>Descobreix fins on arriba la xarxa de la Joviat</h1>
+                <p>{t('heroEyebrow')}</p>
+                <h1>{t('heroTitle')}</h1>
                 <div className="home-cta-row">
-                  <button type="button" onClick={() => selectSection('restaurants')}>EXPLORAR RESTAURANTS</button>
-                  <button type="button" onClick={() => selectSection('students')}>EXPLORAR ALUMNES</button>
+                  <button type="button" onClick={() => selectSection('restaurants')}>{t('exploreRestaurants')}</button>
+                  <button type="button" onClick={() => selectSection('students')}>{t('exploreStudents')}</button>
                 </div>
               </div>
             </div>
@@ -918,12 +986,12 @@ function App() {
 
         {activeSection === 'restaurants' && (
           <section className="restaurants-section">
-            <h2>Visualització de l’alumnat al restaurant</h2>
-            <h3 className="restaurants-subtitle">Mapa de Google Maps</h3>
+            <h2>{t('restaurantsTitle')}</h2>
+            <h3 className="restaurants-subtitle">{t('mapTitle')}</h3>
             <input
               type="search"
               className="search-input"
-              placeholder="Buscar restaurant..."
+              placeholder={t('searchRestaurant')}
               value={restaurantSearch}
               onChange={(event) => setRestaurantSearch(event.target.value)}
             />
@@ -968,11 +1036,11 @@ function App() {
 
         {activeSection === 'students' && (
           <section className="students-section">
-            <h2>Llistat d&apos;alumnes</h2>
+            <h2>{t('studentsTitle')}</h2>
             <input
               type="search"
               className="search-input"
-              placeholder="Buscar alumne o rol..."
+              placeholder={t('searchStudent')}
               value={studentSearch}
               onChange={(event) => setStudentSearch(event.target.value)}
             />
