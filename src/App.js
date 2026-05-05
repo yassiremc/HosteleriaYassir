@@ -202,6 +202,9 @@ function App() {
   ]);
   const [pendingVenueRequests, setPendingVenueRequests] = useState([]);
   const [manageModal, setManageModal] = useState(null);
+  const mapContainerRef = useRef(null);
+  const leafletMapRef = useRef(null);
+  const leafletMarkersRef = useRef([]);
   const t = (key) => TRANSLATIONS[activeLanguage]?.[key] || TRANSLATIONS.ca[key] || key;
 
   useEffect(() => {
@@ -840,6 +843,68 @@ function App() {
     selectSection('students');
   };
 
+  useEffect(() => {
+    const loadLeaflet = async () => {
+      if (!mapContainerRef.current || activeSection !== 'restaurants') return;
+
+      if (!document.querySelector("link[data-leaflet='true']")) {
+        const leafletCss = document.createElement('link');
+        leafletCss.rel = 'stylesheet';
+        leafletCss.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+        leafletCss.dataset.leaflet = 'true';
+        document.head.appendChild(leafletCss);
+      }
+
+      if (!window.L) {
+        await new Promise((resolve, reject) => {
+          const script = document.createElement('script');
+          script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+          script.async = true;
+          script.onload = resolve;
+          script.onerror = reject;
+          document.body.appendChild(script);
+        });
+      }
+
+      if (!leafletMapRef.current && window.L) {
+        leafletMapRef.current = window.L.map(mapContainerRef.current).setView([41.8, 1.9], 8);
+        window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(leafletMapRef.current);
+      }
+
+      if (!leafletMapRef.current) return;
+
+      leafletMarkersRef.current.forEach((marker) => marker.remove());
+      leafletMarkersRef.current = [];
+
+      filteredRestaurants.forEach((restaurant) => {
+        if (!restaurant.coordinates) return;
+        const marker = window.L.marker([restaurant.coordinates.lat, restaurant.coordinates.lng]).addTo(leafletMapRef.current);
+        marker.bindPopup(`
+          <div class="restaurant-map-popup">
+            <button class="map-popup-close" type="button" onclick="this.closest('.leaflet-popup').querySelector('.leaflet-popup-close-button')?.click()">×</button>
+            <img src="${restaurant.imageUrl || WHITE_AVATAR_IMAGE}" alt="Foto de ${restaurant.name}" />
+            <div class="popup-chip">RESTAURANT</div>
+            <h4>${restaurant.name}</h4>
+            <p>📍 ${restaurant.street || 'No disponible'}</p>
+            <p>${students.filter((student) => student.restaurantId === restaurant.id).length} alumni associats</p>
+            <button class="map-popup-details" data-restaurant-id="${restaurant.id}">VEURE DETALLS</button>
+          </div>
+        `);
+        marker.on('popupopen', () => {
+          const button = document.querySelector(`.map-popup-details[data-restaurant-id="${restaurant.id}"]`);
+          if (button) {
+            button.addEventListener('click', () => openRestaurantProfile(restaurant.id), { once: true });
+          }
+        });
+        leafletMarkersRef.current.push(marker);
+      });
+    };
+
+    loadLeaflet();
+  }, [activeSection, filteredRestaurants, students]);
+
   const openManageActionModal = (type, request) => {
     setManageModal({ type, request });
   };
@@ -1021,12 +1086,7 @@ function App() {
               onChange={(event) => setRestaurantSearch(event.target.value)}
             />
             <div className="map-wrapper">
-              <iframe
-                title="Mapa de restaurants"
-                src={mapUrl}
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-              />
+              <div ref={mapContainerRef} className="leaflet-map-canvas" aria-label="Mapa de restaurants" />
             </div>
 
             <h3 className="restaurants-subtitle">Restaurants</h3>
