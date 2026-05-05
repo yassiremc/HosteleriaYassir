@@ -104,10 +104,30 @@ const readFirestoreValue = (field) => {
   if (Object.prototype.hasOwnProperty.call(field, 'arrayValue')) {
     return (field.arrayValue.values || []).map(readFirestoreValue);
   }
+  if (Object.prototype.hasOwnProperty.call(field, 'mapValue')) {
+    const mapped = {};
+    const mapFields = field.mapValue.fields || {};
+    Object.entries(mapFields).forEach(([key, value]) => {
+      mapped[key] = readFirestoreValue(value);
+    });
+    return mapped;
+  }
+  if (Object.prototype.hasOwnProperty.call(field, 'geoPointValue')) {
+    const point = field.geoPointValue || {};
+    return { lat: Number(point.latitude), lng: Number(point.longitude) };
+  }
   return '';
 };
 
 const parseLocation = (rawLocation) => {
+  if (rawLocation && typeof rawLocation === 'object' && !Array.isArray(rawLocation)) {
+    const latCandidates = [rawLocation.lat, rawLocation.latitude, rawLocation.Latitude, rawLocation.Lat];
+    const lngCandidates = [rawLocation.lng, rawLocation.longitude, rawLocation.Longitude, rawLocation.Lng, rawLocation.lon, rawLocation.long];
+    const parsedLat = Number(latCandidates.find((value) => value !== undefined && value !== null));
+    const parsedLng = Number(lngCandidates.find((value) => value !== undefined && value !== null));
+    if (!Number.isNaN(parsedLat) && !Number.isNaN(parsedLng)) return { lat: parsedLat, lng: parsedLng };
+  }
+
   if (Array.isArray(rawLocation)) {
     const [lat, lng] = rawLocation;
     const parsedLat = Number(lat);
@@ -233,8 +253,17 @@ function App() {
             readFirestoreValue(fields.Name) ||
             readFirestoreValue(fields.name) ||
             'Restaurant sense nom';
-          const locationField = readFirestoreValue(fields.Location) || '';
-          const coordinates = parseLocation(locationField);
+          const locationField =
+            readFirestoreValue(fields.Location) ||
+            readFirestoreValue(fields.location) ||
+            readFirestoreValue(fields.coordinates) ||
+            readFirestoreValue(fields.Coordinates) ||
+            '';
+          const fallbackCoordinates = parseLocation({
+            lat: readFirestoreValue(fields.lat) || readFirestoreValue(fields.latitude),
+            lng: readFirestoreValue(fields.lng) || readFirestoreValue(fields.longitude)
+          });
+          const coordinates = parseLocation(locationField) || fallbackCoordinates;
           const specialty =
             readFirestoreValue(fields.specialty) ||
             readFirestoreValue(fields.especialidad) ||
@@ -878,7 +907,9 @@ function App() {
       leafletMarkersRef.current.forEach((marker) => marker.remove());
       leafletMarkersRef.current = [];
 
-      filteredRestaurants.forEach((restaurant) => {
+      const restaurantsWithCoordinates = filteredRestaurants.filter((restaurant) => restaurant.coordinates);
+
+      restaurantsWithCoordinates.forEach((restaurant) => {
         if (!restaurant.coordinates) return;
         const marker = window.L.marker([restaurant.coordinates.lat, restaurant.coordinates.lng]).addTo(leafletMapRef.current);
         marker.bindPopup(`
@@ -900,6 +931,13 @@ function App() {
         });
         leafletMarkersRef.current.push(marker);
       });
+
+      if (restaurantsWithCoordinates.length > 0) {
+        const bounds = window.L.latLngBounds(
+          restaurantsWithCoordinates.map((restaurant) => [restaurant.coordinates.lat, restaurant.coordinates.lng])
+        );
+        leafletMapRef.current.fitBounds(bounds.pad(0.2));
+      }
     };
 
     loadLeaflet();
