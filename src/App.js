@@ -196,6 +196,12 @@ function App() {
   const [saveRestaurantSuccess, setSaveRestaurantSuccess] = useState('');
   const [studentProfileSourceRestaurantId, setStudentProfileSourceRestaurantId] = useState(null);
   const [pendingAdminSection, setPendingAdminSection] = useState('');
+  const [manageEntriesTab, setManageEntriesTab] = useState('users');
+  const [pendingUserRequests, setPendingUserRequests] = useState([
+    { id: 'req-user-1', name: 'Sandra Jo Solà', email: 'sjo@joviat.cat' }
+  ]);
+  const [pendingVenueRequests, setPendingVenueRequests] = useState([]);
+  const [manageModal, setManageModal] = useState(null);
   const t = (key) => TRANSLATIONS[activeLanguage]?.[key] || TRANSLATIONS.ca[key] || key;
 
   useEffect(() => {
@@ -832,6 +838,25 @@ function App() {
       return;
     }
     selectSection('students');
+  };
+
+  const openManageActionModal = (type, request) => {
+    setManageModal({ type, request });
+  };
+
+  const closeManageModal = () => {
+    setManageModal(null);
+  };
+
+  const confirmManageAction = () => {
+    if (!manageModal) return;
+    if (manageModal.type === 'accept-user' || manageModal.type === 'cancel-user') {
+      setPendingUserRequests((prev) => prev.filter((item) => item.id !== manageModal.request.id));
+    }
+    if (manageModal.type === 'accept-venue' || manageModal.type === 'cancel-venue') {
+      setPendingVenueRequests((prev) => prev.filter((item) => item.id !== manageModal.request.id));
+    }
+    setManageModal(null);
   };
 
   return (
@@ -1514,21 +1539,87 @@ function App() {
           <section className="admin-page">
             <p className="admin-eyebrow">ADMINISTRACIO</p>
             <h1>Gestionar altes</h1>
-            <p className="admin-intro">Revisa els darrers alumnes i restaurants creats.</p>
-            <article className="admin-panel">
-              <h3>Últims alumnes</h3>
-              <ul>
-                {students.slice(0, 10).map((student) => (
-                  <li key={`manage-student-${student.id}`}>{student.fullName}</li>
-                ))}
-              </ul>
-              <h3>Últims restaurants</h3>
-              <ul>
-                {restaurants.slice(0, 10).map((restaurant) => (
-                  <li key={`manage-restaurant-${restaurant.id}`}>{restaurant.name}</li>
-                ))}
-              </ul>
+            <p className="admin-intro">Revisa les sol·licituds pendents i decideix si vols donar d&apos;alta l&apos;usuari o cancel·lar-la.</p>
+
+            <article className="manage-entries-panel">
+              <div className="manage-entries-toggle" role="tablist" aria-label="Visualització d'altes">
+                <button
+                  type="button"
+                  className={`manage-entries-tab ${manageEntriesTab === 'users' ? 'active' : ''}`}
+                  onClick={() => setManageEntriesTab('users')}
+                >
+                  VISUALITZAR ALTES USUARIS
+                </button>
+                <button
+                  type="button"
+                  className={`manage-entries-tab ${manageEntriesTab === 'venues' ? 'active' : ''}`}
+                  onClick={() => setManageEntriesTab('venues')}
+                >
+                  VISUALITZAR ALTES ESTABLIMENTS
+                </button>
+              </div>
+
+              {manageEntriesTab === 'users' && (
+                <>
+                  {pendingUserRequests.length > 0 ? (
+                    pendingUserRequests.map((request) => (
+                      <article key={request.id} className="manage-entry-card">
+                        <div>
+                          <h3>{request.name}</h3>
+                          <p>{request.email}</p>
+                        </div>
+                        <div className="manage-entry-actions">
+                          <button type="button" className="manage-btn accept" onClick={() => openManageActionModal('accept-user', request)}>Acceptar</button>
+                          <button type="button" className="manage-btn cancel" onClick={() => openManageActionModal('cancel-user', request)}>Cancelar</button>
+                        </div>
+                      </article>
+                    ))
+                  ) : (
+                    <p className="manage-empty">No hi ha cap petició d&apos;usuari pendent.</p>
+                  )}
+                </>
+              )}
+
+              {manageEntriesTab === 'venues' && (
+                <>
+                  {pendingVenueRequests.length > 0 ? (
+                    pendingVenueRequests.map((request) => (
+                      <article key={request.id} className="manage-entry-card">
+                        <div>
+                          <h3>{request.name}</h3>
+                          <p>{request.email}</p>
+                        </div>
+                        <div className="manage-entry-actions">
+                          <button type="button" className="manage-btn accept" onClick={() => openManageActionModal('accept-venue', request)}>Acceptar</button>
+                          <button type="button" className="manage-btn cancel" onClick={() => openManageActionModal('cancel-venue', request)}>Cancelar</button>
+                        </div>
+                      </article>
+                    ))
+                  ) : (
+                    <p className="manage-empty">No hi ha cap petició d&apos;establiment pendent.</p>
+                  )}
+                </>
+              )}
             </article>
+
+            {manageModal && (
+              <div className="manage-modal-backdrop" role="presentation">
+                <article className="manage-modal" role="dialog" aria-modal="true">
+                  <h3>{manageModal.type.includes('accept') ? 'Confirmar alta' : 'Confirmar cancel·lacio de peticio'}</h3>
+                  <p>
+                    {manageModal.type.includes('accept')
+                      ? `Estas segur que vols donar d'alta a ${manageModal.request.name}?`
+                      : `Estas segur que vols cancel·lar la peticio d'alta de ${manageModal.request.name}?`}
+                  </p>
+                  <div className="manage-modal-actions">
+                    <button type="button" className="manage-btn cancel" onClick={closeManageModal}>No</button>
+                    <button type="button" className="manage-btn accept" onClick={confirmManageAction}>
+                      {manageModal.type.includes('accept') ? 'Si' : 'Cancel·lar peticio'}
+                    </button>
+                  </div>
+                </article>
+              </div>
+            )}
           </section>
         )}
 

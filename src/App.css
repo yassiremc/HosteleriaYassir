@@ -578,6 +578,126 @@ body {
   border: 1px solid #1e293b;
 }
 
+.manage-entries-panel {
+  background: #f2efea;
+  border-radius: 28px;
+  border: 1px solid #d5d1c8;
+  padding: 1.5rem;
+  position: relative;
+}
+
+.manage-entries-toggle {
+  width: min(100%, 520px);
+  margin: 0 auto 1.4rem;
+  background: #f6f5f2;
+  border: 1px solid #d0ccc2;
+  border-radius: 999px;
+  padding: 0.35rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.25rem;
+}
+
+.manage-entries-tab {
+  border: none;
+  border-radius: 999px;
+  padding: 0.8rem 0.9rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  background: transparent;
+  color: #1f2937;
+  cursor: pointer;
+}
+
+.manage-entries-tab.active {
+  background: #0a0a0d;
+  color: #fff;
+  box-shadow: 0 10px 18px rgba(2, 6, 23, 0.18);
+}
+
+.manage-entry-card {
+  background: #eef0f2;
+  border: 1px solid #d2d7de;
+  border-radius: 22px;
+  padding: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.manage-entry-card h3 {
+  margin: 0;
+  font-size: 2rem;
+  color: #0f172a;
+}
+
+.manage-entry-card p {
+  margin: 0.35rem 0 0;
+  color: #334155;
+}
+
+.manage-entry-actions,
+.manage-modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.manage-btn {
+  border: none;
+  border-radius: 999px;
+  padding: 0.75rem 1.25rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.manage-btn.accept {
+  background: #0a0a0d;
+  color: #fff;
+}
+
+.manage-btn.cancel {
+  background: #e6d3b4;
+  color: #171717;
+}
+
+.manage-empty {
+  margin: 0.5rem 0;
+  color: #1f2937;
+}
+
+.manage-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 60;
+}
+
+.manage-modal {
+  width: min(100%, 520px);
+  background: #f7f4ef;
+  border-radius: 28px;
+  box-shadow: 0 22px 40px rgba(15, 23, 42, 0.28);
+  padding: 1.5rem;
+}
+
+.manage-modal h3 {
+  margin-top: 0;
+  margin-bottom: 0.8rem;
+  color: #111827;
+  font-size: clamp(1.8rem, 3vw, 2.4rem);
+}
+
+.manage-modal p {
+  color: #334155;
+  margin-bottom: 1.2rem;
+}
+
 .admin-eyebrow {
   margin: 0;
   letter-spacing: 0.3rem;
