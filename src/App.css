@@ -208,26 +208,28 @@ body {
 }
 
 @media (min-width: 992px) {
-  .menu-button {
-    display: none;
-  }
-
-  .sidebar {
-    transform: translateX(0);
-  }
-
   .overlay {
     display: none;
   }
 
   .main-content {
-    margin-left: min(80vw, 290px);
-    max-width: calc(1700px + min(80vw, 290px));
+    margin-left: 0;
+    max-width: 1700px;
     padding: 108px 2rem 2rem;
+    transition: margin-left 0.25s ease, max-width 0.25s ease;
   }
 
   .topbar {
     padding: 0 1.5rem;
+  }
+
+  .app-shell.sidebar-open .sidebar {
+    transform: translateX(0);
+  }
+
+  .app-shell.sidebar-open .main-content {
+    margin-left: min(80vw, 290px);
+    max-width: calc(1700px + min(80vw, 290px));
   }
 }
 
