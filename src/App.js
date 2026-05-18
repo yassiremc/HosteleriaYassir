@@ -40,7 +40,10 @@ const TRANSLATIONS = {
     searchStudent: 'Buscar alumne o rol...',
     username: 'Usuari',
     password: 'Contrasenya',
-    enter: 'Entrar'
+    enter: 'Entrar',
+    requestAccess: 'Sol·licitar accés',
+    mapMode: 'Mode mapa',
+    listMode: 'Mode llistat'
   },
   es: {
     login: 'INICIAR SESIÓN',
@@ -62,7 +65,10 @@ const TRANSLATIONS = {
     searchStudent: 'Buscar alumno o rol...',
     username: 'Usuario',
     password: 'Contraseña',
-    enter: 'Entrar'
+    enter: 'Entrar',
+    requestAccess: 'Solicitar acceso',
+    mapMode: 'Modo mapa',
+    listMode: 'Modo listado'
   },
   en: {
     login: 'LOGIN',
@@ -84,7 +90,10 @@ const TRANSLATIONS = {
     searchStudent: 'Search student or role...',
     username: 'Username',
     password: 'Password',
-    enter: 'Sign in'
+    enter: 'Sign in',
+    requestAccess: 'Request access',
+    mapMode: 'Map mode',
+    listMode: 'List mode'
   }
 };
 
@@ -222,6 +231,11 @@ function App() {
   ]);
   const [pendingVenueRequests, setPendingVenueRequests] = useState([]);
   const [manageModal, setManageModal] = useState(null);
+  const [showRequestAccess, setShowRequestAccess] = useState(false);
+  const [accessRequestForm, setAccessRequestForm] = useState({ email: '', fullName: '' });
+  const [accessRequestMessage, setAccessRequestMessage] = useState('');
+  const [restaurantViewMode, setRestaurantViewMode] = useState('map');
+  const [restaurantPage, setRestaurantPage] = useState(1);
   const mapContainerRef = useRef(null);
   const leafletMapRef = useRef(null);
   const leafletMarkersRef = useRef([]);
@@ -943,6 +957,17 @@ function App() {
     loadLeaflet();
   }, [activeSection, filteredRestaurants, students]);
 
+  useEffect(() => {
+    setRestaurantPage(1);
+  }, [restaurantSearch]);
+
+  const RESTAURANTS_PER_PAGE = 6;
+  const paginatedRestaurants = useMemo(() => {
+    const start = (restaurantPage - 1) * RESTAURANTS_PER_PAGE;
+    return filteredRestaurants.slice(start, start + RESTAURANTS_PER_PAGE);
+  }, [filteredRestaurants, restaurantPage]);
+  const totalRestaurantPages = Math.max(1, Math.ceil(filteredRestaurants.length / RESTAURANTS_PER_PAGE));
+
   const openManageActionModal = (type, request) => {
     setManageModal({ type, request });
   };
@@ -960,6 +985,35 @@ function App() {
       setPendingVenueRequests((prev) => prev.filter((item) => item.id !== manageModal.request.id));
     }
     setManageModal(null);
+  };
+
+  const handleAccessRequestInput = (event) => {
+    const { name, value } = event.target;
+    setAccessRequestForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleRequestAccess = (event) => {
+    event.preventDefault();
+    const email = accessRequestForm.email.trim().toLowerCase();
+    const fullName = accessRequestForm.fullName.trim();
+    if (!email || !fullName) {
+      setAccessRequestMessage('Cal omplir correu i nom i cognoms.');
+      return;
+    }
+    const alreadyUser = students.some((st) => (st.email || '').toLowerCase() === email) || email === ADMIN_EMAIL;
+    const alreadyPending = pendingUserRequests.some((req) => req.email.toLowerCase() === email);
+    if (alreadyUser) {
+      setAccessRequestMessage('Aquest correu ja està donat d’alta.');
+      return;
+    }
+    if (alreadyPending) {
+      setAccessRequestMessage('Aquest correu ja ha sol·licitat accés.');
+      return;
+    }
+    const newRequest = { id: `req-user-${Date.now()}`, name: fullName, email };
+    setPendingUserRequests((prev) => [newRequest, ...prev]);
+    setAccessRequestMessage('Sol·licitud enviada correctament.');
+    setAccessRequestForm({ email: '', fullName: '' });
   };
 
   return (
@@ -1020,6 +1074,15 @@ function App() {
                   />
                   {loginError && <p className="auth-error">{loginError}</p>}
                   <button type="submit" className="auth-submit-button">{t('enter')}</button>
+                  <button type="button" className="auth-submit-button" onClick={() => setShowRequestAccess((prev) => !prev)}>{t('requestAccess')}</button>
+                  {showRequestAccess && (
+                    <div className="request-access-panel">
+                      <input name="email" type="email" placeholder="Email" value={accessRequestForm.email} onChange={handleAccessRequestInput} />
+                      <input name="fullName" type="text" placeholder="Nom i cognoms" value={accessRequestForm.fullName} onChange={handleAccessRequestInput} />
+                      <button type="button" className="auth-submit-button" onClick={handleRequestAccess}>{t('requestAccess')}</button>
+                      {accessRequestMessage && <p className="auth-error">{accessRequestMessage}</p>}
+                    </div>
+                  )}
                 </form>
               ) : (
                 <div className="auth-logged-in">
@@ -1123,9 +1186,15 @@ function App() {
               value={restaurantSearch}
               onChange={(event) => setRestaurantSearch(event.target.value)}
             />
-            <div className="map-wrapper">
-              <div ref={mapContainerRef} className="leaflet-map-canvas" aria-label="Mapa de restaurants" />
+            <div className="view-toggle">
+              <button type="button" className={`language-pill ${restaurantViewMode === 'map' ? 'active' : ''}`} onClick={() => setRestaurantViewMode('map')}>{t('mapMode')}</button>
+              <button type="button" className={`language-pill ${restaurantViewMode === 'list' ? 'active' : ''}`} onClick={() => setRestaurantViewMode('list')}>{t('listMode')}</button>
             </div>
+            {restaurantViewMode === 'map' && (
+              <div className="map-wrapper">
+                <div ref={mapContainerRef} className="leaflet-map-canvas" aria-label="Mapa de restaurants" />
+              </div>
+            )}
 
             <h3 className="restaurants-subtitle">Restaurants</h3>
             {loadingRestaurants && <p>Carregant restaurants...</p>}
@@ -1151,6 +1220,13 @@ function App() {
                     </button>
                   </article>
                 ))}
+              </div>
+            )}
+            {restaurantViewMode === 'list' && totalRestaurantPages > 1 && (
+              <div className="pagination">
+                <button type="button" disabled={restaurantPage <= 1} onClick={() => setRestaurantPage((p) => Math.max(1, p - 1))}>‹</button>
+                <span>{restaurantPage} / {totalRestaurantPages}</span>
+                <button type="button" disabled={restaurantPage >= totalRestaurantPages} onClick={() => setRestaurantPage((p) => Math.min(totalRestaurantPages, p + 1))}>›</button>
               </div>
             )}
 
@@ -1196,7 +1272,6 @@ function App() {
                 ))}
               </div>
             )}
-
           </section>
         )}
 

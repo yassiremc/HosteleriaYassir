@@ -74,6 +74,11 @@ body {
   border-radius: 8px;
   padding: 0.55rem 0.6rem;
 }
+.request-access-panel {
+  display: grid;
+  gap: 0.45rem;
+  margin-top: 0.4rem;
+}
 
 .auth-submit-button,
 .auth-logout-button {
@@ -470,6 +475,24 @@ body {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 1rem;
+}
+.view-toggle {
+  display: flex;
+  gap: 0.55rem;
+  margin-bottom: 0.5rem;
+}
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.85rem;
+}
+.pagination button {
+  border: 1px solid #334155;
+  background: #0f172a;
+  color: #e2e8f0;
+  border-radius: 8px;
+  padding: 0.35rem 0.65rem;
 }
 
 .restaurant-card {
