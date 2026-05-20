@@ -188,6 +188,8 @@ function App() {
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [selectedRestaurant, setSelectedRestaurant] = useState(null);
   const [studentSearch, setStudentSearch] = useState('');
+  const [studentEmploymentFilter, setStudentEmploymentFilter] = useState('all');
+  const [studentPromotionYearFilter, setStudentPromotionYearFilter] = useState('all');
   const [restaurantSearch, setRestaurantSearch] = useState('');
   const [students, setStudents] = useState([]);
   const [loadingStudents, setLoadingStudents] = useState(true);
@@ -424,15 +426,33 @@ function App() {
 
   const filteredStudents = useMemo(() => {
     const term = studentSearch.trim().toLowerCase();
-    if (!term) return students;
+    return students.filter((student) => {
+      const matchesSearch = !term
+        || student.fullName.toLowerCase().includes(term)
+        || student.role.toLowerCase().includes(term)
+        || student.workplace.toLowerCase().includes(term);
 
-    return students.filter(
-      (student) =>
-        student.fullName.toLowerCase().includes(term) ||
-        student.role.toLowerCase().includes(term) ||
-        student.workplace.toLowerCase().includes(term)
-    );
-  }, [students, studentSearch]);
+      const isCurrent = parseBoolean(student.currentJob);
+      const matchesEmployment = studentEmploymentFilter === 'all'
+        || (studentEmploymentFilter === 'current' && isCurrent)
+        || (studentEmploymentFilter === 'past' && !isCurrent);
+
+      const studentYear = Number(String(student.promotionYear || '').trim());
+      const matchesPromotionYear = studentPromotionYearFilter === 'all'
+        || (!Number.isNaN(studentYear) && studentYear === Number(studentPromotionYearFilter));
+
+      return matchesSearch && matchesEmployment && matchesPromotionYear;
+    });
+  }, [students, studentSearch, studentEmploymentFilter, studentPromotionYearFilter]);
+
+  const promotionYearOptions = useMemo(() => {
+    const detected = students
+      .map((student) => Number(String(student.promotionYear || '').trim()))
+      .filter((year) => !Number.isNaN(year));
+    const currentYear = new Date().getFullYear();
+    const fallbackYears = Array.from({ length: 18 }, (_, idx) => currentYear - idx);
+    return Array.from(new Set([...detected, ...fallbackYears])).sort((a, b) => b - a);
+  }, [students]);
 
   const filteredRestaurants = useMemo(() => {
     const term = restaurantSearch.trim().toLowerCase();
@@ -1339,14 +1359,45 @@ function App() {
 
         {activeSection === 'students' && (
           <section className="students-section">
-            <h2>{t('studentsTitle')}</h2>
-            <input
-              type="search"
-              className="search-input"
-              placeholder={t('searchStudent')}
-              value={studentSearch}
-              onChange={(event) => setStudentSearch(event.target.value)}
-            />
+            <h2 className="students-title">🧑‍🍳 Llistat d&apos;Alumnis</h2>
+            <div className="students-search-wrap">
+              <label htmlFor="students-search-input" className="students-search-label">
+                CERCAR ALUMNIS <span>(mostrant {filteredStudents.length} de {students.length})</span>
+              </label>
+              <div className="students-search-row">
+                <input
+                  id="students-search-input"
+                  type="search"
+                  className="search-input students-search-input"
+                  placeholder="Escriu el nom de l&apos;Alumni"
+                  value={studentSearch}
+                  onChange={(event) => setStudentSearch(event.target.value)}
+                />
+                <span className="students-filter-icon" aria-hidden="true">🎚️</span>
+              </div>
+            </div>
+
+            <article className="students-filters-card">
+              <div className="students-filter-block-title">ESTUDIS CURSATS A LA JOVIAT</div>
+              <div className="students-filter-inline">
+                <div>
+                  <label htmlFor="students-employment-filter" className="students-filter-label">SITUACIÓ LABORAL</label>
+                  <select id="students-employment-filter" value={studentEmploymentFilter} onChange={(event) => setStudentEmploymentFilter(event.target.value)}>
+                    <option value="all">Qualsevol situació</option>
+                    <option value="current">Treballen actualment</option>
+                    <option value="past">No treballen actualment</option>
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="students-year-filter" className="students-filter-label">ANY DE PROMOCIÓ</label>
+                  <select id="students-year-filter" value={studentPromotionYearFilter} onChange={(event) => setStudentPromotionYearFilter(event.target.value)}>
+                    <option value="all">Qualsevol any</option>
+                    {promotionYearOptions.map((year) => <option key={year} value={year}>{year}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="students-filter-block-title">PERFIL PROFESSIONAL</div>
+            </article>
 
             {loadingStudents && <p>Carregant alumnes...</p>}
             {!loadingStudents && studentsError && <p>{studentsError}</p>}
@@ -1367,9 +1418,11 @@ function App() {
                           event.currentTarget.src = WHITE_AVATAR_IMAGE;
                         }}
                       />
-                      <div>
+                      <div className="student-card-body">
                         <h3>{student.fullName}</h3>
-                        <p>Rol: {student.role}</p>
+                        <p>• {student.role}</p>
+                        <p className="student-card-assoc">🏫 {students.filter((item) => item.alumniId === student.alumniId).length || 1} establiments associats</p>
+                        <span className="student-card-cta">VEURE DETALLS</span>
                       </div>
                     </button>
                   </article>

@@ -366,6 +366,7 @@ body {
 
 .students-section {
   margin-top: 2rem;
+  color: #111827;
 }
 
 .students-grid {
@@ -375,8 +376,8 @@ body {
 }
 
 .student-card {
-  background: #111827;
-  border: 1px solid #334155;
+  background: #f7f4ee;
+  border: 1px solid #ddd5c9;
   border-radius: 12px;
   overflow: hidden;
 }
@@ -384,9 +385,9 @@ body {
 .student-card img {
   width: 100%;
   height: 220px;
-  object-fit: contain;
-  object-position: center top;
-  background: #020617;
+  object-fit: cover;
+  object-position: center;
+  background: #e8decc;
   display: block;
 }
 
@@ -397,13 +398,29 @@ body {
 .student-card h3 {
   margin: 0;
   font-size: 1rem;
-  color: #f8fafc;
+  color: #111827;
 }
 
 .student-card p {
   margin: 0.4rem 0 0;
-  color: #cbd5e1;
+  color: #3f3a32;
 }
+.students-title { font-size: 3rem; margin: 0 0 1rem; }
+.students-search-wrap { margin-bottom: 1rem; }
+.students-search-label { font-size: 0.8rem; font-weight: 800; letter-spacing: 0.08em; }
+.students-search-label span { font-weight: 500; letter-spacing: normal; color: #796c55; }
+.students-search-row { display:flex; gap:0.7rem; align-items:center; }
+.students-search-input { background:#fff; border:1px solid #d7cfbf; color:#111827; max-width:unset; }
+.students-filter-icon { font-size:1.5rem; }
+.students-filters-card { background:#f7f4ee; border:1px solid #ddd5c9; border-radius:14px; padding:0.75rem; margin-bottom:1.2rem; }
+.students-filter-block-title { font-size:0.78rem; font-weight:900; letter-spacing:0.08em; margin:0.4rem 0; }
+.students-filter-inline { display:flex; gap:1rem; flex-wrap:wrap; margin:0.5rem 0 0.8rem; }
+.students-filter-inline > div { min-width:220px; }
+.students-filter-label { display:block; font-size:0.78rem; font-weight:800; margin-bottom:0.35rem; }
+.students-filter-inline select { width:100%; border:1px solid #d7cfbf; border-radius:11px; padding:0.55rem 0.8rem; background:#fff; }
+.student-card-body { padding:0.75rem; }
+.student-card-assoc { font-size:0.86rem; margin-top:0.45rem; }
+.student-card-cta { display:block; margin-top:0.55rem; border:1px solid #111827; border-radius:8px; padding:0.4rem; text-align:center; font-weight:800; font-size:0.78rem; letter-spacing:0.08em; }
 
 .restaurants-section {
   margin-top: 2rem;
