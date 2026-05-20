@@ -1107,3 +1107,31 @@ body {
     font-size: 2.1rem;
   }
 }
+
+.inline-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 0.35rem;
+}
+
+.restaurant-action-row {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.restaurant-profile-message {
+  margin-top: 0.6rem;
+  color: #8b4d11;
+  font-weight: 600;
+}
+
+.restaurant-info-grid input {
+  width: 100%;
+  margin-top: 0.35rem;
+  border: 1px solid #d8d0c2;
+  border-radius: 8px;
+  padding: 0.4rem 0.5rem;
+  background: #fff;
+}

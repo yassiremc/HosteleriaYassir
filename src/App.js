@@ -236,6 +236,9 @@ function App() {
   const [accessRequestMessage, setAccessRequestMessage] = useState('');
   const [restaurantViewMode, setRestaurantViewMode] = useState('map');
   const [restaurantPage, setRestaurantPage] = useState(1);
+  const [isEditingRestaurant, setIsEditingRestaurant] = useState(false);
+  const [restaurantEditForm, setRestaurantEditForm] = useState({ name: '', specialty: '', street: '', email: '', phone: '' });
+  const [restaurantProfileMessage, setRestaurantProfileMessage] = useState('');
   const mapContainerRef = useRef(null);
   const leafletMapRef = useRef(null);
   const leafletMarkersRef = useRef([]);
@@ -878,6 +881,91 @@ function App() {
     setIsSidebarOpen(false);
   };
 
+
+  const startRestaurantEdit = () => {
+    if (!selectedRestaurant) return;
+    setRestaurantEditForm({
+      name: selectedRestaurant.name || '',
+      specialty: selectedRestaurant.specialty || '',
+      street: selectedRestaurant.street || '',
+      email: selectedRestaurant.email === 'No disponible' ? '' : selectedRestaurant.email || '',
+      phone: selectedRestaurant.phone === 'No disponible' ? '' : selectedRestaurant.phone || ''
+    });
+    setRestaurantProfileMessage('');
+    setIsEditingRestaurant(true);
+  };
+
+  const handleRestaurantEditChange = (event) => {
+    const { name, value } = event.target;
+    setRestaurantEditForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSaveRestaurantEdit = async () => {
+    if (!selectedRestaurant) return;
+
+    const updatedRestaurant = {
+      ...selectedRestaurant,
+      name: restaurantEditForm.name.trim() || selectedRestaurant.name,
+      specialty: restaurantEditForm.specialty.trim() || 'No disponible',
+      street: restaurantEditForm.street.trim() || selectedRestaurant.street,
+      email: restaurantEditForm.email.trim() || 'No disponible',
+      phone: restaurantEditForm.phone.trim() || 'No disponible'
+    };
+
+    if (!updatedRestaurant.name || !updatedRestaurant.street) {
+      setRestaurantProfileMessage('Cal informar el nom i el carrer.');
+      return;
+    }
+
+    try {
+      const response = await fetch(`${FIRESTORE_BASE_URL}/Restaurant/${encodeURIComponent(selectedRestaurant.id)}?updateMask.fieldPaths=Name&updateMask.fieldPaths=specialty&updateMask.fieldPaths=street&updateMask.fieldPaths=email&updateMask.fieldPaths=phone`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fields: {
+            Name: { stringValue: updatedRestaurant.name },
+            specialty: { stringValue: updatedRestaurant.specialty },
+            street: { stringValue: updatedRestaurant.street },
+            email: { stringValue: updatedRestaurant.email === 'No disponible' ? '' : updatedRestaurant.email },
+            phone: { stringValue: updatedRestaurant.phone === 'No disponible' ? '' : updatedRestaurant.phone }
+          }
+        })
+      });
+
+      if (!response.ok) throw new Error('No s’ha pogut actualitzar el restaurant.');
+
+      setRestaurants((prev) => prev.map((restaurant) => (restaurant.id === selectedRestaurant.id ? updatedRestaurant : restaurant)));
+      setSelectedRestaurant(updatedRestaurant);
+      setIsEditingRestaurant(false);
+      setRestaurantProfileMessage('Restaurant actualitzat correctament.');
+    } catch (error) {
+      setRestaurantProfileMessage('No s’ha pogut actualitzar el restaurant.');
+    }
+  };
+
+  const handleDeleteRestaurant = async () => {
+    if (!selectedRestaurant) return;
+
+    const confirmed = window.confirm(`Vols eliminar ${selectedRestaurant.name}? Aquesta acció no es pot desfer.`);
+    if (!confirmed) return;
+
+    try {
+      const response = await fetch(`${FIRESTORE_BASE_URL}/Restaurant/${encodeURIComponent(selectedRestaurant.id)}`, {
+        method: 'DELETE'
+      });
+
+      if (!response.ok) throw new Error('No s’ha pogut eliminar el restaurant.');
+
+      setRestaurants((prev) => prev.filter((restaurant) => restaurant.id !== selectedRestaurant.id));
+      setSelectedRestaurant(null);
+      setIsEditingRestaurant(false);
+      setRestaurantProfileMessage('');
+      selectSection('restaurants');
+    } catch (error) {
+      setRestaurantProfileMessage('No s’ha pogut eliminar el restaurant.');
+    }
+  };
+
   const handleBackFromStudentProfile = () => {
     if (studentProfileSourceRestaurantId) {
       openRestaurantProfile(studentProfileSourceRestaurantId);
@@ -1237,7 +1325,7 @@ function App() {
                         <h4>{restaurant.name}</h4>
                         <p>📍 {restaurant.street || 'Adreça no disponible'}</p>
                         <p>{students.filter((student) => student.restaurantId === restaurant.id).length} Alumnis associats</p>
-                        <span className="restaurant-details-cta">👁 VEURE DETALLS</span>
+                        <span className="restaurant-details-cta"><span className="inline-icon">◉</span> VEURE DETALLS</span>
                       </div>
                     </button>
                   </article>
@@ -1315,18 +1403,28 @@ function App() {
                 <div>
                   <h3>Fitxa d&apos;establiment</h3>
                   <h2>{selectedRestaurant.name}</h2>
-                  <p>📍 {selectedRestaurant.street}</p>
+                  <p><span className="inline-icon">📍</span> {selectedRestaurant.street}</p>
                   <div className="restaurant-action-row">
-                    <button type="button" className="pill-button">Editar</button>
-                    <button type="button" className="pill-button danger">Eliminar</button>
+                    {isEditingRestaurant ? (
+                      <>
+                        <button type="button" className="pill-button" onClick={handleSaveRestaurantEdit}>💾 Guardar</button>
+                        <button type="button" className="pill-button" onClick={() => setIsEditingRestaurant(false)}>↩ Cancel·lar</button>
+                      </>
+                    ) : (
+                      <>
+                        <button type="button" className="pill-button" onClick={startRestaurantEdit}>✎ Editar</button>
+                        <button type="button" className="pill-button danger" onClick={handleDeleteRestaurant}>🗑 Eliminar</button>
+                      </>
+                    )}
                   </div>
+                  {restaurantProfileMessage && <p className="restaurant-profile-message">{restaurantProfileMessage}</p>}
                 </div>
               </div>
               <div className="restaurant-info-grid">
-                <div><strong>Categoria</strong><p>{selectedRestaurant.specialty}</p></div>
-                <div><strong>Phone</strong><p>{selectedRestaurant.phone || 'No disponible'}</p></div>
-                <div><strong>Email</strong><p>{selectedRestaurant.email || 'No disponible'}</p></div>
-                <div><strong>Web</strong><p>No disponible</p></div>
+                <div><strong>Categoria</strong>{isEditingRestaurant ? <input name="specialty" value={restaurantEditForm.specialty} onChange={handleRestaurantEditChange} /> : <p>{selectedRestaurant.specialty}</p>}</div>
+                <div><strong>Phone</strong>{isEditingRestaurant ? <input name="phone" value={restaurantEditForm.phone} onChange={handleRestaurantEditChange} /> : <p>{selectedRestaurant.phone || 'No disponible'}</p>}</div>
+                <div><strong>Email</strong>{isEditingRestaurant ? <input name="email" value={restaurantEditForm.email} onChange={handleRestaurantEditChange} /> : <p>{selectedRestaurant.email || 'No disponible'}</p>}</div>
+                <div><strong>Carrer</strong>{isEditingRestaurant ? <input name="street" value={restaurantEditForm.street} onChange={handleRestaurantEditChange} /> : <p>{selectedRestaurant.street || 'No disponible'}</p>}</div>
               </div>
               <div className="map-wrapper">
                 <iframe title="Mapa de la fitxa del restaurant" src={restaurantProfileMapUrl} loading="lazy" />
