@@ -192,6 +192,8 @@ function App() {
   const [studentPromotionYearFilter, setStudentPromotionYearFilter] = useState('all');
   const [selectedStudyFilters, setSelectedStudyFilters] = useState([]);
   const [selectedProfileFilters, setSelectedProfileFilters] = useState([]);
+  const [isStudiesFilterOpen, setIsStudiesFilterOpen] = useState(true);
+  const [isProfileFilterOpen, setIsProfileFilterOpen] = useState(true);
   const [restaurantSearch, setRestaurantSearch] = useState('');
   const [students, setStudents] = useState([]);
   const [loadingStudents, setLoadingStudents] = useState(true);
@@ -1412,22 +1414,27 @@ function App() {
             </div>
 
             <article className="students-filters-card">
-              <div className="students-filter-block-title">ESTUDIS CURSATS A LA JOVIAT</div>
-              <div className="students-chip-grid">
-                <button type="button" className="students-filter-chip action" onClick={() => setSelectedStudyFilters(studyOptions)}>
-                  Seleccionar tots els estudis
-                </button>
-                {studyOptions.map((study) => (
-                  <button
-                    key={study}
-                    type="button"
-                    className={`students-filter-chip ${selectedStudyFilters.includes(study) ? 'active' : ''}`}
-                    onClick={() => toggleStudentFilter(study, setSelectedStudyFilters)}
-                  >
-                    ☑ {study}
+              <button type="button" className="students-filter-collapse-btn" onClick={() => setIsStudiesFilterOpen((prev) => !prev)}>
+                <span className="students-filter-block-title">ESTUDIS CURSATS A LA JOVIAT</span>
+                <span aria-hidden="true">{isStudiesFilterOpen ? '⌃' : '⌄'}</span>
+              </button>
+              {isStudiesFilterOpen && (
+                <div className="students-chip-grid">
+                  <button type="button" className="students-filter-chip action" onClick={() => setSelectedStudyFilters(studyOptions)}>
+                    Seleccionar tots els estudis
                   </button>
-                ))}
-              </div>
+                  {studyOptions.map((study) => (
+                    <button
+                      key={study}
+                      type="button"
+                      className={`students-filter-chip ${selectedStudyFilters.includes(study) ? 'active' : ''}`}
+                      onClick={() => toggleStudentFilter(study, setSelectedStudyFilters)}
+                    >
+                      ☑ {study}
+                    </button>
+                  ))}
+                </div>
+              )}
               <div className="students-filter-inline">
                 <div>
                   <label htmlFor="students-employment-filter" className="students-filter-label">SITUACIÓ LABORAL</label>
@@ -1445,25 +1452,30 @@ function App() {
                   </select>
                 </div>
               </div>
-              <div className="students-filter-block-title">PERFIL PROFESSIONAL</div>
-              <div className="students-chip-grid">
-                <button type="button" className="students-filter-chip action" onClick={() => setSelectedProfileFilters(profileOptions)}>
-                  Seleccionar tots els perfils professionals
-                </button>
-                <button type="button" className="students-filter-chip action" onClick={() => setSelectedProfileFilters([])}>
-                  Treure tots els perfils professionals
-                </button>
-                {profileOptions.map((profile) => (
-                  <button
-                    key={profile}
-                    type="button"
-                    className={`students-filter-chip ${selectedProfileFilters.includes(profile) ? 'active' : ''}`}
-                    onClick={() => toggleStudentFilter(profile, setSelectedProfileFilters)}
-                  >
-                    ☐ {profile}
+              <button type="button" className="students-filter-collapse-btn" onClick={() => setIsProfileFilterOpen((prev) => !prev)}>
+                <span className="students-filter-block-title">PERFIL PROFESSIONAL</span>
+                <span aria-hidden="true">{isProfileFilterOpen ? '⌃' : '⌄'}</span>
+              </button>
+              {isProfileFilterOpen && (
+                <div className="students-chip-grid">
+                  <button type="button" className="students-filter-chip action" onClick={() => setSelectedProfileFilters(profileOptions)}>
+                    Seleccionar tots els perfils professionals
                   </button>
-                ))}
-              </div>
+                  <button type="button" className="students-filter-chip action" onClick={() => setSelectedProfileFilters([])}>
+                    Treure tots els perfils professionals
+                  </button>
+                  {profileOptions.map((profile) => (
+                    <button
+                      key={profile}
+                      type="button"
+                      className={`students-filter-chip ${selectedProfileFilters.includes(profile) ? 'active' : ''}`}
+                      onClick={() => toggleStudentFilter(profile, setSelectedProfileFilters)}
+                    >
+                      ☐ {profile}
+                    </button>
+                  ))}
+                </div>
+              )}
             </article>
 
             {loadingStudents && <p>Carregant alumnes...</p>}

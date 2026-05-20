@@ -414,6 +414,18 @@ body {
 .students-filter-icon { font-size:1.5rem; }
 .students-filters-card { background:#f7f4ee; border:1px solid #ddd5c9; border-radius:14px; padding:0.75rem; margin-bottom:1.2rem; }
 .students-filter-block-title { font-size:0.78rem; font-weight:900; letter-spacing:0.08em; margin:0.4rem 0; }
+.students-filter-collapse-btn {
+  width: 100%;
+  border: 1px solid #ddd5c9;
+  background: #fff;
+  border-radius: 10px;
+  padding: 0.45rem 0.65rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+}
+.students-filter-collapse-btn + .students-chip-grid { margin-top: 0.55rem; }
 .students-filter-inline { display:flex; gap:1rem; flex-wrap:wrap; margin:0.5rem 0 0.8rem; }
 .students-filter-inline > div { min-width:220px; }
 .students-filter-label { display:block; font-size:0.78rem; font-weight:800; margin-bottom:0.35rem; }
