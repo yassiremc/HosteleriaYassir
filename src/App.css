@@ -698,6 +698,15 @@ body {
   text-decoration: underline;
 }
 
+.student-contact-grid input {
+  width: 100%;
+  margin-top: 0.35rem;
+  border: 1px solid #d8d0c2;
+  border-radius: 8px;
+  padding: 0.4rem 0.5rem;
+  background: #fff;
+}
+
 .back-button {
   border: 1px solid #334155;
   background: #0f172a;

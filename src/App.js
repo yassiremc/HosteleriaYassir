@@ -186,6 +186,9 @@ function App() {
   const [activeSection, setActiveSection] = useState('home');
   const [activeLanguage, setActiveLanguage] = useState('ca');
   const [selectedStudent, setSelectedStudent] = useState(null);
+  const [isEditingStudent, setIsEditingStudent] = useState(false);
+  const [studentEditForm, setStudentEditForm] = useState({ fullName: '', studies: '', promotionYear: '', email: '', phone: '', linkedin: '', instagram: '' });
+  const [studentProfileMessage, setStudentProfileMessage] = useState('');
   const [selectedRestaurant, setSelectedRestaurant] = useState(null);
   const [studentSearch, setStudentSearch] = useState('');
   const [studentEmploymentFilter, setStudentEmploymentFilter] = useState('all');
@@ -960,6 +963,8 @@ function App() {
     setStudentProfileSourceRestaurantId(null);
     setActiveSection('student-profile');
     setSelectedStudent(student);
+    setIsEditingStudent(false);
+    setStudentProfileMessage('');
     setSelectedRestaurant(null);
     setIsSidebarOpen(false);
   };
@@ -968,6 +973,8 @@ function App() {
     setStudentProfileSourceRestaurantId(restaurantId || null);
     setActiveSection('student-profile');
     setSelectedStudent(student);
+    setIsEditingStudent(false);
+    setStudentProfileMessage('');
     setSelectedRestaurant(null);
     setIsSidebarOpen(false);
   };
@@ -1035,6 +1042,91 @@ function App() {
       return;
     }
     selectSection('students');
+  };
+
+  const startStudentEdit = () => {
+    if (!selectedStudent) return;
+    setStudentEditForm({
+      fullName: selectedStudent.fullName || '',
+      studies: selectedStudent.studies || '',
+      promotionYear: selectedStudent.promotionYear || '',
+      email: selectedStudent.email === 'No disponible' ? '' : selectedStudent.email || '',
+      phone: selectedStudent.phone === 'No disponible' ? '' : selectedStudent.phone || '',
+      linkedin: selectedStudent.linkedin === 'No disponible' ? '' : selectedStudent.linkedin || '',
+      instagram: selectedStudent.instagram === 'No disponible' ? '' : selectedStudent.instagram || ''
+    });
+    setIsEditingStudent(true);
+    setStudentProfileMessage('');
+  };
+
+  const handleStudentEditInputChange = (event) => {
+    const { name, value } = event.target;
+    setStudentEditForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSaveStudentEdit = async () => {
+    if (!selectedStudent) return;
+    const alumniId = selectedStudent.alumniId;
+    if (!alumniId) {
+      setStudentProfileMessage('No s’ha trobat l’identificador d’alumni.');
+      return;
+    }
+
+    const [firstName, ...lastParts] = studentEditForm.fullName.trim().split(' ');
+    const lastName = lastParts.join(' ').trim();
+    const payload = {
+      fields: {
+        name: { stringValue: firstName || '' },
+        lastName: { stringValue: lastName || '' },
+        email: { stringValue: studentEditForm.email.trim() },
+        phone: { stringValue: studentEditForm.phone.trim() },
+        linkedin: { stringValue: studentEditForm.linkedin.trim() },
+        instagram: { stringValue: studentEditForm.instagram.trim() },
+        studies: { stringValue: studentEditForm.studies.trim() },
+        promotionYear: { stringValue: studentEditForm.promotionYear.trim() }
+      }
+    };
+
+    try {
+      const response = await fetch(`${FIRESTORE_BASE_URL}/Alumni/${encodeURIComponent(alumniId)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!response.ok) throw new Error('No update');
+
+      const updated = {
+        ...selectedStudent,
+        fullName: studentEditForm.fullName.trim() || selectedStudent.fullName,
+        email: studentEditForm.email.trim() || 'No disponible',
+        phone: studentEditForm.phone.trim() || 'No disponible',
+        linkedin: studentEditForm.linkedin.trim() || 'No disponible',
+        instagram: studentEditForm.instagram.trim() || 'No disponible',
+        studies: studentEditForm.studies.trim() || 'Estudis no informats',
+        promotionYear: studentEditForm.promotionYear.trim()
+      };
+
+      setStudents((prev) => prev.map((item) => (item.alumniId === alumniId ? { ...item, ...updated } : item)));
+      setSelectedStudent(updated);
+      setIsEditingStudent(false);
+      setStudentProfileMessage('Alumni actualitzat correctament.');
+    } catch (error) {
+      setStudentProfileMessage('No s’ha pogut actualitzar l’alumni.');
+    }
+  };
+
+  const handleDeleteStudent = async () => {
+    if (!selectedStudent?.alumniId) return;
+    if (!window.confirm(`Vols eliminar ${selectedStudent.fullName}?`)) return;
+    try {
+      const response = await fetch(`${FIRESTORE_BASE_URL}/Alumni/${encodeURIComponent(selectedStudent.alumniId)}`, { method: 'DELETE' });
+      if (!response.ok) throw new Error('No delete');
+      setStudents((prev) => prev.filter((item) => item.alumniId !== selectedStudent.alumniId));
+      setSelectedStudent(null);
+      selectSection('students');
+    } catch (error) {
+      setStudentProfileMessage('No s’ha pogut eliminar l’alumni.');
+    }
   };
 
   useEffect(() => {
@@ -1639,6 +1731,19 @@ function App() {
                   <p>• {selectedStudent.studies || 'Estudis no informats'}</p>
                   {selectedStudent.role && <p>• {selectedStudent.role}</p>}
                   {selectedStudent.promotionYear && <p><strong>Promoció {selectedStudent.promotionYear}</strong></p>}
+                  <div className="restaurant-action-row">
+                    {isEditingStudent ? (
+                      <>
+                        <button type="button" className="pill-button" onClick={handleSaveStudentEdit}>💾 Desar</button>
+                        <button type="button" className="pill-button" onClick={() => setIsEditingStudent(false)}>↩ Cancel·lar</button>
+                      </>
+                    ) : (
+                      <>
+                        <button type="button" className="pill-button" onClick={startStudentEdit}>✎ Editar</button>
+                        <button type="button" className="pill-button danger" onClick={handleDeleteStudent}>🗑 Eliminar</button>
+                      </>
+                    )}
+                  </div>
                   <button type="button" className="profile-link-button" onClick={openProfilePhotoPicker}>
                     Canviar foto de perfil
                   </button>
@@ -1652,6 +1757,18 @@ function App() {
                 onChange={handleProfilePhotoChange}
               />
               {profilePhotoStatus && <p>{profilePhotoStatus}</p>}
+              {studentProfileMessage && <p className="restaurant-profile-message">{studentProfileMessage}</p>}
+              {isEditingStudent && (
+                <section className="student-contact-grid">
+                  <div><strong>Nom complet</strong><input name="fullName" value={studentEditForm.fullName} onChange={handleStudentEditInputChange} /></div>
+                  <div><strong>Estudis</strong><input name="studies" value={studentEditForm.studies} onChange={handleStudentEditInputChange} /></div>
+                  <div><strong>Promoció</strong><input name="promotionYear" value={studentEditForm.promotionYear} onChange={handleStudentEditInputChange} /></div>
+                  <div><strong>Email</strong><input name="email" value={studentEditForm.email} onChange={handleStudentEditInputChange} /></div>
+                  <div><strong>Phone</strong><input name="phone" value={studentEditForm.phone} onChange={handleStudentEditInputChange} /></div>
+                  <div><strong>LinkedIn</strong><input name="linkedin" value={studentEditForm.linkedin} onChange={handleStudentEditInputChange} /></div>
+                  <div><strong>Instagram</strong><input name="instagram" value={studentEditForm.instagram} onChange={handleStudentEditInputChange} /></div>
+                </section>
+              )}
               <section className="student-contact-grid">
                 <div><strong>Email</strong><p>{selectedStudent.email !== 'No disponible' ? <a href={`mailto:${selectedStudent.email}`}>{selectedStudent.email}</a> : 'No disponible'}</p></div>
                 <div><strong>Phone</strong><p>{selectedStudent.phone !== 'No disponible' ? <a href={`tel:${selectedStudent.phone}`}>{selectedStudent.phone}</a> : 'No disponible'}</p></div>
