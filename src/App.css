@@ -496,6 +496,10 @@ body {
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 1rem;
 }
+.restaurants-list-reference {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.2rem;
+}
 .view-toggle {
   display: flex;
   gap: 0.55rem;
@@ -516,9 +520,9 @@ body {
 }
 
 .restaurant-card {
-  background: #111827;
-  border: 1px solid #334155;
-  border-radius: 12px;
+  background: #f4f2ed;
+  border: 1px solid #d2ccc0;
+  border-radius: 16px;
   overflow: hidden;
 }
 
@@ -530,14 +534,34 @@ body {
 }
 
 .restaurant-card h4 {
-  margin: 0;
-  padding: 0.9rem;
-  color: #f8fafc;
+  margin: 0.35rem 0 0.45rem;
+  color: #111827;
 }
 
 .restaurant-card p {
-  margin: 0.5rem 0 0;
-  color: #cbd5e1;
+  margin: 0.35rem 0;
+  color: #5b5345;
+}
+.restaurant-card-body {
+  padding: 0.85rem;
+}
+.restaurant-chip {
+  display: inline-block;
+  background: #e9dfcd;
+  border-radius: 999px;
+  padding: 0.35rem 0.6rem;
+  font-weight: 800;
+  font-size: 0.75rem;
+}
+.restaurant-details-cta {
+  display: block;
+  margin-top: 0.7rem;
+  border: 1px solid #111827;
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  font-weight: 800;
+  color: #111827;
+  text-align: center;
 }
 
 .search-input {
@@ -621,11 +645,11 @@ body {
 }
 
 .restaurant-profile-card {
-  max-width: 760px;
-  border: 1px solid #334155;
-  border-radius: 12px;
-  background: #111827;
-  padding: 1rem;
+  max-width: 980px;
+  border: 1px solid #d8d0c2;
+  border-radius: 18px;
+  background: #f4f2ed;
+  padding: 1.2rem;
 }
 
 .restaurant-profile-card .restaurant-hero-image {
@@ -637,7 +661,42 @@ body {
 
 .restaurant-profile-card ul {
   margin-top: 0.5rem;
-  color: #cbd5e1;
+  color: #2f2b24;
+}
+.restaurant-profile-header {
+  display: grid;
+  grid-template-columns: 270px 1fr;
+  gap: 1.1rem;
+  align-items: start;
+}
+.restaurant-profile-header h2 {
+  margin: 0.35rem 0;
+  font-size: clamp(2rem, 3vw, 3.1rem);
+  color: #121212;
+}
+.restaurant-profile-header h3 {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.9rem;
+  color: #8b4d11;
+}
+.restaurant-info-grid {
+  margin: 1rem 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(120px, 1fr));
+  gap: 0.8rem;
+}
+.restaurant-info-grid > div {
+  border: 1px solid #e0d8c8;
+  background: #ece7dd;
+  border-radius: 14px;
+  padding: 0.7rem;
+}
+.restaurant-info-grid strong {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.78rem;
 }
 
 .profile-link-button {

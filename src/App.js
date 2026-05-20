@@ -1217,7 +1217,7 @@ function App() {
             {!loadingRestaurants && restaurantsError && <p>{restaurantsError}</p>}
 
             {!loadingRestaurants && !restaurantsError && !selectedRestaurant && (
-              <div className="restaurants-list">
+              <div className="restaurants-list restaurants-list-reference">
                 {filteredRestaurants.map((restaurant) => (
                   <article key={restaurant.id} className="restaurant-card restaurant-card-clickable">
                     <button
@@ -1232,7 +1232,13 @@ function App() {
                           event.currentTarget.src = WHITE_AVATAR_IMAGE;
                         }}
                       />
-                      <h4>{restaurant.name}</h4>
+                      <div className="restaurant-card-body">
+                        <span className="restaurant-chip">{restaurant.specialty || 'Restaurant'}</span>
+                        <h4>{restaurant.name}</h4>
+                        <p>📍 {restaurant.street || 'Adreça no disponible'}</p>
+                        <p>{students.filter((student) => student.restaurantId === restaurant.id).length} Alumnis associats</p>
+                        <span className="restaurant-details-cta">👁 VEURE DETALLS</span>
+                      </div>
                     </button>
                   </article>
                 ))}
@@ -1293,24 +1299,35 @@ function App() {
 
         {activeSection === 'restaurant-profile' && selectedRestaurant && (
           <section className="restaurants-section">
-            <article className="restaurant-profile-card">
+            <article className="restaurant-profile-card restaurant-profile-reference">
               <button type="button" className="back-button" onClick={() => selectSection('restaurants')}>
                 ← Tornar al llistat
               </button>
-              <img
-                className="restaurant-hero-image"
-                src={selectedRestaurant.imageUrl || WHITE_AVATAR_IMAGE}
-                alt={`Foto de ${selectedRestaurant.name}`}
-                onError={(event) => {
-                  event.currentTarget.src = WHITE_AVATAR_IMAGE;
-                }}
-              />
-              <h3>Fitxa del restaurant</h3>
-              <p><strong>Nom:</strong> {selectedRestaurant.name}</p>
-              <p><strong>Especialitat:</strong> {selectedRestaurant.specialty}</p>
-              <p><strong>Carrer:</strong> {selectedRestaurant.street}</p>
-              <p><strong>Correu electrònic:</strong> {selectedRestaurant.email || 'No disponible'}</p>
-              <p><strong>Telèfon:</strong> {selectedRestaurant.phone || 'No disponible'}</p>
+              <div className="restaurant-profile-header">
+                <img
+                  className="restaurant-hero-image"
+                  src={selectedRestaurant.imageUrl || WHITE_AVATAR_IMAGE}
+                  alt={`Foto de ${selectedRestaurant.name}`}
+                  onError={(event) => {
+                    event.currentTarget.src = WHITE_AVATAR_IMAGE;
+                  }}
+                />
+                <div>
+                  <h3>Fitxa d&apos;establiment</h3>
+                  <h2>{selectedRestaurant.name}</h2>
+                  <p>📍 {selectedRestaurant.street}</p>
+                  <div className="restaurant-action-row">
+                    <button type="button" className="pill-button">Editar</button>
+                    <button type="button" className="pill-button danger">Eliminar</button>
+                  </div>
+                </div>
+              </div>
+              <div className="restaurant-info-grid">
+                <div><strong>Categoria</strong><p>{selectedRestaurant.specialty}</p></div>
+                <div><strong>Phone</strong><p>{selectedRestaurant.phone || 'No disponible'}</p></div>
+                <div><strong>Email</strong><p>{selectedRestaurant.email || 'No disponible'}</p></div>
+                <div><strong>Web</strong><p>No disponible</p></div>
+              </div>
               <div className="map-wrapper">
                 <iframe title="Mapa de la fitxa del restaurant" src={restaurantProfileMapUrl} loading="lazy" />
               </div>
