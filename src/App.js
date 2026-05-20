@@ -900,7 +900,11 @@ function App() {
     setRestaurantForm({
       name: selectedRestaurant.name || '',
       specialty: selectedRestaurant.specialty === 'No disponible' ? '' : selectedRestaurant.specialty || '',
-      street: selectedRestaurant.street || '',
+      street: typeof selectedRestaurant.street === 'string'
+        ? selectedRestaurant.street
+        : Array.isArray(selectedRestaurant.street)
+          ? selectedRestaurant.street.join(', ')
+          : String(selectedRestaurant.street || ''),
       email: selectedRestaurant.email === 'No disponible' ? '' : selectedRestaurant.email || '',
       phone: selectedRestaurant.phone === 'No disponible' ? '' : selectedRestaurant.phone || ''
     });
@@ -1731,28 +1735,31 @@ function App() {
               </article>
             )}
 
-            <div className="admin-top-grid">
-              <article className="admin-panel photo-panel">
-                <button type="button" className="upload-circle upload-circle-button" onClick={openRestaurantPhotoPicker}>
-                  {restaurantPhotoPreview ? (
-                    <img src={restaurantPhotoPreview} alt="Previsualització del restaurant" className="upload-preview-image" />
-                  ) : (
-                    <span>+</span>
-                  )}
-                </button>
-                <input
-                  ref={restaurantPhotoInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden-file-input"
-                  onChange={handleRestaurantPhotoUpload}
-                />
-                <h3>Pujar foto</h3>
-                <p>{restaurantPhotoPreview ? 'Clica per canviar la imatge' : 'Selecciona una imatge des del disc'}</p>
-              </article>
+            <div className={`admin-top-grid ${isEditingRestaurant ? 'restaurant-edit-form-grid' : ''}`}>
+              {!isEditingRestaurant && (
+                <article className="admin-panel photo-panel">
+                  <button type="button" className="upload-circle upload-circle-button" onClick={openRestaurantPhotoPicker}>
+                    {restaurantPhotoPreview ? (
+                      <img src={restaurantPhotoPreview} alt="Previsualització del restaurant" className="upload-preview-image" />
+                    ) : (
+                      <span>+</span>
+                    )}
+                  </button>
+                  <input
+                    ref={restaurantPhotoInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden-file-input"
+                    onChange={handleRestaurantPhotoUpload}
+                  />
+                  <h3>Pujar foto</h3>
+                  <p>{restaurantPhotoPreview ? 'Clica per canviar la imatge' : 'Selecciona una imatge des del disc'}</p>
+                </article>
+              )}
 
               <article className="admin-panel info-panel">
-                <h3>Informacio primaria</h3>
+                <h3>{isEditingRestaurant ? "Dades de l'establiment" : 'Informacio primaria'}</h3>
+                {isEditingRestaurant && <p className="edit-panel-helper">Revisa els camps importants i completa manualment el que Google no proporcioni.</p>}
                 <label htmlFor="restaurant-name">Nom del restaurant</label>
                 <input
                   id="restaurant-name"
@@ -1783,25 +1790,56 @@ function App() {
                   onChange={handleRestaurantInputChange}
                 />
 
-                <label htmlFor="restaurant-email">Correu electrònic</label>
-                <input
-                  id="restaurant-email"
-                  name="email"
-                  type="email"
-                  placeholder="contacte@restaurant.cat"
-                  value={restaurantForm.email || ''}
-                  onChange={handleRestaurantInputChange}
-                />
+                <div className={isEditingRestaurant ? 'restaurant-edit-two-columns' : ''}>
+                  <div>
+                    <label htmlFor="restaurant-phone">Phone</label>
+                    <input
+                      id="restaurant-phone"
+                      name="phone"
+                      type="text"
+                      placeholder="+34 600 000 000"
+                      value={restaurantForm.phone || ''}
+                      onChange={handleRestaurantInputChange}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="restaurant-email">Email</label>
+                    <input
+                      id="restaurant-email"
+                      name="email"
+                      type="email"
+                      placeholder="contacte@restaurant.com"
+                      value={restaurantForm.email || ''}
+                      onChange={handleRestaurantInputChange}
+                    />
+                  </div>
+                </div>
 
-                <label htmlFor="restaurant-phone">Telèfon</label>
-                <input
-                  id="restaurant-phone"
-                  name="phone"
-                  type="text"
-                  placeholder="+34 600 000 000"
-                  value={restaurantForm.phone || ''}
-                  onChange={handleRestaurantInputChange}
-                />
+                {isEditingRestaurant && (
+                  <>
+                    <label htmlFor="restaurant-photo-url">Foto URL</label>
+                    <input
+                      id="restaurant-photo-url"
+                      name="imageUrl"
+                      type="text"
+                      placeholder="https://..."
+                      value={restaurantPhotoPreview || ''}
+                      onChange={(event) => setRestaurantPhotoPreview(event.target.value)}
+                    />
+                    <label htmlFor="restaurant-place-id">Google Place ID</label>
+                    <input id="restaurant-place-id" type="text" placeholder="ChIJ..." />
+                    <div className="restaurant-edit-preview-grid">
+                      <article>
+                        <h4>Previsualització de foto</h4>
+                        <img src={restaurantPhotoPreview || WHITE_AVATAR_IMAGE} alt="Previsualització de foto del restaurant" />
+                      </article>
+                      <article>
+                        <h4>Previsualització del mapa</h4>
+                        <iframe title="Previsualització del mapa" src={restaurantProfileMapUrl} loading="lazy" />
+                      </article>
+                    </div>
+                  </>
+                )}
               </article>
             </div>
 

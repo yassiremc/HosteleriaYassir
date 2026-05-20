@@ -1173,3 +1173,61 @@ body {
   color: #111827;
   border: 1px solid #d9d2c5;
 }
+
+.restaurant-edit-page .admin-top-grid.restaurant-edit-form-grid {
+  grid-template-columns: 1fr;
+}
+
+.restaurant-edit-page .info-panel h3 {
+  text-transform: none;
+  letter-spacing: normal;
+  font-size: 2rem;
+}
+
+.edit-panel-helper {
+  margin: -0.25rem 0 0.85rem;
+  color: #5b5345;
+}
+
+.restaurant-edit-two-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem;
+}
+
+.restaurant-edit-preview-grid {
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.9rem;
+}
+
+.restaurant-edit-preview-grid article {
+  border: 1px solid #d8d0c2;
+  background: #f9f7f2;
+  border-radius: 16px;
+  padding: 0.7rem;
+}
+
+.restaurant-edit-preview-grid h4 {
+  margin: 0 0 0.5rem;
+}
+
+.restaurant-edit-preview-grid img,
+.restaurant-edit-preview-grid iframe {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  border: 1px solid #d8d0c2;
+  border-radius: 10px;
+}
+
+.restaurant-edit-page .manage-btn.accept {
+  background: #9d6a18;
+}
+
+.restaurant-edit-page .manage-btn.cancel {
+  background: #f4efe6;
+  border: 1px solid #d8d0c2;
+  color: #9d6a18;
+}
