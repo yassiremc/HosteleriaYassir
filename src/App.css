@@ -632,20 +632,70 @@ body {
 }
 
 .student-profile-card {
-  max-width: 640px;
-  border: 1px solid #334155;
-  border-radius: 12px;
-  background: #111827;
-  padding: 1rem;
+  max-width: 980px;
+  border: 1px solid #d8d0c2;
+  border-radius: 18px;
+  background: #f4f2ed;
+  padding: 1.2rem;
 }
 
 .student-profile-card .student-hero-image {
-  width: 100%;
-  max-height: 340px;
-  object-fit: contain;
-  object-position: center top;
-  background: #020617;
-  border-radius: 10px;
+  width: 220px;
+  height: 220px;
+  object-fit: cover;
+  border-radius: 999px;
+  border: 3px solid #fff;
+}
+
+.student-profile-header {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+.student-profile-header h2 {
+  font-size: clamp(2rem, 3.8vw, 3.5rem);
+  margin: 0.3rem 0;
+  color: #121212;
+}
+
+.student-profile-header h3 {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.9rem;
+  color: #8b4d11;
+}
+
+.student-contact-grid {
+  margin: 1rem 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  gap: 0.8rem;
+}
+
+.student-contact-grid > div {
+  border: 1px solid #e0d8c8;
+  background: #ece7dd;
+  border-radius: 14px;
+  padding: 0.7rem;
+}
+
+.student-contact-grid strong {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.78rem;
+}
+
+.student-contact-grid a {
+  color: #8b4d11;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.student-contact-grid a:hover {
+  text-decoration: underline;
 }
 
 .back-button {
@@ -1264,3 +1314,5 @@ body {
   border: 1px solid #d8d0c2;
   color: #9d6a18;
 }
+
+.student-card-promo { font-weight:700; color:#8b4d11; }

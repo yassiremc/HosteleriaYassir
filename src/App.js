@@ -399,7 +399,20 @@ function App() {
                 readFirestoreValue(alumniFields?.linkedin) ||
                 readFirestoreValue(alumniFields?.linkedIn) ||
                 readFirestoreValue(alumniFields?.linkedin_url) ||
-                'No disponible'
+                'No disponible',
+              instagram:
+                readFirestoreValue(alumniFields?.instagram) ||
+                readFirestoreValue(alumniFields?.insta) ||
+                'No disponible',
+              studies:
+                readFirestoreValue(alumniFields?.studies) ||
+                readFirestoreValue(alumniFields?.estudis) ||
+                readFirestoreValue(alumniFields?.study) ||
+                'Estudis no informats',
+              promotionYear:
+                readFirestoreValue(alumniFields?.promotionYear) ||
+                readFirestoreValue(alumniFields?.promocio) ||
+                ''
             };
           })
         );
@@ -1499,7 +1512,9 @@ function App() {
                       />
                       <div className="student-card-body">
                         <h3>{student.fullName}</h3>
-                        <p>• {student.role}</p>
+                        <p>• {student.studies || 'Estudis no informats'}</p>
+                        {student.role && <p>• {student.role}</p>}
+                        {student.promotionYear && <p className="student-card-promo">Promoció {student.promotionYear}</p>}
                         <p className="student-card-assoc">🏫 {students.filter((item) => item.alumniId === student.alumniId).length || 1} establiments associats</p>
                         <span className="student-card-cta">VEURE DETALLS</span>
                       </div>
@@ -1604,21 +1619,31 @@ function App() {
 
         {activeSection === 'student-profile' && selectedStudent && (
           <section className="students-section">
-            <article className="student-profile-card">
+            <article className="student-profile-card student-profile-reference">
               <button type="button" className="back-button" onClick={handleBackFromStudentProfile}>
                 ← Tornar al llistat
               </button>
-              <img
-                className="student-hero-image"
-                src={selectedStudent.imageUrl || WHITE_AVATAR_IMAGE}
-                alt={`Foto de ${selectedStudent.fullName}`}
-                onError={(event) => {
-                  event.currentTarget.src = WHITE_AVATAR_IMAGE;
-                }}
-              />
-              <button type="button" className="profile-link-button" onClick={openProfilePhotoPicker}>
-                Canviar foto de perfil
-              </button>
+              <div className="student-profile-header">
+                <img
+                  className="student-hero-image"
+                  src={selectedStudent.imageUrl || WHITE_AVATAR_IMAGE}
+                  alt={`Foto de ${selectedStudent.fullName}`}
+                  onError={(event) => {
+                    event.currentTarget.src = WHITE_AVATAR_IMAGE;
+                  }}
+                />
+                <div>
+                  <h3>Fitxa d&apos;Alumni</h3>
+                  <h2>{selectedStudent.fullName}</h2>
+                  <p><strong>Estudis realitzats a la Joviat:</strong></p>
+                  <p>• {selectedStudent.studies || 'Estudis no informats'}</p>
+                  {selectedStudent.role && <p>• {selectedStudent.role}</p>}
+                  {selectedStudent.promotionYear && <p><strong>Promoció {selectedStudent.promotionYear}</strong></p>}
+                  <button type="button" className="profile-link-button" onClick={openProfilePhotoPicker}>
+                    Canviar foto de perfil
+                  </button>
+                </div>
+              </div>
               <input
                 ref={profilePhotoInputRef}
                 type="file"
@@ -1627,27 +1652,12 @@ function App() {
                 onChange={handleProfilePhotoChange}
               />
               {profilePhotoStatus && <p>{profilePhotoStatus}</p>}
-              <h3>Fitxa personal</h3>
-              <p><strong>Nom i cognoms:</strong> {selectedStudent.fullName}</p>
-              <p><strong>On treballa:</strong> {selectedStudent.workplace}</p>
-              <p><strong>Rol a la feina:</strong> {selectedStudent.role}</p>
-              <p><strong>Correu electrònic:</strong> {selectedStudent.email || 'No disponible'}</p>
-              <p><strong>Telèfon:</strong> {selectedStudent.phone || 'No disponible'}</p>
-              <p>
-                <strong>LinkedIn:</strong>{' '}
-                {selectedStudent.linkedin && selectedStudent.linkedin !== 'No disponible' ? (
-                  <a
-                    href={normalizeLinkedinUrl(selectedStudent.linkedin)}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="profile-link-button"
-                  >
-                    {selectedStudent.linkedin}
-                  </a>
-                ) : (
-                  'No disponible'
-                )}
-              </p>
+              <section className="student-contact-grid">
+                <div><strong>Email</strong><p>{selectedStudent.email !== 'No disponible' ? <a href={`mailto:${selectedStudent.email}`}>{selectedStudent.email}</a> : 'No disponible'}</p></div>
+                <div><strong>Phone</strong><p>{selectedStudent.phone !== 'No disponible' ? <a href={`tel:${selectedStudent.phone}`}>{selectedStudent.phone}</a> : 'No disponible'}</p></div>
+                <div><strong>LinkedIn</strong><p>{selectedStudent.linkedin !== 'No disponible' ? <a href={normalizeLinkedinUrl(selectedStudent.linkedin)} target="_blank" rel="noreferrer">{selectedStudent.linkedin}</a> : 'No disponible'}</p></div>
+                <div><strong>Instagram</strong><p>{selectedStudent.instagram !== 'No disponible' ? <a href={`https://instagram.com/${String(selectedStudent.instagram).replace('@', '')}`} target="_blank" rel="noreferrer">{selectedStudent.instagram}</a> : 'No disponible'}</p></div>
+              </section>
               <h4>Restaurants on treballa o ha treballat</h4>
               {restaurantsForSelectedStudent.length > 0 ? (
                 <ul>
