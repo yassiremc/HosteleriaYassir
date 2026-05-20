@@ -418,6 +418,10 @@ body {
 .students-filter-inline > div { min-width:220px; }
 .students-filter-label { display:block; font-size:0.78rem; font-weight:800; margin-bottom:0.35rem; }
 .students-filter-inline select { width:100%; border:1px solid #d7cfbf; border-radius:11px; padding:0.55rem 0.8rem; background:#fff; }
+.students-chip-grid { display:grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap:0.5rem; margin:0.6rem 0 0.9rem; }
+.students-filter-chip { border:1px solid #d7cfbf; background:#fff; border-radius:11px; padding:0.58rem 0.7rem; text-align:left; cursor:pointer; font-weight:600; }
+.students-filter-chip.action { text-align:center; font-weight:700; }
+.students-filter-chip.active { border-color:#111827; background:#f3efe7; }
 .student-card-body { padding:0.75rem; }
 .student-card-assoc { font-size:0.86rem; margin-top:0.45rem; }
 .student-card-cta { display:block; margin-top:0.55rem; border:1px solid #111827; border-radius:8px; padding:0.4rem; text-align:center; font-weight:800; font-size:0.78rem; letter-spacing:0.08em; }

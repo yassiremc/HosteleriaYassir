@@ -190,6 +190,8 @@ function App() {
   const [studentSearch, setStudentSearch] = useState('');
   const [studentEmploymentFilter, setStudentEmploymentFilter] = useState('all');
   const [studentPromotionYearFilter, setStudentPromotionYearFilter] = useState('all');
+  const [selectedStudyFilters, setSelectedStudyFilters] = useState([]);
+  const [selectedProfileFilters, setSelectedProfileFilters] = useState([]);
   const [restaurantSearch, setRestaurantSearch] = useState('');
   const [students, setStudents] = useState([]);
   const [loadingStudents, setLoadingStudents] = useState(true);
@@ -441,9 +443,16 @@ function App() {
       const matchesPromotionYear = studentPromotionYearFilter === 'all'
         || (!Number.isNaN(studentYear) && studentYear === Number(studentPromotionYearFilter));
 
-      return matchesSearch && matchesEmployment && matchesPromotionYear;
+      const studentStudiesText = String(student.studies || student.study || student.cycle || '').toLowerCase();
+      const studentProfileText = String(student.role || '').toLowerCase();
+      const matchesStudies = selectedStudyFilters.length === 0
+        || selectedStudyFilters.some((study) => studentStudiesText.includes(study.toLowerCase()));
+      const matchesProfiles = selectedProfileFilters.length === 0
+        || selectedProfileFilters.some((profile) => studentProfileText.includes(profile.toLowerCase()));
+
+      return matchesSearch && matchesEmployment && matchesPromotionYear && matchesStudies && matchesProfiles;
     });
-  }, [students, studentSearch, studentEmploymentFilter, studentPromotionYearFilter]);
+  }, [students, studentSearch, studentEmploymentFilter, studentPromotionYearFilter, selectedStudyFilters, selectedProfileFilters]);
 
   const promotionYearOptions = useMemo(() => {
     const detected = students
@@ -453,6 +462,31 @@ function App() {
     const fallbackYears = Array.from({ length: 18 }, (_, idx) => currentYear - idx);
     return Array.from(new Set([...detected, ...fallbackYears])).sort((a, b) => b - a);
   }, [students]);
+
+  const studyOptions = useMemo(() => {
+    const defaults = [
+      'CFGM Cuina i gastronomia i Serveis en restauració',
+      'CFGM Pastisseria, forneria i confiteria',
+      'CFGS Direcció de cuina',
+      'Programa Intensiu de Cuina Catalana',
+      'Diploma de Sommelier',
+      'FP Hoteleria'
+    ];
+    return defaults;
+  }, []);
+
+  const profileOptions = useMemo(() => ([
+    'Restaurador/a o Propietari/a',
+    'Professional de Sala',
+    'Professional de Cuina',
+    'Professional de Pastisseria i/o Forneria',
+    'Direcció-Gerència',
+    'Docència'
+  ]), []);
+
+  const toggleStudentFilter = (value, setter) => {
+    setter((prev) => (prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value]));
+  };
 
   const filteredRestaurants = useMemo(() => {
     const term = restaurantSearch.trim().toLowerCase();
@@ -1379,6 +1413,21 @@ function App() {
 
             <article className="students-filters-card">
               <div className="students-filter-block-title">ESTUDIS CURSATS A LA JOVIAT</div>
+              <div className="students-chip-grid">
+                <button type="button" className="students-filter-chip action" onClick={() => setSelectedStudyFilters(studyOptions)}>
+                  Seleccionar tots els estudis
+                </button>
+                {studyOptions.map((study) => (
+                  <button
+                    key={study}
+                    type="button"
+                    className={`students-filter-chip ${selectedStudyFilters.includes(study) ? 'active' : ''}`}
+                    onClick={() => toggleStudentFilter(study, setSelectedStudyFilters)}
+                  >
+                    ☑ {study}
+                  </button>
+                ))}
+              </div>
               <div className="students-filter-inline">
                 <div>
                   <label htmlFor="students-employment-filter" className="students-filter-label">SITUACIÓ LABORAL</label>
@@ -1397,6 +1446,24 @@ function App() {
                 </div>
               </div>
               <div className="students-filter-block-title">PERFIL PROFESSIONAL</div>
+              <div className="students-chip-grid">
+                <button type="button" className="students-filter-chip action" onClick={() => setSelectedProfileFilters(profileOptions)}>
+                  Seleccionar tots els perfils professionals
+                </button>
+                <button type="button" className="students-filter-chip action" onClick={() => setSelectedProfileFilters([])}>
+                  Treure tots els perfils professionals
+                </button>
+                {profileOptions.map((profile) => (
+                  <button
+                    key={profile}
+                    type="button"
+                    className={`students-filter-chip ${selectedProfileFilters.includes(profile) ? 'active' : ''}`}
+                    onClick={() => toggleStudentFilter(profile, setSelectedProfileFilters)}
+                  >
+                    ☐ {profile}
+                  </button>
+                ))}
+              </div>
             </article>
 
             {loadingStudents && <p>Carregant alumnes...</p>}
