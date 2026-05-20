@@ -237,8 +237,8 @@ function App() {
   const [restaurantViewMode, setRestaurantViewMode] = useState('map');
   const [restaurantPage, setRestaurantPage] = useState(1);
   const [isEditingRestaurant, setIsEditingRestaurant] = useState(false);
-  const [restaurantEditForm, setRestaurantEditForm] = useState({ name: '', specialty: '', street: '', email: '', phone: '' });
   const [restaurantProfileMessage, setRestaurantProfileMessage] = useState('');
+  const [editingRestaurantId, setEditingRestaurantId] = useState('');
   const mapContainerRef = useRef(null);
   const leafletMapRef = useRef(null);
   const leafletMarkersRef = useRef([]);
@@ -807,7 +807,8 @@ function App() {
       return;
     }
 
-    const restaurantId = `restaurant_${Date.now()}`;
+    const isEditMode = Boolean(editingRestaurantId);
+    const restaurantId = isEditMode ? editingRestaurantId : `restaurant_${Date.now()}`;
     const payload = {
       fields: {
         Name: { stringValue: name },
@@ -820,8 +821,12 @@ function App() {
     };
 
     try {
-      const response = await fetch(`${FIRESTORE_BASE_URL}/Restaurant?documentId=${encodeURIComponent(restaurantId)}`, {
-        method: 'POST',
+      const endpoint = isEditMode
+        ? `${FIRESTORE_BASE_URL}/Restaurant/${encodeURIComponent(restaurantId)}?updateMask.fieldPaths=Name&updateMask.fieldPaths=specialty&updateMask.fieldPaths=street&updateMask.fieldPaths=email&updateMask.fieldPaths=phone&updateMask.fieldPaths=imageUrl`
+        : `${FIRESTORE_BASE_URL}/Restaurant?documentId=${encodeURIComponent(restaurantId)}`;
+
+      const response = await fetch(endpoint, {
+        method: isEditMode ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
@@ -842,12 +847,18 @@ function App() {
         imageUrl: restaurantPhotoPreview || WHITE_AVATAR_IMAGE
       };
 
-      setRestaurants((prev) => [newRestaurant, ...prev]);
+      setRestaurants((prev) => (
+        isEditMode
+          ? prev.map((restaurant) => (restaurant.id === restaurantId ? newRestaurant : restaurant))
+          : [newRestaurant, ...prev]
+      ));
       openRestaurantProfile(newRestaurant.id);
       setSaveRestaurantError('');
-      setSaveRestaurantSuccess('Restaurant guardat correctament a Firebase.');
+      setSaveRestaurantSuccess(isEditMode ? 'Restaurant actualitzat correctament a Firebase.' : 'Restaurant guardat correctament a Firebase.');
       setRestaurantForm({ name: '', specialty: '', street: '', email: '', phone: '' });
       setRestaurantPhotoPreview('');
+      setEditingRestaurantId('');
+      setIsEditingRestaurant(false);
     } catch (error) {
       setSaveRestaurantSuccess('');
       setSaveRestaurantError('No s’ha pogut guardar el restaurant a Firebase.');
@@ -878,69 +889,25 @@ function App() {
     setSelectedRestaurant(restaurantMatch);
     setSelectedStudent(null);
     setStudentProfileSourceRestaurantId(null);
+    setIsEditingRestaurant(false);
     setIsSidebarOpen(false);
   };
 
 
   const startRestaurantEdit = () => {
     if (!selectedRestaurant) return;
-    setRestaurantEditForm({
+    setEditingRestaurantId(selectedRestaurant.id);
+    setRestaurantForm({
       name: selectedRestaurant.name || '',
-      specialty: selectedRestaurant.specialty || '',
+      specialty: selectedRestaurant.specialty === 'No disponible' ? '' : selectedRestaurant.specialty || '',
       street: selectedRestaurant.street || '',
       email: selectedRestaurant.email === 'No disponible' ? '' : selectedRestaurant.email || '',
       phone: selectedRestaurant.phone === 'No disponible' ? '' : selectedRestaurant.phone || ''
     });
+    setRestaurantPhotoPreview(selectedRestaurant.imageUrl || '');
     setRestaurantProfileMessage('');
     setIsEditingRestaurant(true);
-  };
-
-  const handleRestaurantEditChange = (event) => {
-    const { name, value } = event.target;
-    setRestaurantEditForm((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSaveRestaurantEdit = async () => {
-    if (!selectedRestaurant) return;
-
-    const updatedRestaurant = {
-      ...selectedRestaurant,
-      name: restaurantEditForm.name.trim() || selectedRestaurant.name,
-      specialty: restaurantEditForm.specialty.trim() || 'No disponible',
-      street: restaurantEditForm.street.trim() || selectedRestaurant.street,
-      email: restaurantEditForm.email.trim() || 'No disponible',
-      phone: restaurantEditForm.phone.trim() || 'No disponible'
-    };
-
-    if (!updatedRestaurant.name || !updatedRestaurant.street) {
-      setRestaurantProfileMessage('Cal informar el nom i el carrer.');
-      return;
-    }
-
-    try {
-      const response = await fetch(`${FIRESTORE_BASE_URL}/Restaurant/${encodeURIComponent(selectedRestaurant.id)}?updateMask.fieldPaths=Name&updateMask.fieldPaths=specialty&updateMask.fieldPaths=street&updateMask.fieldPaths=email&updateMask.fieldPaths=phone`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fields: {
-            Name: { stringValue: updatedRestaurant.name },
-            specialty: { stringValue: updatedRestaurant.specialty },
-            street: { stringValue: updatedRestaurant.street },
-            email: { stringValue: updatedRestaurant.email === 'No disponible' ? '' : updatedRestaurant.email },
-            phone: { stringValue: updatedRestaurant.phone === 'No disponible' ? '' : updatedRestaurant.phone }
-          }
-        })
-      });
-
-      if (!response.ok) throw new Error('No s’ha pogut actualitzar el restaurant.');
-
-      setRestaurants((prev) => prev.map((restaurant) => (restaurant.id === selectedRestaurant.id ? updatedRestaurant : restaurant)));
-      setSelectedRestaurant(updatedRestaurant);
-      setIsEditingRestaurant(false);
-      setRestaurantProfileMessage('Restaurant actualitzat correctament.');
-    } catch (error) {
-      setRestaurantProfileMessage('No s’ha pogut actualitzar el restaurant.');
-    }
+    selectSection('add-restaurant');
   };
 
   const handleDeleteRestaurant = async () => {
@@ -959,6 +926,7 @@ function App() {
       setRestaurants((prev) => prev.filter((restaurant) => restaurant.id !== selectedRestaurant.id));
       setSelectedRestaurant(null);
       setIsEditingRestaurant(false);
+      setEditingRestaurantId('');
       setRestaurantProfileMessage('');
       selectSection('restaurants');
     } catch (error) {
@@ -1405,26 +1373,17 @@ function App() {
                   <h2>{selectedRestaurant.name}</h2>
                   <p><span className="inline-icon">📍</span> {selectedRestaurant.street}</p>
                   <div className="restaurant-action-row">
-                    {isEditingRestaurant ? (
-                      <>
-                        <button type="button" className="pill-button" onClick={handleSaveRestaurantEdit}>💾 Guardar</button>
-                        <button type="button" className="pill-button" onClick={() => setIsEditingRestaurant(false)}>↩ Cancel·lar</button>
-                      </>
-                    ) : (
-                      <>
-                        <button type="button" className="pill-button" onClick={startRestaurantEdit}>✎ Editar</button>
-                        <button type="button" className="pill-button danger" onClick={handleDeleteRestaurant}>🗑 Eliminar</button>
-                      </>
-                    )}
+                    <button type="button" className="pill-button" onClick={startRestaurantEdit}>✎ Editar</button>
+                    <button type="button" className="pill-button danger" onClick={handleDeleteRestaurant}>🗑 Eliminar</button>
                   </div>
                   {restaurantProfileMessage && <p className="restaurant-profile-message">{restaurantProfileMessage}</p>}
                 </div>
               </div>
               <div className="restaurant-info-grid">
-                <div><strong>Categoria</strong>{isEditingRestaurant ? <input name="specialty" value={restaurantEditForm.specialty} onChange={handleRestaurantEditChange} /> : <p>{selectedRestaurant.specialty}</p>}</div>
-                <div><strong>Phone</strong>{isEditingRestaurant ? <input name="phone" value={restaurantEditForm.phone} onChange={handleRestaurantEditChange} /> : <p>{selectedRestaurant.phone || 'No disponible'}</p>}</div>
-                <div><strong>Email</strong>{isEditingRestaurant ? <input name="email" value={restaurantEditForm.email} onChange={handleRestaurantEditChange} /> : <p>{selectedRestaurant.email || 'No disponible'}</p>}</div>
-                <div><strong>Carrer</strong>{isEditingRestaurant ? <input name="street" value={restaurantEditForm.street} onChange={handleRestaurantEditChange} /> : <p>{selectedRestaurant.street || 'No disponible'}</p>}</div>
+                <div><strong>Categoria</strong><p>{selectedRestaurant.specialty}</p></div>
+                <div><strong>Phone</strong><p>{selectedRestaurant.phone || 'No disponible'}</p></div>
+                <div><strong>Email</strong><p>{selectedRestaurant.email || 'No disponible'}</p></div>
+                <div><strong>Web</strong><p>No disponible</p></div>
               </div>
               <div className="map-wrapper">
                 <iframe title="Mapa de la fitxa del restaurant" src={restaurantProfileMapUrl} loading="lazy" />
@@ -1750,10 +1709,27 @@ function App() {
         )}
 
         {activeSection === 'add-restaurant' && (
-          <section className="admin-page">
+          <section className={`admin-page ${isEditingRestaurant ? 'restaurant-edit-page' : ''}`}>
             <p className="admin-eyebrow">ADMINISTRACIO</p>
-            <h1>Afegir Restaurant</h1>
-            <p className="admin-intro">Afegeix un restaurant nou amb les seves dades bàsiques.</p>
+            <h1>{isEditingRestaurant ? 'Editar Establiment' : 'Afegir Restaurant'}</h1>
+            <p className="admin-intro">{isEditingRestaurant ? "Actualitza la fitxa de l'establiment reutilitzant el mateix formulari de creació." : 'Afegeix un restaurant nou amb les seves dades bàsiques.'}</p>
+
+            {isEditingRestaurant && (
+              <article className="admin-panel places-panel">
+                <h3>Cerca a Google Places</h3>
+                <p>Escriu el nom de l&apos;establiment i recupera els resultats disponibles.</p>
+                <label htmlFor="places-name">Nom de l&apos;establiment</label>
+                <div className="places-search-row">
+                  <input id="places-name" type="text" value={restaurantForm.name} name="name" onChange={handleRestaurantInputChange} placeholder="Ex. Disfrutar Barcelona" />
+                  <button type="button" className="manage-btn accept">Buscar</button>
+                </div>
+                <label htmlFor="places-results">Resultats</label>
+                <div className="places-search-row">
+                  <select id="places-results"><option>Encara no hi ha resultats</option></select>
+                  <button type="button" className="manage-btn cancel">Autocompletar</button>
+                </div>
+              </article>
+            )}
 
             <div className="admin-top-grid">
               <article className="admin-panel photo-panel">
@@ -1831,7 +1807,7 @@ function App() {
 
             <div className="save-student-row">
               <button type="button" className="pill-button save-student-button" onClick={handleSaveRestaurant}>
-                Guardar restaurant
+                {isEditingRestaurant ? 'Desar canvis' : 'Guardar restaurant'}
               </button>
               {saveRestaurantError && <p className="save-student-error">{saveRestaurantError}</p>}
               {saveRestaurantSuccess && <p className="save-student-success">{saveRestaurantSuccess}</p>}

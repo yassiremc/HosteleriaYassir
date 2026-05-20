@@ -1135,3 +1135,41 @@ body {
   padding: 0.4rem 0.5rem;
   background: #fff;
 }
+
+.restaurant-edit-page {
+  background: #e9e1d2;
+  color: #111827;
+  border: 1px solid #d8d0c2;
+}
+
+.restaurant-edit-page .admin-eyebrow,
+.restaurant-edit-page .admin-intro,
+.restaurant-edit-page h1,
+.restaurant-edit-page label {
+  color: #111827;
+}
+
+.restaurant-edit-page .admin-panel {
+  background: #f6f3ed;
+  border: 1px solid #ded6c8;
+  box-shadow: none;
+}
+
+.places-panel p {
+  margin: 0 0 0.5rem;
+  color: #5b5345;
+}
+
+.places-search-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.restaurant-edit-page input,
+.restaurant-edit-page select {
+  background: #fff;
+  color: #111827;
+  border: 1px solid #d9d2c5;
+}
