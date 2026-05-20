@@ -918,6 +918,10 @@ function App() {
 
       if (!leafletMapRef.current) return;
 
+      setTimeout(() => {
+        leafletMapRef.current?.invalidateSize();
+      }, 0);
+
       leafletMarkersRef.current.forEach((marker) => marker.remove());
       leafletMarkersRef.current = [];
 
@@ -951,11 +955,13 @@ function App() {
           restaurantsWithCoordinates.map((restaurant) => [restaurant.coordinates.lat, restaurant.coordinates.lng])
         );
         leafletMapRef.current.fitBounds(bounds.pad(0.2));
+      } else {
+        leafletMapRef.current.setView([41.8, 1.9], 8);
       }
     };
 
     loadLeaflet();
-  }, [activeSection, filteredRestaurants, students]);
+  }, [activeSection, filteredRestaurants, students, restaurantViewMode]);
 
   useEffect(() => {
     setRestaurantPage(1);
@@ -1099,7 +1105,6 @@ function App() {
       <aside id="main-sidebar" className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
         <nav>
           <div className="sidebar-brand">
-            <h2>JOVIAT</h2>
             <p>ALUMNI NETWORK</p>
             <div className="language-switch">
               {['ca', 'es', 'en'].map((lang) => (
