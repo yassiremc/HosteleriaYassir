@@ -470,6 +470,28 @@ function App() {
     return `https://www.google.com/maps?q=${encodeURIComponent(selectedRestaurant.name)}&z=16&output=embed`;
   }, [selectedRestaurant]);
 
+  const restaurantEditPreviewMapUrl = useMemo(() => {
+    if (!isEditingRestaurant) return '';
+
+    const streetQuery = (restaurantForm.street || '').trim();
+    const nameQuery = (restaurantForm.name || '').trim();
+
+    if (selectedRestaurant?.coordinates) {
+      const { lat, lng } = selectedRestaurant.coordinates;
+      return `https://www.google.com/maps?q=${lat},${lng}&z=17&output=embed`;
+    }
+
+    if (streetQuery) {
+      return `https://www.google.com/maps?q=${encodeURIComponent(streetQuery)}&z=17&output=embed`;
+    }
+
+    if (nameQuery) {
+      return `https://www.google.com/maps?q=${encodeURIComponent(nameQuery)}&z=17&output=embed`;
+    }
+
+    return 'https://www.google.com/maps?q=Barcelona&z=13&output=embed';
+  }, [isEditingRestaurant, restaurantForm.street, restaurantForm.name, selectedRestaurant]);
+
   const restaurantsForSelectedStudent = useMemo(() => {
     if (!selectedStudent) return [];
 
@@ -1835,7 +1857,7 @@ function App() {
                       </article>
                       <article>
                         <h4>Previsualització del mapa</h4>
-                        <iframe title="Previsualització del mapa" src={restaurantProfileMapUrl} loading="lazy" />
+                        <iframe title="Previsualització del mapa" src={restaurantEditPreviewMapUrl} loading="lazy" />
                       </article>
                     </div>
                   </>
