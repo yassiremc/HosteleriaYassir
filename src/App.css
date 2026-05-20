@@ -29,6 +29,16 @@ body {
   padding: 0 1rem;
   z-index: 20;
 }
+.topbar-brand {
+  border: none;
+  background: transparent;
+  color: #ffffff;
+  font-size: 2.8rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  margin-right: 0.8rem;
+}
 
 .auth-menu-wrapper {
   margin-left: auto;
@@ -341,6 +351,16 @@ body {
   padding: 0.8rem 1.2rem;
   font-weight: 800;
   border-radius: 12px;
+  cursor: pointer;
+}
+.register-hero-button {
+  margin: 0 0 1rem;
+  border-radius: 999px;
+  border: 2px solid #fff;
+  background: #fff;
+  color: #050709;
+  font-weight: 900;
+  padding: 0.75rem 1.45rem;
   cursor: pointer;
 }
 

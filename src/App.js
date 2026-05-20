@@ -1019,6 +1019,7 @@ function App() {
   return (
     <div className={`app-shell ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
       <header className="topbar">
+        <button type="button" className="topbar-brand" onClick={() => selectSection('home')}>JOVIAT</button>
         <button
           type="button"
           className="menu-button"
@@ -1166,6 +1167,16 @@ function App() {
               <div className="home-hero-content">
                 <p>{t('heroEyebrow')}</p>
                 <h1>{t('heroTitle')}</h1>
+                <button
+                  type="button"
+                  className="register-hero-button"
+                  onClick={() => {
+                    setIsAuthMenuOpen(true);
+                    setShowRequestAccess(true);
+                  }}
+                >
+                  REGISTRA'T
+                </button>
                 <div className="home-cta-row">
                   <button type="button" onClick={() => selectSection('restaurants')}>{t('exploreRestaurants')}</button>
                   <button type="button" onClick={() => selectSection('students')}>{t('exploreStudents')}</button>
