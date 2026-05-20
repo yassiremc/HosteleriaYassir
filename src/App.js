@@ -221,6 +221,7 @@ function App() {
     phone: ''
   });
   const [restaurantPhotoPreview, setRestaurantPhotoPreview] = useState('');
+  const [editingRestaurantId, setEditingRestaurantId] = useState('');
   const [saveRestaurantError, setSaveRestaurantError] = useState('');
   const [saveRestaurantSuccess, setSaveRestaurantSuccess] = useState('');
   const [studentProfileSourceRestaurantId, setStudentProfileSourceRestaurantId] = useState(null);
@@ -808,7 +809,8 @@ function App() {
       return;
     }
 
-    const restaurantId = `restaurant_${Date.now()}`;
+    const isEditing = Boolean(editingRestaurantId);
+    const restaurantId = editingRestaurantId || `restaurant_${Date.now()}`;
     const payload = {
       fields: {
         Name: { stringValue: name },
@@ -821,8 +823,12 @@ function App() {
     };
 
     try {
-      const response = await fetch(`${FIRESTORE_BASE_URL}/Restaurant?documentId=${encodeURIComponent(restaurantId)}`, {
-        method: 'POST',
+      const endpoint = isEditing
+        ? `${FIRESTORE_BASE_URL}/Restaurant/${encodeURIComponent(restaurantId)}`
+        : `${FIRESTORE_BASE_URL}/Restaurant?documentId=${encodeURIComponent(restaurantId)}`;
+
+      const response = await fetch(endpoint, {
+        method: isEditing ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
@@ -843,12 +849,19 @@ function App() {
         imageUrl: restaurantPhotoPreview || WHITE_AVATAR_IMAGE
       };
 
-      setRestaurants((prev) => [newRestaurant, ...prev]);
+      if (isEditing) {
+        setRestaurants((prev) => prev.map((restaurant) => (
+          restaurant.id === restaurantId ? newRestaurant : restaurant
+        )));
+      } else {
+        setRestaurants((prev) => [newRestaurant, ...prev]);
+      }
       openRestaurantProfile(newRestaurant.id);
       setSaveRestaurantError('');
-      setSaveRestaurantSuccess('Restaurant guardat correctament a Firebase.');
+      setSaveRestaurantSuccess(isEditing ? 'Restaurant actualitzat correctament.' : 'Restaurant guardat correctament a Firebase.');
       setRestaurantForm({ name: '', specialty: '', street: '', email: '', phone: '' });
       setRestaurantPhotoPreview('');
+      setEditingRestaurantId('');
     } catch (error) {
       setSaveRestaurantSuccess('');
       setSaveRestaurantError('No s’ha pogut guardar el restaurant a Firebase.');
@@ -865,6 +878,7 @@ function App() {
       phone: selectedRestaurant.phone === 'No disponible' ? '' : (selectedRestaurant.phone || '')
     });
     setRestaurantPhotoPreview(selectedRestaurant.imageUrl || '');
+    setEditingRestaurantId(selectedRestaurant.id);
     setSaveRestaurantError('');
     setSaveRestaurantSuccess('');
     setActiveSection('add-restaurant');
@@ -881,6 +895,11 @@ function App() {
     }
     setRestaurants((prev) => prev.filter((restaurant) => restaurant.id !== selectedRestaurant.id));
     setSelectedRestaurant(null);
+    if (editingRestaurantId === selectedRestaurant.id) {
+      setEditingRestaurantId('');
+      setRestaurantForm({ name: '', specialty: '', street: '', email: '', phone: '' });
+      setRestaurantPhotoPreview('');
+    }
     setActiveSection('restaurants');
   };
 
@@ -1780,7 +1799,7 @@ function App() {
 
             <div className="save-student-row">
               <button type="button" className="pill-button save-student-button" onClick={handleSaveRestaurant}>
-                Guardar restaurant
+                {editingRestaurantId ? 'Actualitzar restaurant' : 'Guardar restaurant'}
               </button>
               {saveRestaurantError && <p className="save-student-error">{saveRestaurantError}</p>}
               {saveRestaurantSuccess && <p className="save-student-success">{saveRestaurantSuccess}</p>}
