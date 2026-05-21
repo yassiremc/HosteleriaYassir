@@ -227,8 +227,17 @@ function App() {
     specialty: '',
     street: '',
     email: '',
-    phone: ''
+    phone: '',
+    web: '',
+    googleMapsUrl: '',
+    latitude: '',
+    longitude: '',
+    rating: '',
+    businessStatus: '',
+    placeId: ''
   });
+  const [placesResults, setPlacesResults] = useState([]);
+  const [selectedPlaceIndex, setSelectedPlaceIndex] = useState('');
   const [restaurantPhotoPreview, setRestaurantPhotoPreview] = useState('');
   const [saveRestaurantError, setSaveRestaurantError] = useState('');
   const [saveRestaurantSuccess, setSaveRestaurantSuccess] = useState('');
@@ -543,7 +552,11 @@ function App() {
   }, [selectedRestaurant]);
 
   const restaurantEditPreviewMapUrl = useMemo(() => {
-    if (!isEditingRestaurant) return '';
+    const lat = Number(String(restaurantForm.latitude || '').trim());
+    const lng = Number(String(restaurantForm.longitude || '').trim());
+    if (!Number.isNaN(lat) && !Number.isNaN(lng)) {
+      return `https://www.google.com/maps?q=${lat},${lng}&z=17&output=embed`;
+    }
 
     const streetQuery = (restaurantForm.street || '').trim();
     const nameQuery = (restaurantForm.name || '').trim();
@@ -562,7 +575,7 @@ function App() {
     }
 
     return 'https://www.google.com/maps?q=Barcelona&z=13&output=embed';
-  }, [isEditingRestaurant, restaurantForm.street, restaurantForm.name, selectedRestaurant]);
+  }, [isEditingRestaurant, restaurantForm.street, restaurantForm.name, restaurantForm.latitude, restaurantForm.longitude, selectedRestaurant]);
 
   const restaurantsForSelectedStudent = useMemo(() => {
     if (!selectedStudent) return [];
@@ -888,12 +901,54 @@ function App() {
     setRestaurantForm((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleSearchPlaces = async () => {
+    const query = (restaurantForm.name || '').trim();
+    if (!query) return;
+    try {
+      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(query)}&limit=8`);
+      const data = await response.json();
+      const mapped = (Array.isArray(data) ? data : []).map((item) => ({
+        name: item.name || query,
+        displayName: item.display_name || query,
+        latitude: item.lat || '',
+        longitude: item.lon || '',
+        placeId: item.place_id ? String(item.place_id) : ''
+      }));
+      setPlacesResults(mapped);
+      setSelectedPlaceIndex('');
+    } catch (error) {
+      setPlacesResults([]);
+    }
+  };
+
+  const handleAutocompletePlace = () => {
+    if (!placesResults.length) return;
+    const place = selectedPlaceIndex !== '' ? placesResults[Number(selectedPlaceIndex)] : placesResults[0];
+    if (!place) return;
+    setRestaurantForm((prev) => ({
+      ...prev,
+      name: prev.name || place.name,
+      street: place.displayName || prev.street,
+      latitude: String(place.latitude || prev.latitude || ''),
+      longitude: String(place.longitude || prev.longitude || ''),
+      placeId: place.placeId || prev.placeId,
+      googleMapsUrl: `https://maps.google.com/?q=${encodeURIComponent(place.displayName || prev.name || '')}`
+    }));
+  };
+
   const handleSaveRestaurant = async () => {
     const name = restaurantForm.name.trim();
     const specialty = restaurantForm.specialty.trim();
     const street = restaurantForm.street.trim();
     const email = (restaurantForm.email || '').trim();
     const phone = (restaurantForm.phone || '').trim();
+    const web = (restaurantForm.web || '').trim();
+    const googleMapsUrl = (restaurantForm.googleMapsUrl || '').trim();
+    const latitude = Number(String(restaurantForm.latitude || '').trim());
+    const longitude = Number(String(restaurantForm.longitude || '').trim());
+    const rating = (restaurantForm.rating || '').trim();
+    const businessStatus = (restaurantForm.businessStatus || '').trim();
+    const placeId = (restaurantForm.placeId || '').trim();
 
     if (!name || !street) {
       setSaveRestaurantSuccess('');
@@ -910,13 +965,20 @@ function App() {
         street: { stringValue: street },
         email: { stringValue: email },
         phone: { stringValue: phone },
-        imageUrl: { stringValue: restaurantPhotoPreview || WHITE_AVATAR_IMAGE }
+        imageUrl: { stringValue: restaurantPhotoPreview || WHITE_AVATAR_IMAGE },
+        web: { stringValue: web },
+        googleMapsUrl: { stringValue: googleMapsUrl },
+        rating: { stringValue: rating },
+        businessStatus: { stringValue: businessStatus },
+        placeId: { stringValue: placeId },
+        latitude: { stringValue: Number.isNaN(latitude) ? '' : String(latitude) },
+        longitude: { stringValue: Number.isNaN(longitude) ? '' : String(longitude) }
       }
     };
 
     try {
       const endpoint = isEditMode
-        ? `${FIRESTORE_BASE_URL}/Restaurant/${encodeURIComponent(restaurantId)}?updateMask.fieldPaths=Name&updateMask.fieldPaths=specialty&updateMask.fieldPaths=street&updateMask.fieldPaths=email&updateMask.fieldPaths=phone&updateMask.fieldPaths=imageUrl`
+        ? `${FIRESTORE_BASE_URL}/Restaurant/${encodeURIComponent(restaurantId)}?updateMask.fieldPaths=Name&updateMask.fieldPaths=specialty&updateMask.fieldPaths=street&updateMask.fieldPaths=email&updateMask.fieldPaths=phone&updateMask.fieldPaths=imageUrl&updateMask.fieldPaths=web&updateMask.fieldPaths=googleMapsUrl&updateMask.fieldPaths=rating&updateMask.fieldPaths=businessStatus&updateMask.fieldPaths=placeId&updateMask.fieldPaths=latitude&updateMask.fieldPaths=longitude`
         : `${FIRESTORE_BASE_URL}/Restaurant?documentId=${encodeURIComponent(restaurantId)}`;
 
       const response = await fetch(endpoint, {
@@ -937,7 +999,7 @@ function App() {
         street,
         email: email || 'No disponible',
         phone: phone || 'No disponible',
-        coordinates: null,
+        coordinates: !Number.isNaN(latitude) && !Number.isNaN(longitude) ? { lat: latitude, lng: longitude } : null,
         imageUrl: restaurantPhotoPreview || WHITE_AVATAR_IMAGE
       };
 
@@ -949,7 +1011,7 @@ function App() {
       openRestaurantProfile(newRestaurant.id);
       setSaveRestaurantError('');
       setSaveRestaurantSuccess(isEditMode ? 'Restaurant actualitzat correctament a Firebase.' : 'Restaurant guardat correctament a Firebase.');
-      setRestaurantForm({ name: '', specialty: '', street: '', email: '', phone: '' });
+      setRestaurantForm({ name: '', specialty: '', street: '', email: '', phone: '', web: '', googleMapsUrl: '', latitude: '', longitude: '', rating: '', businessStatus: '', placeId: '' });
       setRestaurantPhotoPreview('');
       setEditingRestaurantId('');
       setIsEditingRestaurant(false);
@@ -1004,7 +1066,14 @@ function App() {
           ? selectedRestaurant.street.join(', ')
           : String(selectedRestaurant.street || ''),
       email: selectedRestaurant.email === 'No disponible' ? '' : selectedRestaurant.email || '',
-      phone: selectedRestaurant.phone === 'No disponible' ? '' : selectedRestaurant.phone || ''
+      phone: selectedRestaurant.phone === 'No disponible' ? '' : selectedRestaurant.phone || '',
+      web: selectedRestaurant.web === 'No disponible' ? '' : selectedRestaurant.web || '',
+      googleMapsUrl: selectedRestaurant.googleMapsUrl || '',
+      latitude: selectedRestaurant.coordinates?.lat ? String(selectedRestaurant.coordinates.lat) : '',
+      longitude: selectedRestaurant.coordinates?.lng ? String(selectedRestaurant.coordinates.lng) : '',
+      rating: selectedRestaurant.rating || '',
+      businessStatus: selectedRestaurant.businessStatus || '',
+      placeId: selectedRestaurant.placeId || ''
     });
     setRestaurantPhotoPreview(selectedRestaurant.imageUrl || '');
     setRestaurantProfileMessage('');
@@ -2005,12 +2074,15 @@ function App() {
               <label htmlFor="places-name">Nom de l&apos;establiment</label>
               <div className="places-search-row">
                 <input id="places-name" type="text" value={restaurantForm.name} name="name" onChange={handleRestaurantInputChange} placeholder="Ex. Disfrutar Barcelona" />
-                <button type="button" className="manage-btn accept">Buscar</button>
+                <button type="button" className="manage-btn accept" onClick={handleSearchPlaces}>Buscar</button>
               </div>
               <label htmlFor="places-results">Resultats</label>
               <div className="places-search-row">
-                <select id="places-results"><option>Encara no hi ha resultats</option></select>
-                <button type="button" className="manage-btn cancel">Autocompletar</button>
+                <select id="places-results" value={selectedPlaceIndex} onChange={(event) => setSelectedPlaceIndex(event.target.value)}>
+                  <option value="">Encara no hi ha resultats</option>
+                  {placesResults.map((item, index) => <option key={`${item.placeId}-${index}`} value={index}>{item.displayName}</option>)}
+                </select>
+                <button type="button" className="manage-btn cancel" onClick={handleAutocompletePlace}>Autocompletar</button>
               </div>
             </article>
 
@@ -2070,6 +2142,36 @@ function App() {
                       value={restaurantForm.email || ''}
                       onChange={handleRestaurantInputChange}
                     />
+                  </div>
+                </div>
+                <div className="restaurant-edit-two-columns">
+                  <div>
+                    <label htmlFor="restaurant-web">Web</label>
+                    <input id="restaurant-web" name="web" type="text" placeholder="https://restaurant.com" value={restaurantForm.web || ''} onChange={handleRestaurantInputChange} />
+                  </div>
+                  <div>
+                    <label htmlFor="restaurant-map-url">Google Maps URL</label>
+                    <input id="restaurant-map-url" name="googleMapsUrl" type="text" placeholder="https://maps.google.com/..." value={restaurantForm.googleMapsUrl || ''} onChange={handleRestaurantInputChange} />
+                  </div>
+                </div>
+                <div className="restaurant-edit-two-columns">
+                  <div>
+                    <label htmlFor="restaurant-lat">Latitud</label>
+                    <input id="restaurant-lat" name="latitude" type="text" placeholder="41.390000" value={restaurantForm.latitude || ''} onChange={handleRestaurantInputChange} />
+                  </div>
+                  <div>
+                    <label htmlFor="restaurant-lng">Longitud</label>
+                    <input id="restaurant-lng" name="longitude" type="text" placeholder="2.150000" value={restaurantForm.longitude || ''} onChange={handleRestaurantInputChange} />
+                  </div>
+                </div>
+                <div className="restaurant-edit-two-columns">
+                  <div>
+                    <label htmlFor="restaurant-rating">Rating</label>
+                    <input id="restaurant-rating" name="rating" type="text" placeholder="4.8" value={restaurantForm.rating || ''} onChange={handleRestaurantInputChange} />
+                  </div>
+                  <div>
+                    <label htmlFor="restaurant-business-status">Estat del negoci</label>
+                    <input id="restaurant-business-status" name="businessStatus" type="text" placeholder="OPERATIONAL" value={restaurantForm.businessStatus || ''} onChange={handleRestaurantInputChange} />
                   </div>
                 </div>
 
