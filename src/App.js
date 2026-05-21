@@ -214,8 +214,14 @@ function App() {
     fullName: '',
     email: '',
     phone: '',
-    linkedin: ''
+    linkedin: '',
+    instagram: '',
+    bio: '',
+    password: '',
+    promotionYear: '',
+    studies: []
   });
+  const [isStudiesOpenAddStudent, setIsStudiesOpenAddStudent] = useState(true);
   const [saveStudentError, setSaveStudentError] = useState('');
   const [saveStudentSuccess, setSaveStudentSuccess] = useState('');
   const fileInputRef = useRef(null);
@@ -735,6 +741,19 @@ function App() {
     setAdminForm((prev) => ({ ...prev, [name]: value }));
   };
 
+  const addStudentStudyOptions = [
+    'CFGM Cuina i gastronomia i Serveis en restauració',
+    'CFGM Pastisseria, forneria i confiteria',
+    'CFGS Direcció de cuina',
+    'Programa Intensiu de Cuina Catalana',
+    'Diploma de Sommelier',
+    'Advanced Sommelier Postgraduate Degree',
+    'FP Hoteleria',
+    'Diplomatura de Turisme'
+  ];
+
+  const promotionYearFormOptions = ['Actualment estudiant', ...Array.from({ length: 18 }, (_, i) => String(new Date().getFullYear() - i))];
+
   const handleSaveStudent = async () => {
     const fullName = adminForm.fullName.trim();
     const email = adminForm.email.trim();
@@ -764,7 +783,12 @@ function App() {
           lastName: { stringValue: lastName },
           email: { stringValue: email },
           phone: { stringValue: adminForm.phone.trim() || '' },
-          linkedin: { stringValue: adminForm.linkedin.trim() || '' }
+          linkedin: { stringValue: adminForm.linkedin.trim() || '' },
+          instagram: { stringValue: adminForm.instagram.trim() || '' },
+          bio: { stringValue: adminForm.bio.trim() || '' },
+          promotionYear: { stringValue: adminForm.promotionYear.trim() || '' },
+          studies: { stringValue: adminForm.studies.join(' · ') },
+          password: { stringValue: adminForm.password.trim() || '' }
         }
       };
 
@@ -816,7 +840,10 @@ function App() {
         imageUrl: adminPhotoPreview || WHITE_AVATAR_IMAGE,
         email: adminForm.email.trim(),
         phone: adminForm.phone.trim() || 'No disponible',
-        linkedin: adminForm.linkedin.trim() || 'No disponible'
+        linkedin: adminForm.linkedin.trim() || 'No disponible',
+        instagram: adminForm.instagram.trim() || 'No disponible',
+        studies: adminForm.studies.join(' · ') || 'Estudis no informats',
+        promotionYear: adminForm.promotionYear || ''
       };
 
       setStudents((prev) => [newStudent, ...prev]);
@@ -824,7 +851,7 @@ function App() {
       setSaveStudentError('');
       setSaveStudentSuccess('Alumne guardat correctament a Firebase.');
 
-      setAdminForm({ fullName: '', email: '', phone: '', linkedin: '' });
+      setAdminForm({ fullName: '', email: '', phone: '', linkedin: '', instagram: '', bio: '', password: '', promotionYear: '', studies: [] });
       setAdminStudentStatus('Alumni (En actiu)');
       setAdminTrajectoryFilter('');
       setAdminTrajectories([{ id: 1, restaurant: '', role: '', current: true }]);
@@ -1900,11 +1927,11 @@ function App() {
         )}
 
         {activeSection === 'add-student' && (
-          <section className="admin-page">
+          <section className="admin-page restaurant-edit-page">
             <p className="admin-eyebrow">ADMINISTRACIO</p>
-            <h1>Afegir Alumne</h1>
+            <h1>Afegir Alumni</h1>
             <p className="admin-intro">
-              Dona d&apos;alta un alumne nou, desa la seva foto a storage i relaciona&apos;l amb tants restaurants com calgui.
+              Els camps marcats amb * corresponen al correu electrònic i la contrasenya; són obligatoris.
             </p>
 
             <div className="admin-top-grid">
@@ -1923,22 +1950,26 @@ function App() {
                   className="hidden-file-input"
                   onChange={handlePhotoUpload}
                 />
-                <h3>Pujar foto</h3>
-                <p>{adminPhotoPreview ? 'Clica per canviar la imatge' : 'Selecciona una imatge des del disc'}</p>
+                <h3>PUJAR FOTO</h3>
+                <p>{adminPhotoPreview ? 'Clica per canviar la imatge' : 'Puja una imatge'}</p>
 
-                <label htmlFor="student-status">Estat de l&apos;alumne</label>
-                <select
-                  id="student-status"
-                  value={adminStudentStatus}
-                  onChange={(event) => setAdminStudentStatus(event.target.value)}
-                >
-                  <option>Alumni (En actiu)</option>
-                  <option>Alumni (No actiu)</option>
-                </select>
+                <label>Estudis cursats a la Joviat *</label>
+                <button type="button" className="students-filter-collapse-btn" onClick={() => setIsStudiesOpenAddStudent((p) => !p)}>
+                  <span>{adminForm.studies.length ? `${adminForm.studies.length} seleccionats` : 'Selecciona els estudis'}</span><span>{isStudiesOpenAddStudent ? '⌃' : '⌄'}</span>
+                </button>
+                {isStudiesOpenAddStudent && (
+                  <div className="students-chip-grid">
+                    {addStudentStudyOptions.map((study) => (
+                      <button key={study} type="button" className={`students-filter-chip ${adminForm.studies.includes(study) ? 'active' : ''}`} onClick={() => setAdminForm((prev) => ({ ...prev, studies: prev.studies.includes(study) ? prev.studies.filter((s) => s !== study) : [...prev.studies, study] }))}>
+                        ☐ {study}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </article>
 
               <article className="admin-panel info-panel">
-                <h3>Informacio primaria</h3>
+                <h3>Informació primària</h3>
                 <label htmlFor="full-name">Nom complet</label>
                 <input
                   id="full-name"
@@ -1951,7 +1982,7 @@ function App() {
 
                 <div className="admin-two-columns">
                   <div>
-                    <label htmlFor="email">Correu electronic</label>
+                    <label htmlFor="email">Correu electrònic *</label>
                     <input
                       id="email"
                       name="email"
@@ -1962,7 +1993,14 @@ function App() {
                     />
                   </div>
                   <div>
-                    <label htmlFor="phone">Telefon de contacte</label>
+                    <label htmlFor="password">Contrasenya *</label>
+                    <input id="password" name="password" type="password" placeholder="********" value={adminForm.password} onChange={handleAdminInputChange} />
+                  </div>
+                </div>
+
+                <div className="admin-two-columns">
+                  <div>
+                    <label htmlFor="phone">Telèfon de contacte</label>
                     <input
                       id="phone"
                       name="phone"
@@ -1972,8 +2010,17 @@ function App() {
                       onChange={handleAdminInputChange}
                     />
                   </div>
+                  <div>
+                    <label htmlFor="promotionYear">Any de promoció</label>
+                    <select id="promotionYear" name="promotionYear" value={adminForm.promotionYear} onChange={handleAdminInputChange}>
+                      <option value="">Qualsevol any</option>
+                      {promotionYearFormOptions.map((year) => <option key={year} value={year}>{year}</option>)}
+                    </select>
+                  </div>
                 </div>
 
+                <label htmlFor="bio">Bio</label>
+                <textarea id="bio" name="bio" placeholder="Escriu una breu presentació de l'Alumni" value={adminForm.bio} onChange={handleAdminInputChange} rows={4} />
                 <label htmlFor="linkedin">Perfil Linkedin</label>
                 <input
                   id="linkedin"
@@ -1983,6 +2030,8 @@ function App() {
                   value={adminForm.linkedin}
                   onChange={handleAdminInputChange}
                 />
+                <label htmlFor="instagram">Perfil d&apos;Instagram</label>
+                <input id="instagram" name="instagram" type="text" placeholder="@usuari o instagram.com/usuari" value={adminForm.instagram} onChange={handleAdminInputChange} />
               </article>
             </div>
 
