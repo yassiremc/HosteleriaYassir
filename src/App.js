@@ -1994,54 +1994,31 @@ function App() {
         )}
 
         {activeSection === 'add-restaurant' && (
-          <section className={`admin-page ${isEditingRestaurant ? 'restaurant-edit-page' : ''}`}>
+          <section className="admin-page restaurant-edit-page">
             <p className="admin-eyebrow">ADMINISTRACIO</p>
-            <h1>{isEditingRestaurant ? 'Editar Establiment' : 'Afegir Restaurant'}</h1>
-            <p className="admin-intro">{isEditingRestaurant ? "Actualitza la fitxa de l'establiment reutilitzant el mateix formulari de creació." : 'Afegeix un restaurant nou amb les seves dades bàsiques.'}</p>
+            <h1>{isEditingRestaurant ? 'Editar Establiment' : 'Afegir Establiment'}</h1>
+            <p className="admin-intro">Cerca l&apos;establiment a Google Places, selecciona&apos;l del llistat i importa la seva informació per omplir la fitxa automàticament abans de desar-la a Firestore.</p>
 
-            {isEditingRestaurant && (
-              <article className="admin-panel places-panel">
-                <h3>Cerca a Google Places</h3>
-                <p>Escriu el nom de l&apos;establiment i recupera els resultats disponibles.</p>
-                <label htmlFor="places-name">Nom de l&apos;establiment</label>
-                <div className="places-search-row">
-                  <input id="places-name" type="text" value={restaurantForm.name} name="name" onChange={handleRestaurantInputChange} placeholder="Ex. Disfrutar Barcelona" />
-                  <button type="button" className="manage-btn accept">Buscar</button>
-                </div>
-                <label htmlFor="places-results">Resultats</label>
-                <div className="places-search-row">
-                  <select id="places-results"><option>Encara no hi ha resultats</option></select>
-                  <button type="button" className="manage-btn cancel">Autocompletar</button>
-                </div>
-              </article>
-            )}
+            <article className="admin-panel places-panel">
+              <h3>Cerca a Google Places</h3>
+              <p>Escriu el nom de l&apos;establiment i recupera els resultats disponibles.</p>
+              <label htmlFor="places-name">Nom de l&apos;establiment</label>
+              <div className="places-search-row">
+                <input id="places-name" type="text" value={restaurantForm.name} name="name" onChange={handleRestaurantInputChange} placeholder="Ex. Disfrutar Barcelona" />
+                <button type="button" className="manage-btn accept">Buscar</button>
+              </div>
+              <label htmlFor="places-results">Resultats</label>
+              <div className="places-search-row">
+                <select id="places-results"><option>Encara no hi ha resultats</option></select>
+                <button type="button" className="manage-btn cancel">Autocompletar</button>
+              </div>
+            </article>
 
-            <div className={`admin-top-grid ${isEditingRestaurant ? 'restaurant-edit-form-grid' : ''}`}>
-              {!isEditingRestaurant && (
-                <article className="admin-panel photo-panel">
-                  <button type="button" className="upload-circle upload-circle-button" onClick={openRestaurantPhotoPicker}>
-                    {restaurantPhotoPreview ? (
-                      <img src={restaurantPhotoPreview} alt="Previsualització del restaurant" className="upload-preview-image" />
-                    ) : (
-                      <span>+</span>
-                    )}
-                  </button>
-                  <input
-                    ref={restaurantPhotoInputRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden-file-input"
-                    onChange={handleRestaurantPhotoUpload}
-                  />
-                  <h3>Pujar foto</h3>
-                  <p>{restaurantPhotoPreview ? 'Clica per canviar la imatge' : 'Selecciona una imatge des del disc'}</p>
-                </article>
-              )}
-
+            <div className="admin-top-grid restaurant-edit-form-grid">
               <article className="admin-panel info-panel">
-                <h3>{isEditingRestaurant ? "Dades de l'establiment" : 'Informacio primaria'}</h3>
-                {isEditingRestaurant && <p className="edit-panel-helper">Revisa els camps importants i completa manualment el que Google no proporcioni.</p>}
-                <label htmlFor="restaurant-name">Nom del restaurant</label>
+                <h3>Dades de l&apos;establiment</h3>
+                <p className="edit-panel-helper">Revisa els camps importants i completa manualment el que Google no proporcioni.</p>
+                <label htmlFor="restaurant-name">Nom</label>
                 <input
                   id="restaurant-name"
                   name="name"
@@ -2051,7 +2028,7 @@ function App() {
                   onChange={handleRestaurantInputChange}
                 />
 
-                <label htmlFor="restaurant-specialty">Especialitat</label>
+                <label htmlFor="restaurant-specialty">Categoria</label>
                 <input
                   id="restaurant-specialty"
                   name="specialty"
@@ -2061,7 +2038,7 @@ function App() {
                   onChange={handleRestaurantInputChange}
                 />
 
-                <label htmlFor="restaurant-street">Carrer</label>
+                <label htmlFor="restaurant-street">Adreça</label>
                 <input
                   id="restaurant-street"
                   name="street"
@@ -2071,7 +2048,7 @@ function App() {
                   onChange={handleRestaurantInputChange}
                 />
 
-                <div className={isEditingRestaurant ? 'restaurant-edit-two-columns' : ''}>
+                <div className="restaurant-edit-two-columns">
                   <div>
                     <label htmlFor="restaurant-phone">Phone</label>
                     <input
@@ -2096,8 +2073,7 @@ function App() {
                   </div>
                 </div>
 
-                {isEditingRestaurant && (
-                  <>
+                <>
                     <label htmlFor="restaurant-photo-url">Foto URL</label>
                     <input
                       id="restaurant-photo-url"
@@ -2119,8 +2095,7 @@ function App() {
                         <iframe title="Previsualització del mapa" src={restaurantEditPreviewMapUrl} loading="lazy" />
                       </article>
                     </div>
-                  </>
-                )}
+                </>
               </article>
             </div>
 
