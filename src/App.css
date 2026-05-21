@@ -971,7 +971,7 @@ body {
 
 .admin-intro {
   margin-bottom: 1.8rem;
-  color: #cbd5e1;
+  color: #111827;
   max-width: 900px;
 }
 
@@ -1126,8 +1126,22 @@ body {
 }
 
 .save-student-error {
-  color: #fecaca !important;
+  color: #b00020 !important;
+  font-weight: 700;
   margin-top: 0.6rem;
+}
+
+.manage-success {
+  color: #111827;
+  font-weight: 700;
+  margin: 0.2rem 0 0.8rem;
+}
+
+.students-search-label span,
+.photo-panel p,
+.edit-panel-helper,
+.places-panel p {
+  color: #111827 !important;
 }
 
 .save-student-success {

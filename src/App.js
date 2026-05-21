@@ -253,8 +253,11 @@ function App() {
   const [pendingUserRequests, setPendingUserRequests] = useState([
     { id: 'req-user-1', name: 'Sandra Jo Solà', email: 'sjo@joviat.cat' }
   ]);
-  const [pendingVenueRequests, setPendingVenueRequests] = useState([]);
+  const [pendingVenueRequests, setPendingVenueRequests] = useState([
+    { id: 'req-venue-1', name: 'Restaurant Demo', email: 'contacte@restaurantdemo.cat' }
+  ]);
   const [manageModal, setManageModal] = useState(null);
+  const [manageActionMessage, setManageActionMessage] = useState('');
   const [showRequestAccess, setShowRequestAccess] = useState(false);
   const [accessRequestForm, setAccessRequestForm] = useState({ email: '', fullName: '' });
   const [accessRequestMessage, setAccessRequestMessage] = useState('');
@@ -1323,12 +1326,20 @@ function App() {
 
   const confirmManageAction = () => {
     if (!manageModal) return;
+    let message = '';
     if (manageModal.type === 'accept-user' || manageModal.type === 'cancel-user') {
       setPendingUserRequests((prev) => prev.filter((item) => item.id !== manageModal.request.id));
+      message = manageModal.type === 'accept-user'
+        ? `Usuari ${manageModal.request.name} acceptat correctament.`
+        : `Petició d'usuari de ${manageModal.request.name} cancel·lada.`;
     }
     if (manageModal.type === 'accept-venue' || manageModal.type === 'cancel-venue') {
       setPendingVenueRequests((prev) => prev.filter((item) => item.id !== manageModal.request.id));
+      message = manageModal.type === 'accept-venue'
+        ? `Establiment ${manageModal.request.name} acceptat correctament.`
+        : `Petició d'establiment de ${manageModal.request.name} cancel·lada.`;
     }
+    setManageActionMessage(message);
     setManageModal(null);
   };
 
@@ -2265,6 +2276,7 @@ function App() {
             <p className="admin-eyebrow">ADMINISTRACIO</p>
             <h1>Gestionar altes</h1>
             <p className="admin-intro">Revisa les sol·licituds pendents i decideix si vols donar d&apos;alta l&apos;usuari o cancel·lar-la.</p>
+            {manageActionMessage && <p className="manage-success">{manageActionMessage}</p>}
 
             <article className="manage-entries-panel">
               <div className="manage-entries-toggle" role="tablist" aria-label="Visualització d'altes">
