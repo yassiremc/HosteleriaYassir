@@ -97,6 +97,57 @@ const TRANSLATIONS = {
   }
 };
 
+const UI_TEXT = {
+  ca: {
+    studentsListTitle: "Llistat d'Alumnis",
+    searchAlumni: "CERCAR ALUMNIS",
+    showing: "mostrant",
+    studiesAtJoviat: "ESTUDIS CURSATS A LA JOVIAT",
+    jobSituation: "SITUACIÓ LABORAL",
+    anySituation: "Qualsevol situació",
+    workingNow: "Treballen actualment",
+    notWorkingNow: "No treballen actualment",
+    promotionYear: "ANY DE PROMOCIÓ",
+    anyYear: "Qualsevol any",
+    profile: "PERFIL PROFESSIONAL",
+    seeDetails: "VEURE DETALLS",
+    associatedEstablishments: "establiments associats",
+    manageEntriesTitle: "Gestionar altes"
+  },
+  es: {
+    studentsListTitle: "Listado de Alumni",
+    searchAlumni: "BUSCAR ALUMNI",
+    showing: "mostrando",
+    studiesAtJoviat: "ESTUDIOS CURSADOS EN JOVIAT",
+    jobSituation: "SITUACIÓN LABORAL",
+    anySituation: "Cualquier situación",
+    workingNow: "Trabajan actualmente",
+    notWorkingNow: "No trabajan actualmente",
+    promotionYear: "AÑO DE PROMOCIÓN",
+    anyYear: "Cualquier año",
+    profile: "PERFIL PROFESIONAL",
+    seeDetails: "VER DETALLES",
+    associatedEstablishments: "establecimientos asociados",
+    manageEntriesTitle: "Gestionar altas"
+  },
+  en: {
+    studentsListTitle: "Alumni List",
+    searchAlumni: "SEARCH ALUMNI",
+    showing: "showing",
+    studiesAtJoviat: "STUDIES AT JOVIAT",
+    jobSituation: "WORK SITUATION",
+    anySituation: "Any status",
+    workingNow: "Currently working",
+    notWorkingNow: "Not currently working",
+    promotionYear: "GRADUATION YEAR",
+    anyYear: "Any year",
+    profile: "PROFESSIONAL PROFILE",
+    seeDetails: "SEE DETAILS",
+    associatedEstablishments: "associated establishments",
+    manageEntriesTitle: "Manage entries"
+  }
+};
+
 
 const RESTAURANT_IMAGES_BY_NAME = {
   'restaurant japonès niwaka': 'https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&w=1200&q=80',
@@ -270,6 +321,7 @@ function App() {
   const leafletMapRef = useRef(null);
   const leafletMarkersRef = useRef([]);
   const t = (key) => TRANSLATIONS[activeLanguage]?.[key] || TRANSLATIONS.ca[key] || key;
+  const ui = (key) => UI_TEXT[activeLanguage]?.[key] || UI_TEXT.ca[key] || key;
 
   useEffect(() => {
     const loadData = async () => {
@@ -1607,10 +1659,10 @@ function App() {
 
         {activeSection === 'students' && (
           <section className="students-section">
-            <h2 className="students-title">🧑‍🍳 Llistat d&apos;Alumnis</h2>
+            <h2 className="students-title">🧑‍🍳 {ui('studentsListTitle')}</h2>
             <div className="students-search-wrap">
               <label htmlFor="students-search-input" className="students-search-label">
-                CERCAR ALUMNIS <span>(mostrant {filteredStudents.length} de {students.length})</span>
+                {ui('searchAlumni')} <span>({ui('showing')} {filteredStudents.length} / {students.length})</span>
               </label>
               <div className="students-search-row">
                 <input
@@ -1627,7 +1679,7 @@ function App() {
 
             <article className="students-filters-card">
               <button type="button" className="students-filter-collapse-btn" onClick={() => setIsStudiesFilterOpen((prev) => !prev)}>
-                <span className="students-filter-block-title">ESTUDIS CURSATS A LA JOVIAT</span>
+                <span className="students-filter-block-title">{ui('studiesAtJoviat')}</span>
                 <span aria-hidden="true">{isStudiesFilterOpen ? '⌃' : '⌄'}</span>
               </button>
               {isStudiesFilterOpen && (
@@ -1649,23 +1701,23 @@ function App() {
               )}
               <div className="students-filter-inline">
                 <div>
-                  <label htmlFor="students-employment-filter" className="students-filter-label">SITUACIÓ LABORAL</label>
+                  <label htmlFor="students-employment-filter" className="students-filter-label">{ui('jobSituation')}</label>
                   <select id="students-employment-filter" value={studentEmploymentFilter} onChange={(event) => setStudentEmploymentFilter(event.target.value)}>
-                    <option value="all">Qualsevol situació</option>
-                    <option value="current">Treballen actualment</option>
-                    <option value="past">No treballen actualment</option>
+                    <option value="all">{ui('anySituation')}</option>
+                    <option value="current">{ui('workingNow')}</option>
+                    <option value="past">{ui('notWorkingNow')}</option>
                   </select>
                 </div>
                 <div>
-                  <label htmlFor="students-year-filter" className="students-filter-label">ANY DE PROMOCIÓ</label>
+                  <label htmlFor="students-year-filter" className="students-filter-label">{ui('promotionYear')}</label>
                   <select id="students-year-filter" value={studentPromotionYearFilter} onChange={(event) => setStudentPromotionYearFilter(event.target.value)}>
-                    <option value="all">Qualsevol any</option>
+                    <option value="all">{ui('anyYear')}</option>
                     {promotionYearOptions.map((year) => <option key={year} value={year}>{year}</option>)}
                   </select>
                 </div>
               </div>
               <button type="button" className="students-filter-collapse-btn" onClick={() => setIsProfileFilterOpen((prev) => !prev)}>
-                <span className="students-filter-block-title">PERFIL PROFESSIONAL</span>
+                <span className="students-filter-block-title">{ui('profile')}</span>
                 <span aria-hidden="true">{isProfileFilterOpen ? '⌃' : '⌄'}</span>
               </button>
               {isProfileFilterOpen && (
@@ -1714,8 +1766,8 @@ function App() {
                         <p>• {student.studies || 'Estudis no informats'}</p>
                         {student.role && <p>• {student.role}</p>}
                         {student.promotionYear && <p className="student-card-promo">Promoció {student.promotionYear}</p>}
-                        <p className="student-card-assoc">🏫 {students.filter((item) => item.alumniId === student.alumniId).length || 1} establiments associats</p>
-                        <span className="student-card-cta">VEURE DETALLS</span>
+                        <p className="student-card-assoc">🏫 {students.filter((item) => item.alumniId === student.alumniId).length || 1} {ui('associatedEstablishments')}</p>
+                        <span className="student-card-cta">{ui('seeDetails')}</span>
                       </div>
                     </button>
                   </article>
@@ -2274,7 +2326,7 @@ function App() {
         {activeSection === 'manage-entries' && (
           <section className="admin-page">
             <p className="admin-eyebrow">ADMINISTRACIO</p>
-            <h1>Gestionar altes</h1>
+            <h1>{ui('manageEntriesTitle')}</h1>
             <p className="admin-intro">Revisa les sol·licituds pendents i decideix si vols donar d&apos;alta l&apos;usuari o cancel·lar-la.</p>
             {manageActionMessage && <p className="manage-success">{manageActionMessage}</p>}
 
