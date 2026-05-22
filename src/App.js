@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import logoJoviat from './logo_joviat.webp';
 import './App.css';
 
 const FIREBASE_PROJECT_ID = 'hosteleriajoviat-94129';
 const FIRESTORE_BASE_URL = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents`;
-const ADMIN_EMAIL = 'admin@gmail.com';
-const ADMIN_PASSWORD = 'admin12345';
+const ADMIN_EMAIL = 'evergara@joviat.cat';
+const ADMIN_PASSWORDS = ['Joviat 1234', 'Joviat1234'];
 
 const ALUMNI_IMAGES_BY_NAME = {
   'elena gilbert': 'https://i.pinimg.com/736x/53/39/cc/5339ccdd5dfb6b834fac3711e943c9b0.jpg',
@@ -18,6 +17,85 @@ const WHITE_AVATAR_IMAGE =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='512' height='512' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%230f172a'/%3E%3Ccircle cx='256' cy='188' r='92' fill='%23ffffff'/%3E%3Cpath d='M96 452c0-88 72-160 160-160s160 72 160 160' fill='%23ffffff'/%3E%3C/svg%3E";
 
 const DEFAULT_RESTAURANT_IMAGE_URL = WHITE_AVATAR_IMAGE;
+const HOME_HERO_IMAGE = 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1800&q=80';
+
+const TRANSLATIONS = {
+  ca: {
+    login: 'LOGIN',
+    logout: 'LOGOUT',
+    menuHome: 'Inici',
+    menuRestaurants: 'Restaurants',
+    menuStudents: 'Alumnes',
+    menuAddStudent: 'Afegir Alumne',
+    menuAddRestaurant: 'Afegir Restaurant',
+    menuManageEntries: 'Gestionar altes',
+    heroEyebrow: 'CICLE FORMATIU HOTELERIA',
+    heroTitle: 'Descobreix fins on arriba la xarxa de la Joviat',
+    exploreRestaurants: 'EXPLORAR RESTAURANTS',
+    exploreStudents: 'EXPLORAR ALUMNES',
+    restaurantsTitle: 'Visualització de l’alumnat al restaurant',
+    mapTitle: 'Mapa de Google Maps',
+    searchRestaurant: 'Buscar restaurant...',
+    studentsTitle: "Llistat d'alumnes",
+    searchStudent: 'Buscar alumne o rol...',
+    username: 'Usuari',
+    password: 'Contrasenya',
+    enter: 'Entrar',
+    requestAccess: 'Sol·licitar accés',
+    mapMode: 'Mode mapa',
+    listMode: 'Mode llistat'
+  },
+  es: {
+    login: 'INICIAR SESIÓN',
+    logout: 'CERRAR SESIÓN',
+    menuHome: 'Inicio',
+    menuRestaurants: 'Restaurantes',
+    menuStudents: 'Alumnos',
+    menuAddStudent: 'Añadir Alumno',
+    menuAddRestaurant: 'Añadir Restaurante',
+    menuManageEntries: 'Gestionar altas',
+    heroEyebrow: 'CICLO FORMATIVO HOSTELERÍA',
+    heroTitle: 'Descubre hasta dónde llega la red de Joviat',
+    exploreRestaurants: 'EXPLORAR RESTAURANTES',
+    exploreStudents: 'EXPLORAR ALUMNOS',
+    restaurantsTitle: 'Visualización del alumnado en el restaurante',
+    mapTitle: 'Mapa de Google Maps',
+    searchRestaurant: 'Buscar restaurante...',
+    studentsTitle: 'Listado de alumnos',
+    searchStudent: 'Buscar alumno o rol...',
+    username: 'Usuario',
+    password: 'Contraseña',
+    enter: 'Entrar',
+    requestAccess: 'Solicitar acceso',
+    mapMode: 'Modo mapa',
+    listMode: 'Modo listado'
+  },
+  en: {
+    login: 'LOGIN',
+    logout: 'LOGOUT',
+    menuHome: 'Home',
+    menuRestaurants: 'Restaurants',
+    menuStudents: 'Students',
+    menuAddStudent: 'Add Student',
+    menuAddRestaurant: 'Add Restaurant',
+    menuManageEntries: 'Manage Entries',
+    heroEyebrow: 'HOSPITALITY PROGRAM',
+    heroTitle: 'Discover how far the Joviat network reaches',
+    exploreRestaurants: 'EXPLORE RESTAURANTS',
+    exploreStudents: 'EXPLORE STUDENTS',
+    restaurantsTitle: 'Student presence by restaurant',
+    mapTitle: 'Google Maps',
+    searchRestaurant: 'Search restaurant...',
+    studentsTitle: 'Student list',
+    searchStudent: 'Search student or role...',
+    username: 'Username',
+    password: 'Password',
+    enter: 'Sign in',
+    requestAccess: 'Request access',
+    mapMode: 'Map mode',
+    listMode: 'List mode'
+  }
+};
 
 
 const RESTAURANT_IMAGES_BY_NAME = {
@@ -35,10 +113,30 @@ const readFirestoreValue = (field) => {
   if (Object.prototype.hasOwnProperty.call(field, 'arrayValue')) {
     return (field.arrayValue.values || []).map(readFirestoreValue);
   }
+  if (Object.prototype.hasOwnProperty.call(field, 'mapValue')) {
+    const mapped = {};
+    const mapFields = field.mapValue.fields || {};
+    Object.entries(mapFields).forEach(([key, value]) => {
+      mapped[key] = readFirestoreValue(value);
+    });
+    return mapped;
+  }
+  if (Object.prototype.hasOwnProperty.call(field, 'geoPointValue')) {
+    const point = field.geoPointValue || {};
+    return { lat: Number(point.latitude), lng: Number(point.longitude) };
+  }
   return '';
 };
 
 const parseLocation = (rawLocation) => {
+  if (rawLocation && typeof rawLocation === 'object' && !Array.isArray(rawLocation)) {
+    const latCandidates = [rawLocation.lat, rawLocation.latitude, rawLocation.Latitude, rawLocation.Lat];
+    const lngCandidates = [rawLocation.lng, rawLocation.longitude, rawLocation.Longitude, rawLocation.Lng, rawLocation.lon, rawLocation.long];
+    const parsedLat = Number(latCandidates.find((value) => value !== undefined && value !== null));
+    const parsedLng = Number(lngCandidates.find((value) => value !== undefined && value !== null));
+    if (!Number.isNaN(parsedLat) && !Number.isNaN(parsedLng)) return { lat: parsedLat, lng: parsedLng };
+  }
+
   if (Array.isArray(rawLocation)) {
     const [lat, lng] = rawLocation;
     const parsedLat = Number(lat);
@@ -78,14 +176,15 @@ const fileToDataUrl = (file) => new Promise((resolve, reject) => {
 });
 
 function App() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isAuthMenuOpen, setIsAuthMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loginForm, setLoginForm] = useState({ username: '', password: '' });
   const [loginError, setLoginError] = useState('');
   const [loggedInUser, setLoggedInUser] = useState('');
-  const [activeSection, setActiveSection] = useState('restaurants');
+  const [activeSection, setActiveSection] = useState('home');
+  const [activeLanguage, setActiveLanguage] = useState('ca');
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [selectedRestaurant, setSelectedRestaurant] = useState(null);
   const [studentSearch, setStudentSearch] = useState('');
@@ -126,6 +225,21 @@ function App() {
   const [saveRestaurantSuccess, setSaveRestaurantSuccess] = useState('');
   const [studentProfileSourceRestaurantId, setStudentProfileSourceRestaurantId] = useState(null);
   const [pendingAdminSection, setPendingAdminSection] = useState('');
+  const [manageEntriesTab, setManageEntriesTab] = useState('users');
+  const [pendingUserRequests, setPendingUserRequests] = useState([
+    { id: 'req-user-1', name: 'Sandra Jo Solà', email: 'sjo@joviat.cat' }
+  ]);
+  const [pendingVenueRequests, setPendingVenueRequests] = useState([]);
+  const [manageModal, setManageModal] = useState(null);
+  const [showRequestAccess, setShowRequestAccess] = useState(false);
+  const [accessRequestForm, setAccessRequestForm] = useState({ email: '', fullName: '' });
+  const [accessRequestMessage, setAccessRequestMessage] = useState('');
+  const [restaurantViewMode, setRestaurantViewMode] = useState('map');
+  const [restaurantPage, setRestaurantPage] = useState(1);
+  const mapContainerRef = useRef(null);
+  const leafletMapRef = useRef(null);
+  const leafletMarkersRef = useRef([]);
+  const t = (key) => TRANSLATIONS[activeLanguage]?.[key] || TRANSLATIONS.ca[key] || key;
 
   useEffect(() => {
     const loadData = async () => {
@@ -153,8 +267,17 @@ function App() {
             readFirestoreValue(fields.Name) ||
             readFirestoreValue(fields.name) ||
             'Restaurant sense nom';
-          const locationField = readFirestoreValue(fields.Location) || '';
-          const coordinates = parseLocation(locationField);
+          const locationField =
+            readFirestoreValue(fields.Location) ||
+            readFirestoreValue(fields.location) ||
+            readFirestoreValue(fields.coordinates) ||
+            readFirestoreValue(fields.Coordinates) ||
+            '';
+          const fallbackCoordinates = parseLocation({
+            lat: readFirestoreValue(fields.lat) || readFirestoreValue(fields.latitude),
+            lng: readFirestoreValue(fields.lng) || readFirestoreValue(fields.longitude)
+          });
+          const coordinates = parseLocation(locationField) || fallbackCoordinates;
           const specialty =
             readFirestoreValue(fields.specialty) ||
             readFirestoreValue(fields.especialidad) ||
@@ -378,6 +501,12 @@ function App() {
     };
   }, [selectedRestaurant, students]);
 
+  const getRestaurantImageById = (restaurantId) => {
+    if (!restaurantId) return WHITE_AVATAR_IMAGE;
+    const restaurant = restaurants.find((item) => item.id === restaurantId);
+    return restaurant?.imageUrl || WHITE_AVATAR_IMAGE;
+  };
+
   const toggleSidebar = () => {
     setIsSidebarOpen((prev) => !prev);
   };
@@ -405,7 +534,7 @@ function App() {
     const normalizedUsername = username.toLowerCase();
     const isConfiguredAdminLogin =
       (normalizedUsername === 'admin' || normalizedUsername === ADMIN_EMAIL) &&
-      password === ADMIN_PASSWORD;
+      ADMIN_PASSWORDS.includes(password);
     const isAdminAlias = normalizedUsername === 'admin' || normalizedUsername === ADMIN_EMAIL;
 
     if (isAdminAlias && !isConfiguredAdminLogin) {
@@ -422,6 +551,8 @@ function App() {
   };
 
   const handleLogout = () => {
+    const shouldLogout = window.confirm('Vols tancar la sessió ara?');
+    if (!shouldLogout) return;
     setIsLoggedIn(false);
     setIsAdmin(false);
     setLoggedInUser('');
@@ -755,9 +886,146 @@ function App() {
     selectSection('students');
   };
 
+  useEffect(() => {
+    const loadLeaflet = async () => {
+      if (!mapContainerRef.current || activeSection !== 'restaurants') return;
+
+      if (!document.querySelector("link[data-leaflet='true']")) {
+        const leafletCss = document.createElement('link');
+        leafletCss.rel = 'stylesheet';
+        leafletCss.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+        leafletCss.dataset.leaflet = 'true';
+        document.head.appendChild(leafletCss);
+      }
+
+      if (!window.L) {
+        await new Promise((resolve, reject) => {
+          const script = document.createElement('script');
+          script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+          script.async = true;
+          script.onload = resolve;
+          script.onerror = reject;
+          document.body.appendChild(script);
+        });
+      }
+
+      if (!leafletMapRef.current && window.L) {
+        leafletMapRef.current = window.L.map(mapContainerRef.current).setView([41.8, 1.9], 8);
+        window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(leafletMapRef.current);
+      }
+
+      if (!leafletMapRef.current) return;
+
+      setTimeout(() => {
+        leafletMapRef.current?.invalidateSize();
+      }, 0);
+
+      leafletMarkersRef.current.forEach((marker) => marker.remove());
+      leafletMarkersRef.current = [];
+
+      const restaurantsWithCoordinates = filteredRestaurants.filter((restaurant) => restaurant.coordinates);
+
+      restaurantsWithCoordinates.forEach((restaurant) => {
+        if (!restaurant.coordinates) return;
+        const marker = window.L.marker([restaurant.coordinates.lat, restaurant.coordinates.lng]).addTo(leafletMapRef.current);
+        marker.bindPopup(`
+          <div class="restaurant-map-popup">
+            <button class="map-popup-close" type="button" onclick="this.closest('.leaflet-popup').querySelector('.leaflet-popup-close-button')?.click()">×</button>
+            <img src="${restaurant.imageUrl || WHITE_AVATAR_IMAGE}" alt="Foto de ${restaurant.name}" />
+            <div class="popup-chip">RESTAURANT</div>
+            <h4>${restaurant.name}</h4>
+            <p>📍 ${restaurant.street || 'No disponible'}</p>
+            <p>${students.filter((student) => student.restaurantId === restaurant.id).length} alumni associats</p>
+            <button class="map-popup-details" data-restaurant-id="${restaurant.id}">VEURE DETALLS</button>
+          </div>
+        `);
+        marker.on('popupopen', () => {
+          const button = document.querySelector(`.map-popup-details[data-restaurant-id="${restaurant.id}"]`);
+          if (button) {
+            button.addEventListener('click', () => openRestaurantProfile(restaurant.id), { once: true });
+          }
+        });
+        leafletMarkersRef.current.push(marker);
+      });
+
+      if (restaurantsWithCoordinates.length > 0) {
+        const bounds = window.L.latLngBounds(
+          restaurantsWithCoordinates.map((restaurant) => [restaurant.coordinates.lat, restaurant.coordinates.lng])
+        );
+        leafletMapRef.current.fitBounds(bounds.pad(0.2));
+      } else {
+        leafletMapRef.current.setView([41.8, 1.9], 8);
+      }
+    };
+
+    loadLeaflet();
+  }, [activeSection, filteredRestaurants, students, restaurantViewMode]);
+
+  useEffect(() => {
+    setRestaurantPage(1);
+  }, [restaurantSearch]);
+
+  const RESTAURANTS_PER_PAGE = 6;
+  const paginatedRestaurants = useMemo(() => {
+    const start = (restaurantPage - 1) * RESTAURANTS_PER_PAGE;
+    return filteredRestaurants.slice(start, start + RESTAURANTS_PER_PAGE);
+  }, [filteredRestaurants, restaurantPage]);
+  const totalRestaurantPages = Math.max(1, Math.ceil(filteredRestaurants.length / RESTAURANTS_PER_PAGE));
+
+  const openManageActionModal = (type, request) => {
+    setManageModal({ type, request });
+  };
+
+  const closeManageModal = () => {
+    setManageModal(null);
+  };
+
+  const confirmManageAction = () => {
+    if (!manageModal) return;
+    if (manageModal.type === 'accept-user' || manageModal.type === 'cancel-user') {
+      setPendingUserRequests((prev) => prev.filter((item) => item.id !== manageModal.request.id));
+    }
+    if (manageModal.type === 'accept-venue' || manageModal.type === 'cancel-venue') {
+      setPendingVenueRequests((prev) => prev.filter((item) => item.id !== manageModal.request.id));
+    }
+    setManageModal(null);
+  };
+
+  const handleAccessRequestInput = (event) => {
+    const { name, value } = event.target;
+    setAccessRequestForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleRequestAccess = (event) => {
+    event.preventDefault();
+    const email = accessRequestForm.email.trim().toLowerCase();
+    const fullName = accessRequestForm.fullName.trim();
+    if (!email || !fullName) {
+      setAccessRequestMessage('Cal omplir correu i nom i cognoms.');
+      return;
+    }
+    const alreadyUser = students.some((st) => (st.email || '').toLowerCase() === email) || email === ADMIN_EMAIL;
+    const alreadyPending = pendingUserRequests.some((req) => req.email.toLowerCase() === email);
+    if (alreadyUser) {
+      setAccessRequestMessage('Aquest correu ja està donat d’alta.');
+      return;
+    }
+    if (alreadyPending) {
+      setAccessRequestMessage('Aquest correu ja ha sol·licitat accés.');
+      return;
+    }
+    const newRequest = { id: `req-user-${Date.now()}`, name: fullName, email };
+    setPendingUserRequests((prev) => [newRequest, ...prev]);
+    setAccessRequestMessage('Sol·licitud enviada correctament.');
+    setAccessRequestForm({ email: '', fullName: '' });
+  };
+
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
       <header className="topbar">
+        <button type="button" className="topbar-brand" onClick={() => selectSection('home')}>JOVIAT</button>
         <button
           type="button"
           className="menu-button"
@@ -770,7 +1038,6 @@ function App() {
           <span />
           <span />
         </button>
-        <img src={logoJoviat} className="brand-logo" alt="logo_joviat" />
         <div className="auth-menu-wrapper">
           <button
             type="button"
@@ -779,14 +1046,22 @@ function App() {
             aria-expanded={isAuthMenuOpen}
             aria-controls="auth-menu"
           >
-            {isLoggedIn ? `👤 ${loggedInUser}` : 'Log in'}
+            {isLoggedIn ? (
+              <span className="auth-button-logged">
+                {!isAdmin && <img src={selectedStudent?.imageUrl || WHITE_AVATAR_IMAGE} alt="Avatar usuari" />}
+                <strong>{isAdmin ? 'LOGOUT' : loggedInUser}</strong>
+                {!isAdmin && <small>{loggedInUser}</small>}
+              </span>
+            ) : (
+              t('login')
+            )}
           </button>
 
           {isAuthMenuOpen && (
             <div id="auth-menu" className="auth-menu">
               {!isLoggedIn ? (
                 <form className="auth-form" onSubmit={handleLogin}>
-                  <label htmlFor="username">Usuari</label>
+                  <label htmlFor="username">{t('username')}</label>
                   <input
                     id="username"
                     name="username"
@@ -795,7 +1070,7 @@ function App() {
                     onChange={handleLoginInput}
                     placeholder="Introdueix el teu usuari"
                   />
-                  <label htmlFor="password">Contrasenya</label>
+                  <label htmlFor="password">{t('password')}</label>
                   <input
                     id="password"
                     name="password"
@@ -805,14 +1080,21 @@ function App() {
                     placeholder="Introdueix la contrasenya"
                   />
                   {loginError && <p className="auth-error">{loginError}</p>}
-                  <button type="submit" className="auth-submit-button">Entrar</button>
+                  <button type="submit" className="auth-submit-button">{t('enter')}</button>
+                  <button type="button" className="auth-submit-button" onClick={() => setShowRequestAccess((prev) => !prev)}>{t('requestAccess')}</button>
+                  {showRequestAccess && (
+                    <div className="request-access-panel">
+                      <input name="email" type="email" placeholder="Email" value={accessRequestForm.email} onChange={handleAccessRequestInput} />
+                      <input name="fullName" type="text" placeholder="Nom i cognoms" value={accessRequestForm.fullName} onChange={handleAccessRequestInput} />
+                      <button type="button" className="auth-submit-button" onClick={handleRequestAccess}>{t('requestAccess')}</button>
+                      {accessRequestMessage && <p className="auth-error">{accessRequestMessage}</p>}
+                    </div>
+                  )}
                 </form>
               ) : (
                 <div className="auth-logged-in">
                   <p>Has iniciat sessió com <strong>{loggedInUser}</strong>.</p>
-                  <button type="button" className="auth-logout-button" onClick={handleLogout}>
-                    Log out
-                  </button>
+                  <button type="button" className="auth-logout-button" onClick={handleLogout}>{t('logout')}</button>
                 </div>
               )}
             </div>
@@ -822,33 +1104,52 @@ function App() {
 
       <aside id="main-sidebar" className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
         <nav>
-          <h2>Menú</h2>
+          <div className="sidebar-brand">
+            <p>ALUMNI NETWORK</p>
+            <div className="language-switch">
+              {['ca', 'es', 'en'].map((lang) => (
+                <button
+                  key={lang}
+                  type="button"
+                  className={`language-pill ${activeLanguage === lang ? 'active' : ''}`}
+                  onClick={() => setActiveLanguage(lang)}
+                >
+                  {lang.toUpperCase()}
+                </button>
+              ))}
+            </div>
+          </div>
           <ul>
             <li>
+              <button type="button" className="menu-link" onClick={() => selectSection('home')}>
+                {t('menuHome')}
+              </button>
+            </li>
+            <li>
               <button type="button" className="menu-link" onClick={() => selectSection('restaurants')}>
-                Visalitzar Restaurants
+                {t('menuRestaurants')}
               </button>
             </li>
             <li>
               <button type="button" className="menu-link" onClick={() => selectSection('students')}>
-                Visualitzar Alumnes
+                {t('menuStudents')}
               </button>
             </li>
             {isLoggedIn && isAdmin && (
               <>
                 <li>
                   <button type="button" className="menu-link" onClick={() => selectSection('add-student')}>
-                    Afegir Alumne
+                    {t('menuAddStudent')}
                   </button>
                 </li>
                 <li>
                   <button type="button" className="menu-link" onClick={() => selectSection('add-restaurant')}>
-                    Afegir Restaurant
+                    {t('menuAddRestaurant')}
                   </button>
                 </li>
                 <li>
                   <button type="button" className="menu-link" onClick={() => selectSection('manage-entries')}>
-                    Gestionar altes
+                    {t('menuManageEntries')}
                   </button>
                 </li>
               </>
@@ -865,32 +1166,58 @@ function App() {
       />
 
       <main className="main-content">
+        {activeSection === 'home' && (
+          <section className="home-section">
+            <div className="home-hero" style={{ backgroundImage: `linear-gradient(rgba(5,5,5,0.65), rgba(5,5,5,0.45)), url(${HOME_HERO_IMAGE})` }}>
+              <div className="home-hero-content">
+                <p>{t('heroEyebrow')}</p>
+                <h1>{t('heroTitle')}</h1>
+                <button
+                  type="button"
+                  className="register-hero-button"
+                  onClick={() => {
+                    setIsAuthMenuOpen(true);
+                    setShowRequestAccess(true);
+                  }}
+                >
+                  REGISTRA'T
+                </button>
+                <div className="home-cta-row">
+                  <button type="button" onClick={() => selectSection('restaurants')}>{t('exploreRestaurants')}</button>
+                  <button type="button" onClick={() => selectSection('students')}>{t('exploreStudents')}</button>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
         {activeSection === 'restaurants' && (
           <section className="restaurants-section">
-            <h2>Visualització de l’alumnat al restaurant</h2>
-            <h3 className="restaurants-subtitle">Mapa de Google Maps</h3>
+            <h2>{t('restaurantsTitle')}</h2>
+            <h3 className="restaurants-subtitle">{t('mapTitle')}</h3>
             <input
               type="search"
               className="search-input"
-              placeholder="Buscar restaurant..."
+              placeholder={t('searchRestaurant')}
               value={restaurantSearch}
               onChange={(event) => setRestaurantSearch(event.target.value)}
             />
-            <div className="map-wrapper">
-              <iframe
-                title="Mapa de restaurants"
-                src={mapUrl}
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-              />
+            <div className="view-toggle">
+              <button type="button" className={`language-pill ${restaurantViewMode === 'map' ? 'active' : ''}`} onClick={() => setRestaurantViewMode('map')}>{t('mapMode')}</button>
+              <button type="button" className={`language-pill ${restaurantViewMode === 'list' ? 'active' : ''}`} onClick={() => setRestaurantViewMode('list')}>{t('listMode')}</button>
             </div>
+            {restaurantViewMode === 'map' && (
+              <div className="map-wrapper">
+                <div ref={mapContainerRef} className="leaflet-map-canvas" aria-label="Mapa de restaurants" />
+              </div>
+            )}
 
             <h3 className="restaurants-subtitle">Restaurants</h3>
             {loadingRestaurants && <p>Carregant restaurants...</p>}
             {!loadingRestaurants && restaurantsError && <p>{restaurantsError}</p>}
 
             {!loadingRestaurants && !restaurantsError && !selectedRestaurant && (
-              <div className="restaurants-list">
+              <div className="restaurants-list restaurants-list-reference">
                 {filteredRestaurants.map((restaurant) => (
                   <article key={restaurant.id} className="restaurant-card restaurant-card-clickable">
                     <button
@@ -905,10 +1232,23 @@ function App() {
                           event.currentTarget.src = WHITE_AVATAR_IMAGE;
                         }}
                       />
-                      <h4>{restaurant.name}</h4>
+                      <div className="restaurant-card-body">
+                        <span className="restaurant-chip">{restaurant.specialty || 'Restaurant'}</span>
+                        <h4>{restaurant.name}</h4>
+                        <p>📍 {restaurant.street || 'Adreça no disponible'}</p>
+                        <p>{students.filter((student) => student.restaurantId === restaurant.id).length} Alumnis associats</p>
+                        <span className="restaurant-details-cta">👁 VEURE DETALLS</span>
+                      </div>
                     </button>
                   </article>
                 ))}
+              </div>
+            )}
+            {restaurantViewMode === 'list' && totalRestaurantPages > 1 && (
+              <div className="pagination">
+                <button type="button" disabled={restaurantPage <= 1} onClick={() => setRestaurantPage((p) => Math.max(1, p - 1))}>‹</button>
+                <span>{restaurantPage} / {totalRestaurantPages}</span>
+                <button type="button" disabled={restaurantPage >= totalRestaurantPages} onClick={() => setRestaurantPage((p) => Math.min(totalRestaurantPages, p + 1))}>›</button>
               </div>
             )}
 
@@ -917,11 +1257,11 @@ function App() {
 
         {activeSection === 'students' && (
           <section className="students-section">
-            <h2>Llistat d&apos;alumnes</h2>
+            <h2>{t('studentsTitle')}</h2>
             <input
               type="search"
               className="search-input"
-              placeholder="Buscar alumne o rol..."
+              placeholder={t('searchStudent')}
               value={studentSearch}
               onChange={(event) => setStudentSearch(event.target.value)}
             />
@@ -954,29 +1294,40 @@ function App() {
                 ))}
               </div>
             )}
-
           </section>
         )}
 
         {activeSection === 'restaurant-profile' && selectedRestaurant && (
           <section className="restaurants-section">
-            <article className="restaurant-profile-card">
+            <article className="restaurant-profile-card restaurant-profile-reference">
               <button type="button" className="back-button" onClick={() => selectSection('restaurants')}>
                 ← Tornar al llistat
               </button>
-              <img
-                src={selectedRestaurant.imageUrl || WHITE_AVATAR_IMAGE}
-                alt={`Foto de ${selectedRestaurant.name}`}
-                onError={(event) => {
-                  event.currentTarget.src = WHITE_AVATAR_IMAGE;
-                }}
-              />
-              <h3>Fitxa del restaurant</h3>
-              <p><strong>Nom:</strong> {selectedRestaurant.name}</p>
-              <p><strong>Especialitat:</strong> {selectedRestaurant.specialty}</p>
-              <p><strong>Carrer:</strong> {selectedRestaurant.street}</p>
-              <p><strong>Correu electrònic:</strong> {selectedRestaurant.email || 'No disponible'}</p>
-              <p><strong>Telèfon:</strong> {selectedRestaurant.phone || 'No disponible'}</p>
+              <div className="restaurant-profile-header">
+                <img
+                  className="restaurant-hero-image"
+                  src={selectedRestaurant.imageUrl || WHITE_AVATAR_IMAGE}
+                  alt={`Foto de ${selectedRestaurant.name}`}
+                  onError={(event) => {
+                    event.currentTarget.src = WHITE_AVATAR_IMAGE;
+                  }}
+                />
+                <div>
+                  <h3>Fitxa d&apos;establiment</h3>
+                  <h2>{selectedRestaurant.name}</h2>
+                  <p>📍 {selectedRestaurant.street}</p>
+                  <div className="restaurant-action-row">
+                    <button type="button" className="pill-button">Editar</button>
+                    <button type="button" className="pill-button danger">Eliminar</button>
+                  </div>
+                </div>
+              </div>
+              <div className="restaurant-info-grid">
+                <div><strong>Categoria</strong><p>{selectedRestaurant.specialty}</p></div>
+                <div><strong>Phone</strong><p>{selectedRestaurant.phone || 'No disponible'}</p></div>
+                <div><strong>Email</strong><p>{selectedRestaurant.email || 'No disponible'}</p></div>
+                <div><strong>Web</strong><p>No disponible</p></div>
+              </div>
               <div className="map-wrapper">
                 <iframe title="Mapa de la fitxa del restaurant" src={restaurantProfileMapUrl} loading="lazy" />
               </div>
@@ -984,13 +1335,21 @@ function App() {
               {studentsForSelectedRestaurant.current.length > 0 ? (
                 <ul>
                   {studentsForSelectedRestaurant.current.map((student) => (
-                    <li key={`current-${student.id}`}>
+                    <li key={`current-${student.id}`} className="profile-linked-item">
+                      <img
+                        className="profile-linked-thumb"
+                        src={student.imageUrl || WHITE_AVATAR_IMAGE}
+                        alt={`Foto de ${student.fullName}`}
+                        onError={(event) => {
+                          event.currentTarget.src = WHITE_AVATAR_IMAGE;
+                        }}
+                      />
                       <button
                         type="button"
                         className="profile-link-button"
                         onClick={() => openStudentProfileFromRestaurant(student, selectedRestaurant.id)}
                       >
-                        {student.fullName} ({student.role})
+                        Veure fitxa de l&apos;alumne: {student.fullName} ({student.role})
                       </button>
                     </li>
                   ))}
@@ -1002,13 +1361,21 @@ function App() {
               {studentsForSelectedRestaurant.past.length > 0 ? (
                 <ul>
                   {studentsForSelectedRestaurant.past.map((student) => (
-                    <li key={`past-${student.id}`}>
+                    <li key={`past-${student.id}`} className="profile-linked-item">
+                      <img
+                        className="profile-linked-thumb"
+                        src={student.imageUrl || WHITE_AVATAR_IMAGE}
+                        alt={`Foto de ${student.fullName}`}
+                        onError={(event) => {
+                          event.currentTarget.src = WHITE_AVATAR_IMAGE;
+                        }}
+                      />
                       <button
                         type="button"
                         className="profile-link-button"
                         onClick={() => openStudentProfileFromRestaurant(student, selectedRestaurant.id)}
                       >
-                        {student.fullName} ({student.role})
+                        Veure fitxa de l&apos;alumne: {student.fullName} ({student.role})
                       </button>
                     </li>
                   ))}
@@ -1027,6 +1394,7 @@ function App() {
                 ← Tornar al llistat
               </button>
               <img
+                className="student-hero-image"
                 src={selectedStudent.imageUrl || WHITE_AVATAR_IMAGE}
                 alt={`Foto de ${selectedStudent.fullName}`}
                 onError={(event) => {
@@ -1069,15 +1437,25 @@ function App() {
               {restaurantsForSelectedStudent.length > 0 ? (
                 <ul>
                   {restaurantsForSelectedStudent.map((restaurantItem) => (
-                    <li key={`${restaurantItem.restaurantId}-${restaurantItem.workplace}`}>
+                    <li key={`${restaurantItem.restaurantId}-${restaurantItem.workplace}`} className="profile-linked-item">
                       {restaurantItem.restaurantId ? (
-                        <button
-                          type="button"
-                          className="profile-link-button"
-                          onClick={() => openRestaurantProfile(restaurantItem.restaurantId)}
-                        >
-                          {restaurantItem.workplace} · {restaurantItem.role} {restaurantItem.currentJob ? '(Actual)' : '(Anterior)'}
-                        </button>
+                        <>
+                          <img
+                            className="profile-linked-thumb"
+                            src={getRestaurantImageById(restaurantItem.restaurantId)}
+                            alt={`Foto de ${restaurantItem.workplace}`}
+                            onError={(event) => {
+                              event.currentTarget.src = WHITE_AVATAR_IMAGE;
+                            }}
+                          />
+                          <button
+                            type="button"
+                            className="profile-link-button"
+                            onClick={() => openRestaurantProfile(restaurantItem.restaurantId)}
+                          >
+                            {restaurantItem.workplace} · {restaurantItem.role} {restaurantItem.currentJob ? '(Actual)' : '(Anterior)'}
+                          </button>
+                        </>
                       ) : (
                         <span>{restaurantItem.workplace} · {restaurantItem.role} {restaurantItem.currentJob ? '(Actual)' : '(Anterior)'}</span>
                       )}
@@ -1088,13 +1466,23 @@ function App() {
                 <p>No hi ha restaurants vinculats.</p>
               )}
               {selectedStudent.restaurantId && (
-                <button
-                  type="button"
-                  className="profile-link-button"
-                  onClick={() => openRestaurantProfile(selectedStudent.restaurantId)}
-                >
-                  Veure fitxa del restaurant
-                </button>
+                <div className="profile-linked-item profile-linked-item-standalone">
+                  <img
+                    className="profile-linked-thumb"
+                    src={getRestaurantImageById(selectedStudent.restaurantId)}
+                    alt="Foto del restaurant"
+                    onError={(event) => {
+                      event.currentTarget.src = WHITE_AVATAR_IMAGE;
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="profile-link-button"
+                    onClick={() => openRestaurantProfile(selectedStudent.restaurantId)}
+                  >
+                    Veure fitxa del restaurant
+                  </button>
+                </div>
               )}
             </article>
           </section>
@@ -1357,21 +1745,87 @@ function App() {
           <section className="admin-page">
             <p className="admin-eyebrow">ADMINISTRACIO</p>
             <h1>Gestionar altes</h1>
-            <p className="admin-intro">Revisa els darrers alumnes i restaurants creats.</p>
-            <article className="admin-panel">
-              <h3>Últims alumnes</h3>
-              <ul>
-                {students.slice(0, 10).map((student) => (
-                  <li key={`manage-student-${student.id}`}>{student.fullName}</li>
-                ))}
-              </ul>
-              <h3>Últims restaurants</h3>
-              <ul>
-                {restaurants.slice(0, 10).map((restaurant) => (
-                  <li key={`manage-restaurant-${restaurant.id}`}>{restaurant.name}</li>
-                ))}
-              </ul>
+            <p className="admin-intro">Revisa les sol·licituds pendents i decideix si vols donar d&apos;alta l&apos;usuari o cancel·lar-la.</p>
+
+            <article className="manage-entries-panel">
+              <div className="manage-entries-toggle" role="tablist" aria-label="Visualització d'altes">
+                <button
+                  type="button"
+                  className={`manage-entries-tab ${manageEntriesTab === 'users' ? 'active' : ''}`}
+                  onClick={() => setManageEntriesTab('users')}
+                >
+                  VISUALITZAR ALTES USUARIS
+                </button>
+                <button
+                  type="button"
+                  className={`manage-entries-tab ${manageEntriesTab === 'venues' ? 'active' : ''}`}
+                  onClick={() => setManageEntriesTab('venues')}
+                >
+                  VISUALITZAR ALTES ESTABLIMENTS
+                </button>
+              </div>
+
+              {manageEntriesTab === 'users' && (
+                <>
+                  {pendingUserRequests.length > 0 ? (
+                    pendingUserRequests.map((request) => (
+                      <article key={request.id} className="manage-entry-card">
+                        <div>
+                          <h3>{request.name}</h3>
+                          <p>{request.email}</p>
+                        </div>
+                        <div className="manage-entry-actions">
+                          <button type="button" className="manage-btn accept" onClick={() => openManageActionModal('accept-user', request)}>Acceptar</button>
+                          <button type="button" className="manage-btn cancel" onClick={() => openManageActionModal('cancel-user', request)}>Cancelar</button>
+                        </div>
+                      </article>
+                    ))
+                  ) : (
+                    <p className="manage-empty">No hi ha cap petició d&apos;usuari pendent.</p>
+                  )}
+                </>
+              )}
+
+              {manageEntriesTab === 'venues' && (
+                <>
+                  {pendingVenueRequests.length > 0 ? (
+                    pendingVenueRequests.map((request) => (
+                      <article key={request.id} className="manage-entry-card">
+                        <div>
+                          <h3>{request.name}</h3>
+                          <p>{request.email}</p>
+                        </div>
+                        <div className="manage-entry-actions">
+                          <button type="button" className="manage-btn accept" onClick={() => openManageActionModal('accept-venue', request)}>Acceptar</button>
+                          <button type="button" className="manage-btn cancel" onClick={() => openManageActionModal('cancel-venue', request)}>Cancelar</button>
+                        </div>
+                      </article>
+                    ))
+                  ) : (
+                    <p className="manage-empty">No hi ha cap petició d&apos;establiment pendent.</p>
+                  )}
+                </>
+              )}
             </article>
+
+            {manageModal && (
+              <div className="manage-modal-backdrop" role="presentation">
+                <article className="manage-modal" role="dialog" aria-modal="true">
+                  <h3>{manageModal.type.includes('accept') ? 'Confirmar alta' : 'Confirmar cancel·lacio de peticio'}</h3>
+                  <p>
+                    {manageModal.type.includes('accept')
+                      ? `Estas segur que vols donar d'alta a ${manageModal.request.name}?`
+                      : `Estas segur que vols cancel·lar la peticio d'alta de ${manageModal.request.name}?`}
+                  </p>
+                  <div className="manage-modal-actions">
+                    <button type="button" className="manage-btn cancel" onClick={closeManageModal}>No</button>
+                    <button type="button" className="manage-btn accept" onClick={confirmManageAction}>
+                      {manageModal.type.includes('accept') ? 'Si' : 'Cancel·lar peticio'}
+                    </button>
+                  </div>
+                </article>
+              </div>
+            )}
           </section>
         )}
 

@@ -5,8 +5,8 @@
 body {
   margin: 0;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: #0b1120;
-  color: #e2e8f0;
+  background: #050709;
+  color: #111827;
 }
 
 .app-shell {
@@ -19,15 +19,25 @@ body {
   top: 0;
   left: 0;
   right: 0;
-  height: 72px;
-  background: rgba(15, 23, 42, 0.95);
-  border-bottom: 1px solid #1f2937;
+  height: 84px;
+  background: #050709;
+  border-bottom: 1px solid #101826;
   backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
   gap: 1rem;
   padding: 0 1rem;
   z-index: 20;
+}
+.topbar-brand {
+  border: none;
+  background: transparent;
+  color: #ffffff;
+  font-size: 2.8rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  margin-right: 0.8rem;
 }
 
 .auth-menu-wrapper {
@@ -36,13 +46,14 @@ body {
 }
 
 .auth-button {
-  border: 1px solid #334155;
-  background: #0f172a;
-  color: #e2e8f0;
+  border: none;
+  background: transparent;
+  color: #f8fafc;
   border-radius: 8px;
   padding: 0.5rem 0.8rem;
   cursor: pointer;
-  font-weight: 600;
+  font-weight: 700;
+  letter-spacing: 0.04em;
 }
 
 .auth-menu {
@@ -73,6 +84,11 @@ body {
   border-radius: 8px;
   padding: 0.55rem 0.6rem;
 }
+.request-access-panel {
+  display: grid;
+  gap: 0.45rem;
+  margin-top: 0.4rem;
+}
 
 .auth-submit-button,
 .auth-logout-button {
@@ -94,12 +110,6 @@ body {
 .auth-logged-in p {
   margin-top: 0;
   margin-bottom: 0.8rem;
-}
-
-.brand-logo {
-  height: 48px;
-  width: auto;
-  object-fit: contain;
 }
 
 .menu-button {
@@ -125,11 +135,11 @@ body {
 
 .sidebar {
   position: fixed;
-  top: 72px;
+  top: 84px;
   left: 0;
   width: min(80vw, 290px);
   height: calc(100vh - 72px);
-  background: #0f172a;
+  background: #050709;
   border-right: 1px solid #1f2937;
   box-shadow: 4px 0 16px rgba(2, 6, 23, 0.65);
   transform: translateX(-100%);
@@ -145,7 +155,9 @@ body {
 .sidebar h2 {
   margin-top: 0;
   margin-bottom: 1rem;
-  font-size: 1.1rem;
+  font-size: 2.8rem;
+  letter-spacing: 0.03em;
+  color: #fff;
 }
 
 .sidebar ul {
@@ -161,12 +173,21 @@ body {
 .menu-link {
   background: none;
   border: none;
-  padding: 0;
-  color: #93c5fd;
-  font-weight: 500;
+  padding: 0.65rem 0.8rem;
+  color: #e4d1ad;
+  font-weight: 700;
   font: inherit;
   cursor: pointer;
   text-align: left;
+  width: 100%;
+  border-radius: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.menu-link:hover {
+  background: #e4d1ad;
+  color: #1a1a1a;
 }
 
 .overlay {
@@ -187,7 +208,7 @@ body {
 
 .main-content {
   padding: 104px 1rem 2rem;
-  max-width: 960px;
+  max-width: 1700px;
   margin: 0 auto;
   text-align: left;
 }
@@ -202,27 +223,145 @@ body {
 }
 
 @media (min-width: 992px) {
-  .menu-button {
-    display: none;
-  }
-
-  .sidebar {
-    transform: translateX(0);
-  }
-
   .overlay {
     display: none;
   }
 
   .main-content {
-    margin-left: min(80vw, 290px);
-    max-width: calc(960px + min(80vw, 290px));
-    padding: 104px 2rem 2rem;
+    margin-left: 0;
+    max-width: 1700px;
+    padding: 108px 2rem 2rem;
+    transition: margin-left 0.25s ease, max-width 0.25s ease;
   }
 
   .topbar {
     padding: 0 1.5rem;
   }
+
+  .app-shell.sidebar-open .sidebar {
+    transform: translateX(0);
+  }
+
+  .app-shell.sidebar-open .main-content {
+    margin-left: min(80vw, 290px);
+    max-width: calc(1700px + min(80vw, 290px));
+  }
+}
+
+.main-content > section {
+  background: #d9d3c8;
+  border-radius: 0;
+  min-height: calc(100vh - 140px);
+  padding: 2.5rem 2rem;
+}
+
+.sidebar-brand {
+  text-align: center;
+  margin-bottom: 1.4rem;
+}
+
+.sidebar-brand p {
+  margin-top: 0;
+  margin-bottom: 0.8rem;
+  color: #a99c84;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  font-size: 0.8rem;
+}
+
+.language-switch {
+  display: inline-flex;
+  border: 1px solid #423f39;
+  border-radius: 999px;
+  padding: 0.2rem;
+  gap: 0.15rem;
+}
+
+.language-pill {
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: #a99c84;
+  padding: 0.35rem 0.65rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.language-pill.active {
+  background: #e4d1ad;
+  color: #111827;
+}
+
+.auth-button-logged {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.15rem;
+}
+
+.auth-button-logged img {
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  object-fit: cover;
+  border: 2px solid #e4d1ad;
+}
+
+.auth-button-logged small {
+  color: #cbd5e1;
+}
+
+.home-hero {
+  min-height: 78vh;
+  background-size: cover;
+  background-position: center;
+  border-radius: 0;
+  display: flex;
+  align-items: flex-end;
+  padding: 2rem;
+}
+
+.home-hero-content {
+  max-width: 600px;
+  color: #fff;
+}
+
+.home-hero-content p {
+  color: #e4d1ad;
+  letter-spacing: 0.18em;
+  font-weight: 700;
+}
+
+.home-hero-content h1 {
+  font-size: clamp(2.4rem, 6vw, 5rem);
+  line-height: 1.04;
+  margin: 0 0 1.4rem;
+}
+
+.home-cta-row {
+  display: flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.home-cta-row button {
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  padding: 0.8rem 1.2rem;
+  font-weight: 800;
+  border-radius: 12px;
+  cursor: pointer;
+}
+.register-hero-button {
+  margin: 0 0 1rem;
+  border-radius: 999px;
+  border: 2px solid #fff;
+  background: #fff;
+  color: #050709;
+  font-weight: 900;
+  padding: 0.75rem 1.45rem;
+  cursor: pointer;
 }
 
 .students-section {
@@ -275,6 +414,7 @@ body {
   border-radius: 12px;
   overflow: hidden;
   border: 1px solid #334155;
+  background: #e2e8f0;
 }
 
 .map-wrapper iframe {
@@ -282,6 +422,67 @@ body {
   height: 320px;
   border: 0;
   display: block;
+}
+
+.leaflet-map-canvas {
+  width: 100%;
+  height: 430px;
+}
+
+.restaurant-map-popup {
+  position: relative;
+}
+
+.restaurant-map-popup img {
+  width: 100%;
+  height: 135px;
+  object-fit: cover;
+  border-radius: 14px;
+  margin-bottom: 0.6rem;
+}
+
+.restaurant-map-popup .popup-chip {
+  display: inline-block;
+  background: #e6d3b4;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  font-weight: 800;
+  margin-bottom: 0.55rem;
+}
+
+.restaurant-map-popup h4 {
+  margin: 0 0 0.4rem;
+  font-size: 1.5rem;
+  color: #111827;
+}
+
+.restaurant-map-popup p {
+  margin: 0.2rem 0;
+  color: #374151;
+}
+
+.restaurant-map-popup .map-popup-details {
+  margin-top: 0.8rem;
+  width: 100%;
+  border: 1px solid #111827;
+  border-radius: 10px;
+  background: #fff;
+  padding: 0.65rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.restaurant-map-popup .map-popup-close {
+  position: absolute;
+  top: 0.3rem;
+  right: 0.3rem;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: none;
+  background: #fff;
+  font-size: 1.5rem;
+  cursor: pointer;
 }
 
 .restaurants-subtitle {
@@ -295,11 +496,33 @@ body {
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 1rem;
 }
+.restaurants-list-reference {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.2rem;
+}
+.view-toggle {
+  display: flex;
+  gap: 0.55rem;
+  margin-bottom: 0.5rem;
+}
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.85rem;
+}
+.pagination button {
+  border: 1px solid #334155;
+  background: #0f172a;
+  color: #e2e8f0;
+  border-radius: 8px;
+  padding: 0.35rem 0.65rem;
+}
 
 .restaurant-card {
-  background: #111827;
-  border: 1px solid #334155;
-  border-radius: 12px;
+  background: #f4f2ed;
+  border: 1px solid #d2ccc0;
+  border-radius: 16px;
   overflow: hidden;
 }
 
@@ -311,14 +534,34 @@ body {
 }
 
 .restaurant-card h4 {
-  margin: 0;
-  padding: 0.9rem;
-  color: #f8fafc;
+  margin: 0.35rem 0 0.45rem;
+  color: #111827;
 }
 
 .restaurant-card p {
-  margin: 0.5rem 0 0;
-  color: #cbd5e1;
+  margin: 0.35rem 0;
+  color: #5b5345;
+}
+.restaurant-card-body {
+  padding: 0.85rem;
+}
+.restaurant-chip {
+  display: inline-block;
+  background: #e9dfcd;
+  border-radius: 999px;
+  padding: 0.35rem 0.6rem;
+  font-weight: 800;
+  font-size: 0.75rem;
+}
+.restaurant-details-cta {
+  display: block;
+  margin-top: 0.7rem;
+  border: 1px solid #111827;
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  font-weight: 800;
+  color: #111827;
+  text-align: center;
 }
 
 .search-input {
@@ -363,7 +606,7 @@ body {
   padding: 1rem;
 }
 
-.student-profile-card img {
+.student-profile-card .student-hero-image {
   width: 100%;
   max-height: 340px;
   object-fit: contain;
@@ -402,14 +645,14 @@ body {
 }
 
 .restaurant-profile-card {
-  max-width: 760px;
-  border: 1px solid #334155;
-  border-radius: 12px;
-  background: #111827;
-  padding: 1rem;
+  max-width: 980px;
+  border: 1px solid #d8d0c2;
+  border-radius: 18px;
+  background: #f4f2ed;
+  padding: 1.2rem;
 }
 
-.restaurant-profile-card img {
+.restaurant-profile-card .restaurant-hero-image {
   width: 100%;
   max-height: 320px;
   object-fit: cover;
@@ -418,7 +661,42 @@ body {
 
 .restaurant-profile-card ul {
   margin-top: 0.5rem;
-  color: #cbd5e1;
+  color: #2f2b24;
+}
+.restaurant-profile-header {
+  display: grid;
+  grid-template-columns: 270px 1fr;
+  gap: 1.1rem;
+  align-items: start;
+}
+.restaurant-profile-header h2 {
+  margin: 0.35rem 0;
+  font-size: clamp(2rem, 3vw, 3.1rem);
+  color: #121212;
+}
+.restaurant-profile-header h3 {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.9rem;
+  color: #8b4d11;
+}
+.restaurant-info-grid {
+  margin: 1rem 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(120px, 1fr));
+  gap: 0.8rem;
+}
+.restaurant-info-grid > div {
+  border: 1px solid #e0d8c8;
+  background: #ece7dd;
+  border-radius: 14px;
+  padding: 0.7rem;
+}
+.restaurant-info-grid strong {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.78rem;
 }
 
 .profile-link-button {
@@ -432,12 +710,156 @@ body {
   font: inherit;
 }
 
+.profile-linked-item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.profile-linked-item + .profile-linked-item {
+  margin-top: 0.45rem;
+}
+
+.profile-linked-item-standalone {
+  margin-top: 0.8rem;
+}
+
+.profile-linked-thumb {
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  object-fit: cover;
+  background: #020617;
+  border: 1px solid #334155;
+  flex-shrink: 0;
+}
+
 .admin-page {
   background: radial-gradient(circle at top, #0f1a2f 0%, #0a1222 70%);
   color: #e2e8f0;
   border-radius: 22px;
   padding: 2.4rem;
   border: 1px solid #1e293b;
+}
+
+.manage-entries-panel {
+  background: #f2efea;
+  border-radius: 28px;
+  border: 1px solid #d5d1c8;
+  padding: 1.5rem;
+  position: relative;
+}
+
+.manage-entries-toggle {
+  width: min(100%, 520px);
+  margin: 0 auto 1.4rem;
+  background: #f6f5f2;
+  border: 1px solid #d0ccc2;
+  border-radius: 999px;
+  padding: 0.35rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.25rem;
+}
+
+.manage-entries-tab {
+  border: none;
+  border-radius: 999px;
+  padding: 0.8rem 0.9rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  background: transparent;
+  color: #1f2937;
+  cursor: pointer;
+}
+
+.manage-entries-tab.active {
+  background: #0a0a0d;
+  color: #fff;
+  box-shadow: 0 10px 18px rgba(2, 6, 23, 0.18);
+}
+
+.manage-entry-card {
+  background: #eef0f2;
+  border: 1px solid #d2d7de;
+  border-radius: 22px;
+  padding: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.manage-entry-card h3 {
+  margin: 0;
+  font-size: 2rem;
+  color: #0f172a;
+}
+
+.manage-entry-card p {
+  margin: 0.35rem 0 0;
+  color: #334155;
+}
+
+.manage-entry-actions,
+.manage-modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.manage-btn {
+  border: none;
+  border-radius: 999px;
+  padding: 0.75rem 1.25rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.manage-btn.accept {
+  background: #0a0a0d;
+  color: #fff;
+}
+
+.manage-btn.cancel {
+  background: #e6d3b4;
+  color: #171717;
+}
+
+.manage-empty {
+  margin: 0.5rem 0;
+  color: #1f2937;
+}
+
+.manage-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 60;
+}
+
+.manage-modal {
+  width: min(100%, 520px);
+  background: #f7f4ef;
+  border-radius: 28px;
+  box-shadow: 0 22px 40px rgba(15, 23, 42, 0.28);
+  padding: 1.5rem;
+}
+
+.manage-modal h3 {
+  margin-top: 0;
+  margin-bottom: 0.8rem;
+  color: #111827;
+  font-size: clamp(1.8rem, 3vw, 2.4rem);
+}
+
+.manage-modal p {
+  color: #334155;
+  margin-bottom: 1.2rem;
 }
 
 .admin-eyebrow {
