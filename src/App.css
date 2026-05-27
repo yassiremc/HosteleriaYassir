@@ -366,6 +366,7 @@ body {
 
 .students-section {
   margin-top: 2rem;
+  color: #111827;
 }
 
 .students-grid {
@@ -375,8 +376,8 @@ body {
 }
 
 .student-card {
-  background: #111827;
-  border: 1px solid #334155;
+  background: #f7f4ee;
+  border: 1px solid #ddd5c9;
   border-radius: 12px;
   overflow: hidden;
 }
@@ -384,9 +385,9 @@ body {
 .student-card img {
   width: 100%;
   height: 220px;
-  object-fit: contain;
-  object-position: center top;
-  background: #020617;
+  object-fit: cover;
+  object-position: center;
+  background: #e8decc;
   display: block;
 }
 
@@ -397,13 +398,45 @@ body {
 .student-card h3 {
   margin: 0;
   font-size: 1rem;
-  color: #f8fafc;
+  color: #111827;
 }
 
 .student-card p {
   margin: 0.4rem 0 0;
-  color: #cbd5e1;
+  color: #3f3a32;
 }
+.students-title { font-size: 3rem; margin: 0 0 1rem; }
+.students-search-wrap { margin-bottom: 1rem; }
+.students-search-label { font-size: 0.8rem; font-weight: 800; letter-spacing: 0.08em; }
+.students-search-label span { font-weight: 500; letter-spacing: normal; color: #796c55; }
+.students-search-row { display:flex; gap:0.7rem; align-items:center; }
+.students-search-input { background:#fff; border:1px solid #d7cfbf; color:#111827; max-width:unset; }
+.students-filter-icon { font-size:1.5rem; }
+.students-filters-card { background:#f7f4ee; border:1px solid #ddd5c9; border-radius:14px; padding:0.75rem; margin-bottom:1.2rem; }
+.students-filter-block-title { font-size:0.78rem; font-weight:900; letter-spacing:0.08em; margin:0.4rem 0; }
+.students-filter-collapse-btn {
+  width: 100%;
+  border: 1px solid #ddd5c9;
+  background: #fff;
+  border-radius: 10px;
+  padding: 0.45rem 0.65rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+}
+.students-filter-collapse-btn + .students-chip-grid { margin-top: 0.55rem; }
+.students-filter-inline { display:flex; gap:1rem; flex-wrap:wrap; margin:0.5rem 0 0.8rem; }
+.students-filter-inline > div { min-width:220px; }
+.students-filter-label { display:block; font-size:0.78rem; font-weight:800; margin-bottom:0.35rem; }
+.students-filter-inline select { width:100%; border:1px solid #d7cfbf; border-radius:11px; padding:0.55rem 0.8rem; background:#fff; }
+.students-chip-grid { display:grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap:0.5rem; margin:0.6rem 0 0.9rem; }
+.students-filter-chip { border:1px solid #d7cfbf; background:#fff; border-radius:11px; padding:0.58rem 0.7rem; text-align:left; cursor:pointer; font-weight:600; }
+.students-filter-chip.action { text-align:center; font-weight:700; }
+.students-filter-chip.active { border-color:#111827; background:#f3efe7; }
+.student-card-body { padding:0.75rem; }
+.student-card-assoc { font-size:0.86rem; margin-top:0.45rem; }
+.student-card-cta { display:block; margin-top:0.55rem; border:1px solid #111827; border-radius:8px; padding:0.4rem; text-align:center; font-weight:800; font-size:0.78rem; letter-spacing:0.08em; }
 
 .restaurants-section {
   margin-top: 2rem;
@@ -599,20 +632,79 @@ body {
 }
 
 .student-profile-card {
-  max-width: 640px;
-  border: 1px solid #334155;
-  border-radius: 12px;
-  background: #111827;
-  padding: 1rem;
+  max-width: 980px;
+  border: 1px solid #d8d0c2;
+  border-radius: 18px;
+  background: #f4f2ed;
+  padding: 1.2rem;
 }
 
 .student-profile-card .student-hero-image {
+  width: 220px;
+  height: 220px;
+  object-fit: cover;
+  border-radius: 999px;
+  border: 3px solid #fff;
+}
+
+.student-profile-header {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+.student-profile-header h2 {
+  font-size: clamp(2rem, 3.8vw, 3.5rem);
+  margin: 0.3rem 0;
+  color: #121212;
+}
+
+.student-profile-header h3 {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.9rem;
+  color: #8b4d11;
+}
+
+.student-contact-grid {
+  margin: 1rem 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  gap: 0.8rem;
+}
+
+.student-contact-grid > div {
+  border: 1px solid #e0d8c8;
+  background: #ece7dd;
+  border-radius: 14px;
+  padding: 0.7rem;
+}
+
+.student-contact-grid strong {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.78rem;
+}
+
+.student-contact-grid a {
+  color: #8b4d11;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.student-contact-grid a:hover {
+  text-decoration: underline;
+}
+
+.student-contact-grid input {
   width: 100%;
-  max-height: 340px;
-  object-fit: contain;
-  object-position: center top;
-  background: #020617;
-  border-radius: 10px;
+  margin-top: 0.35rem;
+  border: 1px solid #d8d0c2;
+  border-radius: 8px;
+  padding: 0.4rem 0.5rem;
+  background: #fff;
 }
 
 .back-button {
@@ -879,7 +971,7 @@ body {
 
 .admin-intro {
   margin-bottom: 1.8rem;
-  color: #cbd5e1;
+  color: #111827;
   max-width: 900px;
 }
 
@@ -1034,8 +1126,22 @@ body {
 }
 
 .save-student-error {
-  color: #fecaca !important;
+  color: #b00020 !important;
+  font-weight: 700;
   margin-top: 0.6rem;
+}
+
+.manage-success {
+  color: #111827;
+  font-weight: 700;
+  margin: 0.2rem 0 0.8rem;
+}
+
+.students-search-label span,
+.photo-panel p,
+.edit-panel-helper,
+.places-panel p {
+  color: #111827 !important;
 }
 
 .save-student-success {
@@ -1107,3 +1213,129 @@ body {
     font-size: 2.1rem;
   }
 }
+
+.inline-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 0.35rem;
+}
+
+.restaurant-action-row {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.restaurant-profile-message {
+  margin-top: 0.6rem;
+  color: #8b4d11;
+  font-weight: 600;
+}
+
+.restaurant-info-grid input {
+  width: 100%;
+  margin-top: 0.35rem;
+  border: 1px solid #d8d0c2;
+  border-radius: 8px;
+  padding: 0.4rem 0.5rem;
+  background: #fff;
+}
+
+.restaurant-edit-page {
+  background: #e9e1d2;
+  color: #111827;
+  border: 1px solid #d8d0c2;
+}
+
+.restaurant-edit-page .admin-eyebrow,
+.restaurant-edit-page .admin-intro,
+.restaurant-edit-page h1,
+.restaurant-edit-page label {
+  color: #111827;
+}
+
+.restaurant-edit-page .admin-panel {
+  background: #f6f3ed;
+  border: 1px solid #ded6c8;
+  box-shadow: none;
+}
+
+.places-panel p {
+  margin: 0 0 0.5rem;
+  color: #5b5345;
+}
+
+.places-search-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.restaurant-edit-page input,
+.restaurant-edit-page select {
+  background: #fff;
+  color: #111827;
+  border: 1px solid #d9d2c5;
+}
+
+.restaurant-edit-page .admin-top-grid.restaurant-edit-form-grid {
+  grid-template-columns: 1fr;
+}
+
+.restaurant-edit-page .info-panel h3 {
+  text-transform: none;
+  letter-spacing: normal;
+  font-size: 2rem;
+}
+
+.edit-panel-helper {
+  margin: -0.25rem 0 0.85rem;
+  color: #5b5345;
+}
+
+.restaurant-edit-two-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem;
+}
+
+.restaurant-edit-preview-grid {
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.9rem;
+}
+
+.restaurant-edit-preview-grid article {
+  border: 1px solid #d8d0c2;
+  background: #f9f7f2;
+  border-radius: 16px;
+  padding: 0.7rem;
+}
+
+.restaurant-edit-preview-grid h4 {
+  margin: 0 0 0.5rem;
+}
+
+.restaurant-edit-preview-grid img,
+.restaurant-edit-preview-grid iframe {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  border: 1px solid #d8d0c2;
+  border-radius: 10px;
+}
+
+.restaurant-edit-page .manage-btn.accept {
+  background: #9d6a18;
+}
+
+.restaurant-edit-page .manage-btn.cancel {
+  background: #f4efe6;
+  border: 1px solid #d8d0c2;
+  color: #9d6a18;
+}
+
+.student-card-promo { font-weight:700; color:#8b4d11; }

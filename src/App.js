@@ -97,6 +97,57 @@ const TRANSLATIONS = {
   }
 };
 
+const UI_TEXT = {
+  ca: {
+    studentsListTitle: "Llistat d'Alumnis",
+    searchAlumni: "CERCAR ALUMNIS",
+    showing: "mostrant",
+    studiesAtJoviat: "ESTUDIS CURSATS A LA JOVIAT",
+    jobSituation: "SITUACIÓ LABORAL",
+    anySituation: "Qualsevol situació",
+    workingNow: "Treballen actualment",
+    notWorkingNow: "No treballen actualment",
+    promotionYear: "ANY DE PROMOCIÓ",
+    anyYear: "Qualsevol any",
+    profile: "PERFIL PROFESSIONAL",
+    seeDetails: "VEURE DETALLS",
+    associatedEstablishments: "establiments associats",
+    manageEntriesTitle: "Gestionar altes"
+  },
+  es: {
+    studentsListTitle: "Listado de Alumni",
+    searchAlumni: "BUSCAR ALUMNI",
+    showing: "mostrando",
+    studiesAtJoviat: "ESTUDIOS CURSADOS EN JOVIAT",
+    jobSituation: "SITUACIÓN LABORAL",
+    anySituation: "Cualquier situación",
+    workingNow: "Trabajan actualmente",
+    notWorkingNow: "No trabajan actualmente",
+    promotionYear: "AÑO DE PROMOCIÓN",
+    anyYear: "Cualquier año",
+    profile: "PERFIL PROFESIONAL",
+    seeDetails: "VER DETALLES",
+    associatedEstablishments: "establecimientos asociados",
+    manageEntriesTitle: "Gestionar altas"
+  },
+  en: {
+    studentsListTitle: "Alumni List",
+    searchAlumni: "SEARCH ALUMNI",
+    showing: "showing",
+    studiesAtJoviat: "STUDIES AT JOVIAT",
+    jobSituation: "WORK SITUATION",
+    anySituation: "Any status",
+    workingNow: "Currently working",
+    notWorkingNow: "Not currently working",
+    promotionYear: "GRADUATION YEAR",
+    anyYear: "Any year",
+    profile: "PROFESSIONAL PROFILE",
+    seeDetails: "SEE DETAILS",
+    associatedEstablishments: "associated establishments",
+    manageEntriesTitle: "Manage entries"
+  }
+};
+
 
 const RESTAURANT_IMAGES_BY_NAME = {
   'restaurant japonès niwaka': 'https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&w=1200&q=80',
@@ -186,8 +237,17 @@ function App() {
   const [activeSection, setActiveSection] = useState('home');
   const [activeLanguage, setActiveLanguage] = useState('ca');
   const [selectedStudent, setSelectedStudent] = useState(null);
+  const [isEditingStudent, setIsEditingStudent] = useState(false);
+  const [studentEditForm, setStudentEditForm] = useState({ fullName: '', studies: '', promotionYear: '', email: '', phone: '', linkedin: '', instagram: '' });
+  const [studentProfileMessage, setStudentProfileMessage] = useState('');
   const [selectedRestaurant, setSelectedRestaurant] = useState(null);
   const [studentSearch, setStudentSearch] = useState('');
+  const [studentEmploymentFilter, setStudentEmploymentFilter] = useState('all');
+  const [studentPromotionYearFilter, setStudentPromotionYearFilter] = useState('all');
+  const [selectedStudyFilters, setSelectedStudyFilters] = useState([]);
+  const [selectedProfileFilters, setSelectedProfileFilters] = useState([]);
+  const [isStudiesFilterOpen, setIsStudiesFilterOpen] = useState(true);
+  const [isProfileFilterOpen, setIsProfileFilterOpen] = useState(true);
   const [restaurantSearch, setRestaurantSearch] = useState('');
   const [students, setStudents] = useState([]);
   const [loadingStudents, setLoadingStudents] = useState(true);
@@ -205,8 +265,14 @@ function App() {
     fullName: '',
     email: '',
     phone: '',
-    linkedin: ''
+    linkedin: '',
+    instagram: '',
+    bio: '',
+    password: '',
+    promotionYear: '',
+    studies: []
   });
+  const [isStudiesOpenAddStudent, setIsStudiesOpenAddStudent] = useState(true);
   const [saveStudentError, setSaveStudentError] = useState('');
   const [saveStudentSuccess, setSaveStudentSuccess] = useState('');
   const fileInputRef = useRef(null);
@@ -218,8 +284,17 @@ function App() {
     specialty: '',
     street: '',
     email: '',
-    phone: ''
+    phone: '',
+    web: '',
+    googleMapsUrl: '',
+    latitude: '',
+    longitude: '',
+    rating: '',
+    businessStatus: '',
+    placeId: ''
   });
+  const [placesResults, setPlacesResults] = useState([]);
+  const [selectedPlaceIndex, setSelectedPlaceIndex] = useState('');
   const [restaurantPhotoPreview, setRestaurantPhotoPreview] = useState('');
   const [saveRestaurantError, setSaveRestaurantError] = useState('');
   const [saveRestaurantSuccess, setSaveRestaurantSuccess] = useState('');
@@ -229,17 +304,24 @@ function App() {
   const [pendingUserRequests, setPendingUserRequests] = useState([
     { id: 'req-user-1', name: 'Sandra Jo Solà', email: 'sjo@joviat.cat' }
   ]);
-  const [pendingVenueRequests, setPendingVenueRequests] = useState([]);
+  const [pendingVenueRequests, setPendingVenueRequests] = useState([
+    { id: 'req-venue-1', name: 'Restaurant Demo', email: 'contacte@restaurantdemo.cat' }
+  ]);
   const [manageModal, setManageModal] = useState(null);
+  const [manageActionMessage, setManageActionMessage] = useState('');
   const [showRequestAccess, setShowRequestAccess] = useState(false);
   const [accessRequestForm, setAccessRequestForm] = useState({ email: '', fullName: '' });
   const [accessRequestMessage, setAccessRequestMessage] = useState('');
   const [restaurantViewMode, setRestaurantViewMode] = useState('map');
   const [restaurantPage, setRestaurantPage] = useState(1);
+  const [isEditingRestaurant, setIsEditingRestaurant] = useState(false);
+  const [restaurantProfileMessage, setRestaurantProfileMessage] = useState('');
+  const [editingRestaurantId, setEditingRestaurantId] = useState('');
   const mapContainerRef = useRef(null);
   const leafletMapRef = useRef(null);
   const leafletMarkersRef = useRef([]);
   const t = (key) => TRANSLATIONS[activeLanguage]?.[key] || TRANSLATIONS.ca[key] || key;
+  const ui = (key) => UI_TEXT[activeLanguage]?.[key] || UI_TEXT.ca[key] || key;
 
   useEffect(() => {
     const loadData = async () => {
@@ -390,7 +472,20 @@ function App() {
                 readFirestoreValue(alumniFields?.linkedin) ||
                 readFirestoreValue(alumniFields?.linkedIn) ||
                 readFirestoreValue(alumniFields?.linkedin_url) ||
-                'No disponible'
+                'No disponible',
+              instagram:
+                readFirestoreValue(alumniFields?.instagram) ||
+                readFirestoreValue(alumniFields?.insta) ||
+                'No disponible',
+              studies:
+                readFirestoreValue(alumniFields?.studies) ||
+                readFirestoreValue(alumniFields?.estudis) ||
+                readFirestoreValue(alumniFields?.study) ||
+                'Estudis no informats',
+              promotionYear:
+                readFirestoreValue(alumniFields?.promotionYear) ||
+                readFirestoreValue(alumniFields?.promocio) ||
+                ''
             };
           })
         );
@@ -421,15 +516,65 @@ function App() {
 
   const filteredStudents = useMemo(() => {
     const term = studentSearch.trim().toLowerCase();
-    if (!term) return students;
+    return students.filter((student) => {
+      const matchesSearch = !term
+        || student.fullName.toLowerCase().includes(term)
+        || student.role.toLowerCase().includes(term)
+        || student.workplace.toLowerCase().includes(term);
 
-    return students.filter(
-      (student) =>
-        student.fullName.toLowerCase().includes(term) ||
-        student.role.toLowerCase().includes(term) ||
-        student.workplace.toLowerCase().includes(term)
-    );
-  }, [students, studentSearch]);
+      const isCurrent = parseBoolean(student.currentJob);
+      const matchesEmployment = studentEmploymentFilter === 'all'
+        || (studentEmploymentFilter === 'current' && isCurrent)
+        || (studentEmploymentFilter === 'past' && !isCurrent);
+
+      const studentYear = Number(String(student.promotionYear || '').trim());
+      const matchesPromotionYear = studentPromotionYearFilter === 'all'
+        || (!Number.isNaN(studentYear) && studentYear === Number(studentPromotionYearFilter));
+
+      const studentStudiesText = String(student.studies || student.study || student.cycle || '').toLowerCase();
+      const studentProfileText = String(student.role || '').toLowerCase();
+      const matchesStudies = selectedStudyFilters.length === 0
+        || selectedStudyFilters.some((study) => studentStudiesText.includes(study.toLowerCase()));
+      const matchesProfiles = selectedProfileFilters.length === 0
+        || selectedProfileFilters.some((profile) => studentProfileText.includes(profile.toLowerCase()));
+
+      return matchesSearch && matchesEmployment && matchesPromotionYear && matchesStudies && matchesProfiles;
+    });
+  }, [students, studentSearch, studentEmploymentFilter, studentPromotionYearFilter, selectedStudyFilters, selectedProfileFilters]);
+
+  const promotionYearOptions = useMemo(() => {
+    const detected = students
+      .map((student) => Number(String(student.promotionYear || '').trim()))
+      .filter((year) => !Number.isNaN(year));
+    const currentYear = new Date().getFullYear();
+    const fallbackYears = Array.from({ length: 18 }, (_, idx) => currentYear - idx);
+    return Array.from(new Set([...detected, ...fallbackYears])).sort((a, b) => b - a);
+  }, [students]);
+
+  const studyOptions = useMemo(() => {
+    const defaults = [
+      'CFGM Cuina i gastronomia i Serveis en restauració',
+      'CFGM Pastisseria, forneria i confiteria',
+      'CFGS Direcció de cuina',
+      'Programa Intensiu de Cuina Catalana',
+      'Diploma de Sommelier',
+      'FP Hoteleria'
+    ];
+    return defaults;
+  }, []);
+
+  const profileOptions = useMemo(() => ([
+    'Restaurador/a o Propietari/a',
+    'Professional de Sala',
+    'Professional de Cuina',
+    'Professional de Pastisseria i/o Forneria',
+    'Direcció-Gerència',
+    'Docència'
+  ]), []);
+
+  const toggleStudentFilter = (value, setter) => {
+    setter((prev) => (prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value]));
+  };
 
   const filteredRestaurants = useMemo(() => {
     const term = restaurantSearch.trim().toLowerCase();
@@ -466,6 +611,32 @@ function App() {
     }
     return `https://www.google.com/maps?q=${encodeURIComponent(selectedRestaurant.name)}&z=16&output=embed`;
   }, [selectedRestaurant]);
+
+  const restaurantEditPreviewMapUrl = useMemo(() => {
+    const lat = Number(String(restaurantForm.latitude || '').trim());
+    const lng = Number(String(restaurantForm.longitude || '').trim());
+    if (!Number.isNaN(lat) && !Number.isNaN(lng)) {
+      return `https://www.google.com/maps?q=${lat},${lng}&z=17&output=embed`;
+    }
+
+    const streetQuery = (restaurantForm.street || '').trim();
+    const nameQuery = (restaurantForm.name || '').trim();
+
+    if (selectedRestaurant?.coordinates) {
+      const { lat, lng } = selectedRestaurant.coordinates;
+      return `https://www.google.com/maps?q=${lat},${lng}&z=17&output=embed`;
+    }
+
+    if (streetQuery) {
+      return `https://www.google.com/maps?q=${encodeURIComponent(streetQuery)}&z=17&output=embed`;
+    }
+
+    if (nameQuery) {
+      return `https://www.google.com/maps?q=${encodeURIComponent(nameQuery)}&z=17&output=embed`;
+    }
+
+    return 'https://www.google.com/maps?q=Barcelona&z=13&output=embed';
+  }, [isEditingRestaurant, restaurantForm.street, restaurantForm.name, restaurantForm.latitude, restaurantForm.longitude, selectedRestaurant]);
 
   const restaurantsForSelectedStudent = useMemo(() => {
     if (!selectedStudent) return [];
@@ -625,6 +796,19 @@ function App() {
     setAdminForm((prev) => ({ ...prev, [name]: value }));
   };
 
+  const addStudentStudyOptions = [
+    'CFGM Cuina i gastronomia i Serveis en restauració',
+    'CFGM Pastisseria, forneria i confiteria',
+    'CFGS Direcció de cuina',
+    'Programa Intensiu de Cuina Catalana',
+    'Diploma de Sommelier',
+    'Advanced Sommelier Postgraduate Degree',
+    'FP Hoteleria',
+    'Diplomatura de Turisme'
+  ];
+
+  const promotionYearFormOptions = ['Actualment estudiant', ...Array.from({ length: 18 }, (_, i) => String(new Date().getFullYear() - i))];
+
   const handleSaveStudent = async () => {
     const fullName = adminForm.fullName.trim();
     const email = adminForm.email.trim();
@@ -654,7 +838,12 @@ function App() {
           lastName: { stringValue: lastName },
           email: { stringValue: email },
           phone: { stringValue: adminForm.phone.trim() || '' },
-          linkedin: { stringValue: adminForm.linkedin.trim() || '' }
+          linkedin: { stringValue: adminForm.linkedin.trim() || '' },
+          instagram: { stringValue: adminForm.instagram.trim() || '' },
+          bio: { stringValue: adminForm.bio.trim() || '' },
+          promotionYear: { stringValue: adminForm.promotionYear.trim() || '' },
+          studies: { stringValue: adminForm.studies.join(' · ') },
+          password: { stringValue: adminForm.password.trim() || '' }
         }
       };
 
@@ -706,7 +895,10 @@ function App() {
         imageUrl: adminPhotoPreview || WHITE_AVATAR_IMAGE,
         email: adminForm.email.trim(),
         phone: adminForm.phone.trim() || 'No disponible',
-        linkedin: adminForm.linkedin.trim() || 'No disponible'
+        linkedin: adminForm.linkedin.trim() || 'No disponible',
+        instagram: adminForm.instagram.trim() || 'No disponible',
+        studies: adminForm.studies.join(' · ') || 'Estudis no informats',
+        promotionYear: adminForm.promotionYear || ''
       };
 
       setStudents((prev) => [newStudent, ...prev]);
@@ -714,7 +906,7 @@ function App() {
       setSaveStudentError('');
       setSaveStudentSuccess('Alumne guardat correctament a Firebase.');
 
-      setAdminForm({ fullName: '', email: '', phone: '', linkedin: '' });
+      setAdminForm({ fullName: '', email: '', phone: '', linkedin: '', instagram: '', bio: '', password: '', promotionYear: '', studies: [] });
       setAdminStudentStatus('Alumni (En actiu)');
       setAdminTrajectoryFilter('');
       setAdminTrajectories([{ id: 1, restaurant: '', role: '', current: true }]);
@@ -791,12 +983,54 @@ function App() {
     setRestaurantForm((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleSearchPlaces = async () => {
+    const query = (restaurantForm.name || '').trim();
+    if (!query) return;
+    try {
+      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(query)}&limit=8`);
+      const data = await response.json();
+      const mapped = (Array.isArray(data) ? data : []).map((item) => ({
+        name: item.name || query,
+        displayName: item.display_name || query,
+        latitude: item.lat || '',
+        longitude: item.lon || '',
+        placeId: item.place_id ? String(item.place_id) : ''
+      }));
+      setPlacesResults(mapped);
+      setSelectedPlaceIndex('');
+    } catch (error) {
+      setPlacesResults([]);
+    }
+  };
+
+  const handleAutocompletePlace = () => {
+    if (!placesResults.length) return;
+    const place = selectedPlaceIndex !== '' ? placesResults[Number(selectedPlaceIndex)] : placesResults[0];
+    if (!place) return;
+    setRestaurantForm((prev) => ({
+      ...prev,
+      name: prev.name || place.name,
+      street: place.displayName || prev.street,
+      latitude: String(place.latitude || prev.latitude || ''),
+      longitude: String(place.longitude || prev.longitude || ''),
+      placeId: place.placeId || prev.placeId,
+      googleMapsUrl: `https://maps.google.com/?q=${encodeURIComponent(place.displayName || prev.name || '')}`
+    }));
+  };
+
   const handleSaveRestaurant = async () => {
     const name = restaurantForm.name.trim();
     const specialty = restaurantForm.specialty.trim();
     const street = restaurantForm.street.trim();
     const email = (restaurantForm.email || '').trim();
     const phone = (restaurantForm.phone || '').trim();
+    const web = (restaurantForm.web || '').trim();
+    const googleMapsUrl = (restaurantForm.googleMapsUrl || '').trim();
+    const latitude = Number(String(restaurantForm.latitude || '').trim());
+    const longitude = Number(String(restaurantForm.longitude || '').trim());
+    const rating = (restaurantForm.rating || '').trim();
+    const businessStatus = (restaurantForm.businessStatus || '').trim();
+    const placeId = (restaurantForm.placeId || '').trim();
 
     if (!name || !street) {
       setSaveRestaurantSuccess('');
@@ -804,7 +1038,8 @@ function App() {
       return;
     }
 
-    const restaurantId = `restaurant_${Date.now()}`;
+    const isEditMode = Boolean(editingRestaurantId);
+    const restaurantId = isEditMode ? editingRestaurantId : `restaurant_${Date.now()}`;
     const payload = {
       fields: {
         Name: { stringValue: name },
@@ -812,13 +1047,24 @@ function App() {
         street: { stringValue: street },
         email: { stringValue: email },
         phone: { stringValue: phone },
-        imageUrl: { stringValue: restaurantPhotoPreview || WHITE_AVATAR_IMAGE }
+        imageUrl: { stringValue: restaurantPhotoPreview || WHITE_AVATAR_IMAGE },
+        web: { stringValue: web },
+        googleMapsUrl: { stringValue: googleMapsUrl },
+        rating: { stringValue: rating },
+        businessStatus: { stringValue: businessStatus },
+        placeId: { stringValue: placeId },
+        latitude: { stringValue: Number.isNaN(latitude) ? '' : String(latitude) },
+        longitude: { stringValue: Number.isNaN(longitude) ? '' : String(longitude) }
       }
     };
 
     try {
-      const response = await fetch(`${FIRESTORE_BASE_URL}/Restaurant?documentId=${encodeURIComponent(restaurantId)}`, {
-        method: 'POST',
+      const endpoint = isEditMode
+        ? `${FIRESTORE_BASE_URL}/Restaurant/${encodeURIComponent(restaurantId)}?updateMask.fieldPaths=Name&updateMask.fieldPaths=specialty&updateMask.fieldPaths=street&updateMask.fieldPaths=email&updateMask.fieldPaths=phone&updateMask.fieldPaths=imageUrl&updateMask.fieldPaths=web&updateMask.fieldPaths=googleMapsUrl&updateMask.fieldPaths=rating&updateMask.fieldPaths=businessStatus&updateMask.fieldPaths=placeId&updateMask.fieldPaths=latitude&updateMask.fieldPaths=longitude`
+        : `${FIRESTORE_BASE_URL}/Restaurant?documentId=${encodeURIComponent(restaurantId)}`;
+
+      const response = await fetch(endpoint, {
+        method: isEditMode ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
@@ -835,16 +1081,22 @@ function App() {
         street,
         email: email || 'No disponible',
         phone: phone || 'No disponible',
-        coordinates: null,
+        coordinates: !Number.isNaN(latitude) && !Number.isNaN(longitude) ? { lat: latitude, lng: longitude } : null,
         imageUrl: restaurantPhotoPreview || WHITE_AVATAR_IMAGE
       };
 
-      setRestaurants((prev) => [newRestaurant, ...prev]);
+      setRestaurants((prev) => (
+        isEditMode
+          ? prev.map((restaurant) => (restaurant.id === restaurantId ? newRestaurant : restaurant))
+          : [newRestaurant, ...prev]
+      ));
       openRestaurantProfile(newRestaurant.id);
       setSaveRestaurantError('');
-      setSaveRestaurantSuccess('Restaurant guardat correctament a Firebase.');
-      setRestaurantForm({ name: '', specialty: '', street: '', email: '', phone: '' });
+      setSaveRestaurantSuccess(isEditMode ? 'Restaurant actualitzat correctament a Firebase.' : 'Restaurant guardat correctament a Firebase.');
+      setRestaurantForm({ name: '', specialty: '', street: '', email: '', phone: '', web: '', googleMapsUrl: '', latitude: '', longitude: '', rating: '', businessStatus: '', placeId: '' });
       setRestaurantPhotoPreview('');
+      setEditingRestaurantId('');
+      setIsEditingRestaurant(false);
     } catch (error) {
       setSaveRestaurantSuccess('');
       setSaveRestaurantError('No s’ha pogut guardar el restaurant a Firebase.');
@@ -855,6 +1107,8 @@ function App() {
     setStudentProfileSourceRestaurantId(null);
     setActiveSection('student-profile');
     setSelectedStudent(student);
+    setIsEditingStudent(false);
+    setStudentProfileMessage('');
     setSelectedRestaurant(null);
     setIsSidebarOpen(false);
   };
@@ -863,6 +1117,8 @@ function App() {
     setStudentProfileSourceRestaurantId(restaurantId || null);
     setActiveSection('student-profile');
     setSelectedStudent(student);
+    setIsEditingStudent(false);
+    setStudentProfileMessage('');
     setSelectedRestaurant(null);
     setIsSidebarOpen(false);
   };
@@ -875,7 +1131,60 @@ function App() {
     setSelectedRestaurant(restaurantMatch);
     setSelectedStudent(null);
     setStudentProfileSourceRestaurantId(null);
+    setIsEditingRestaurant(false);
     setIsSidebarOpen(false);
+  };
+
+
+  const startRestaurantEdit = () => {
+    if (!selectedRestaurant) return;
+    setEditingRestaurantId(selectedRestaurant.id);
+    setRestaurantForm({
+      name: selectedRestaurant.name || '',
+      specialty: selectedRestaurant.specialty === 'No disponible' ? '' : selectedRestaurant.specialty || '',
+      street: typeof selectedRestaurant.street === 'string'
+        ? selectedRestaurant.street
+        : Array.isArray(selectedRestaurant.street)
+          ? selectedRestaurant.street.join(', ')
+          : String(selectedRestaurant.street || ''),
+      email: selectedRestaurant.email === 'No disponible' ? '' : selectedRestaurant.email || '',
+      phone: selectedRestaurant.phone === 'No disponible' ? '' : selectedRestaurant.phone || '',
+      web: selectedRestaurant.web === 'No disponible' ? '' : selectedRestaurant.web || '',
+      googleMapsUrl: selectedRestaurant.googleMapsUrl || '',
+      latitude: selectedRestaurant.coordinates?.lat ? String(selectedRestaurant.coordinates.lat) : '',
+      longitude: selectedRestaurant.coordinates?.lng ? String(selectedRestaurant.coordinates.lng) : '',
+      rating: selectedRestaurant.rating || '',
+      businessStatus: selectedRestaurant.businessStatus || '',
+      placeId: selectedRestaurant.placeId || ''
+    });
+    setRestaurantPhotoPreview(selectedRestaurant.imageUrl || '');
+    setRestaurantProfileMessage('');
+    setIsEditingRestaurant(true);
+    selectSection('add-restaurant');
+  };
+
+  const handleDeleteRestaurant = async () => {
+    if (!selectedRestaurant) return;
+
+    const confirmed = window.confirm(`Vols eliminar ${selectedRestaurant.name}? Aquesta acció no es pot desfer.`);
+    if (!confirmed) return;
+
+    try {
+      const response = await fetch(`${FIRESTORE_BASE_URL}/Restaurant/${encodeURIComponent(selectedRestaurant.id)}`, {
+        method: 'DELETE'
+      });
+
+      if (!response.ok) throw new Error('No s’ha pogut eliminar el restaurant.');
+
+      setRestaurants((prev) => prev.filter((restaurant) => restaurant.id !== selectedRestaurant.id));
+      setSelectedRestaurant(null);
+      setIsEditingRestaurant(false);
+      setEditingRestaurantId('');
+      setRestaurantProfileMessage('');
+      selectSection('restaurants');
+    } catch (error) {
+      setRestaurantProfileMessage('No s’ha pogut eliminar el restaurant.');
+    }
   };
 
   const handleBackFromStudentProfile = () => {
@@ -884,6 +1193,91 @@ function App() {
       return;
     }
     selectSection('students');
+  };
+
+  const startStudentEdit = () => {
+    if (!selectedStudent) return;
+    setStudentEditForm({
+      fullName: selectedStudent.fullName || '',
+      studies: selectedStudent.studies || '',
+      promotionYear: selectedStudent.promotionYear || '',
+      email: selectedStudent.email === 'No disponible' ? '' : selectedStudent.email || '',
+      phone: selectedStudent.phone === 'No disponible' ? '' : selectedStudent.phone || '',
+      linkedin: selectedStudent.linkedin === 'No disponible' ? '' : selectedStudent.linkedin || '',
+      instagram: selectedStudent.instagram === 'No disponible' ? '' : selectedStudent.instagram || ''
+    });
+    setIsEditingStudent(true);
+    setStudentProfileMessage('');
+  };
+
+  const handleStudentEditInputChange = (event) => {
+    const { name, value } = event.target;
+    setStudentEditForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSaveStudentEdit = async () => {
+    if (!selectedStudent) return;
+    const alumniId = selectedStudent.alumniId;
+    if (!alumniId) {
+      setStudentProfileMessage('No s’ha trobat l’identificador d’alumni.');
+      return;
+    }
+
+    const [firstName, ...lastParts] = studentEditForm.fullName.trim().split(' ');
+    const lastName = lastParts.join(' ').trim();
+    const payload = {
+      fields: {
+        name: { stringValue: firstName || '' },
+        lastName: { stringValue: lastName || '' },
+        email: { stringValue: studentEditForm.email.trim() },
+        phone: { stringValue: studentEditForm.phone.trim() },
+        linkedin: { stringValue: studentEditForm.linkedin.trim() },
+        instagram: { stringValue: studentEditForm.instagram.trim() },
+        studies: { stringValue: studentEditForm.studies.trim() },
+        promotionYear: { stringValue: studentEditForm.promotionYear.trim() }
+      }
+    };
+
+    try {
+      const response = await fetch(`${FIRESTORE_BASE_URL}/Alumni/${encodeURIComponent(alumniId)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!response.ok) throw new Error('No update');
+
+      const updated = {
+        ...selectedStudent,
+        fullName: studentEditForm.fullName.trim() || selectedStudent.fullName,
+        email: studentEditForm.email.trim() || 'No disponible',
+        phone: studentEditForm.phone.trim() || 'No disponible',
+        linkedin: studentEditForm.linkedin.trim() || 'No disponible',
+        instagram: studentEditForm.instagram.trim() || 'No disponible',
+        studies: studentEditForm.studies.trim() || 'Estudis no informats',
+        promotionYear: studentEditForm.promotionYear.trim()
+      };
+
+      setStudents((prev) => prev.map((item) => (item.alumniId === alumniId ? { ...item, ...updated } : item)));
+      setSelectedStudent(updated);
+      setIsEditingStudent(false);
+      setStudentProfileMessage('Alumni actualitzat correctament.');
+    } catch (error) {
+      setStudentProfileMessage('No s’ha pogut actualitzar l’alumni.');
+    }
+  };
+
+  const handleDeleteStudent = async () => {
+    if (!selectedStudent?.alumniId) return;
+    if (!window.confirm(`Vols eliminar ${selectedStudent.fullName}?`)) return;
+    try {
+      const response = await fetch(`${FIRESTORE_BASE_URL}/Alumni/${encodeURIComponent(selectedStudent.alumniId)}`, { method: 'DELETE' });
+      if (!response.ok) throw new Error('No delete');
+      setStudents((prev) => prev.filter((item) => item.alumniId !== selectedStudent.alumniId));
+      setSelectedStudent(null);
+      selectSection('students');
+    } catch (error) {
+      setStudentProfileMessage('No s’ha pogut eliminar l’alumni.');
+    }
   };
 
   useEffect(() => {
@@ -984,12 +1378,20 @@ function App() {
 
   const confirmManageAction = () => {
     if (!manageModal) return;
+    let message = '';
     if (manageModal.type === 'accept-user' || manageModal.type === 'cancel-user') {
       setPendingUserRequests((prev) => prev.filter((item) => item.id !== manageModal.request.id));
+      message = manageModal.type === 'accept-user'
+        ? `Usuari ${manageModal.request.name} acceptat correctament.`
+        : `Petició d'usuari de ${manageModal.request.name} cancel·lada.`;
     }
     if (manageModal.type === 'accept-venue' || manageModal.type === 'cancel-venue') {
       setPendingVenueRequests((prev) => prev.filter((item) => item.id !== manageModal.request.id));
+      message = manageModal.type === 'accept-venue'
+        ? `Establiment ${manageModal.request.name} acceptat correctament.`
+        : `Petició d'establiment de ${manageModal.request.name} cancel·lada.`;
     }
+    setManageActionMessage(message);
     setManageModal(null);
   };
 
@@ -1237,7 +1639,7 @@ function App() {
                         <h4>{restaurant.name}</h4>
                         <p>📍 {restaurant.street || 'Adreça no disponible'}</p>
                         <p>{students.filter((student) => student.restaurantId === restaurant.id).length} Alumnis associats</p>
-                        <span className="restaurant-details-cta">👁 VEURE DETALLS</span>
+                        <span className="restaurant-details-cta"><span className="inline-icon">◉</span> VEURE DETALLS</span>
                       </div>
                     </button>
                   </article>
@@ -1257,14 +1659,88 @@ function App() {
 
         {activeSection === 'students' && (
           <section className="students-section">
-            <h2>{t('studentsTitle')}</h2>
-            <input
-              type="search"
-              className="search-input"
-              placeholder={t('searchStudent')}
-              value={studentSearch}
-              onChange={(event) => setStudentSearch(event.target.value)}
-            />
+            <h2 className="students-title">🧑‍🍳 {ui('studentsListTitle')}</h2>
+            <div className="students-search-wrap">
+              <label htmlFor="students-search-input" className="students-search-label">
+                {ui('searchAlumni')} <span>({ui('showing')} {filteredStudents.length} / {students.length})</span>
+              </label>
+              <div className="students-search-row">
+                <input
+                  id="students-search-input"
+                  type="search"
+                  className="search-input students-search-input"
+                  placeholder="Escriu el nom de l&apos;Alumni"
+                  value={studentSearch}
+                  onChange={(event) => setStudentSearch(event.target.value)}
+                />
+                <span className="students-filter-icon" aria-hidden="true">🎚️</span>
+              </div>
+            </div>
+
+            <article className="students-filters-card">
+              <button type="button" className="students-filter-collapse-btn" onClick={() => setIsStudiesFilterOpen((prev) => !prev)}>
+                <span className="students-filter-block-title">{ui('studiesAtJoviat')}</span>
+                <span aria-hidden="true">{isStudiesFilterOpen ? '⌃' : '⌄'}</span>
+              </button>
+              {isStudiesFilterOpen && (
+                <div className="students-chip-grid">
+                  <button type="button" className="students-filter-chip action" onClick={() => setSelectedStudyFilters(studyOptions)}>
+                    Seleccionar tots els estudis
+                  </button>
+                  {studyOptions.map((study) => (
+                    <button
+                      key={study}
+                      type="button"
+                      className={`students-filter-chip ${selectedStudyFilters.includes(study) ? 'active' : ''}`}
+                      onClick={() => toggleStudentFilter(study, setSelectedStudyFilters)}
+                    >
+                      ☑ {study}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <div className="students-filter-inline">
+                <div>
+                  <label htmlFor="students-employment-filter" className="students-filter-label">{ui('jobSituation')}</label>
+                  <select id="students-employment-filter" value={studentEmploymentFilter} onChange={(event) => setStudentEmploymentFilter(event.target.value)}>
+                    <option value="all">{ui('anySituation')}</option>
+                    <option value="current">{ui('workingNow')}</option>
+                    <option value="past">{ui('notWorkingNow')}</option>
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="students-year-filter" className="students-filter-label">{ui('promotionYear')}</label>
+                  <select id="students-year-filter" value={studentPromotionYearFilter} onChange={(event) => setStudentPromotionYearFilter(event.target.value)}>
+                    <option value="all">{ui('anyYear')}</option>
+                    {promotionYearOptions.map((year) => <option key={year} value={year}>{year}</option>)}
+                  </select>
+                </div>
+              </div>
+              <button type="button" className="students-filter-collapse-btn" onClick={() => setIsProfileFilterOpen((prev) => !prev)}>
+                <span className="students-filter-block-title">{ui('profile')}</span>
+                <span aria-hidden="true">{isProfileFilterOpen ? '⌃' : '⌄'}</span>
+              </button>
+              {isProfileFilterOpen && (
+                <div className="students-chip-grid">
+                  <button type="button" className="students-filter-chip action" onClick={() => setSelectedProfileFilters(profileOptions)}>
+                    Seleccionar tots els perfils professionals
+                  </button>
+                  <button type="button" className="students-filter-chip action" onClick={() => setSelectedProfileFilters([])}>
+                    Treure tots els perfils professionals
+                  </button>
+                  {profileOptions.map((profile) => (
+                    <button
+                      key={profile}
+                      type="button"
+                      className={`students-filter-chip ${selectedProfileFilters.includes(profile) ? 'active' : ''}`}
+                      onClick={() => toggleStudentFilter(profile, setSelectedProfileFilters)}
+                    >
+                      ☐ {profile}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </article>
 
             {loadingStudents && <p>Carregant alumnes...</p>}
             {!loadingStudents && studentsError && <p>{studentsError}</p>}
@@ -1285,9 +1761,13 @@ function App() {
                           event.currentTarget.src = WHITE_AVATAR_IMAGE;
                         }}
                       />
-                      <div>
+                      <div className="student-card-body">
                         <h3>{student.fullName}</h3>
-                        <p>Rol: {student.role}</p>
+                        <p>• {student.studies || 'Estudis no informats'}</p>
+                        {student.role && <p>• {student.role}</p>}
+                        {student.promotionYear && <p className="student-card-promo">Promoció {student.promotionYear}</p>}
+                        <p className="student-card-assoc">🏫 {students.filter((item) => item.alumniId === student.alumniId).length || 1} {ui('associatedEstablishments')}</p>
+                        <span className="student-card-cta">{ui('seeDetails')}</span>
                       </div>
                     </button>
                   </article>
@@ -1315,11 +1795,12 @@ function App() {
                 <div>
                   <h3>Fitxa d&apos;establiment</h3>
                   <h2>{selectedRestaurant.name}</h2>
-                  <p>📍 {selectedRestaurant.street}</p>
+                  <p><span className="inline-icon">📍</span> {selectedRestaurant.street}</p>
                   <div className="restaurant-action-row">
-                    <button type="button" className="pill-button">Editar</button>
-                    <button type="button" className="pill-button danger">Eliminar</button>
+                    <button type="button" className="pill-button" onClick={startRestaurantEdit}>✎ Editar</button>
+                    <button type="button" className="pill-button danger" onClick={handleDeleteRestaurant}>🗑 Eliminar</button>
                   </div>
+                  {restaurantProfileMessage && <p className="restaurant-profile-message">{restaurantProfileMessage}</p>}
                 </div>
               </div>
               <div className="restaurant-info-grid">
@@ -1389,21 +1870,44 @@ function App() {
 
         {activeSection === 'student-profile' && selectedStudent && (
           <section className="students-section">
-            <article className="student-profile-card">
+            <article className="student-profile-card student-profile-reference">
               <button type="button" className="back-button" onClick={handleBackFromStudentProfile}>
                 ← Tornar al llistat
               </button>
-              <img
-                className="student-hero-image"
-                src={selectedStudent.imageUrl || WHITE_AVATAR_IMAGE}
-                alt={`Foto de ${selectedStudent.fullName}`}
-                onError={(event) => {
-                  event.currentTarget.src = WHITE_AVATAR_IMAGE;
-                }}
-              />
-              <button type="button" className="profile-link-button" onClick={openProfilePhotoPicker}>
-                Canviar foto de perfil
-              </button>
+              <div className="student-profile-header">
+                <img
+                  className="student-hero-image"
+                  src={selectedStudent.imageUrl || WHITE_AVATAR_IMAGE}
+                  alt={`Foto de ${selectedStudent.fullName}`}
+                  onError={(event) => {
+                    event.currentTarget.src = WHITE_AVATAR_IMAGE;
+                  }}
+                />
+                <div>
+                  <h3>Fitxa d&apos;Alumni</h3>
+                  <h2>{selectedStudent.fullName}</h2>
+                  <p><strong>Estudis realitzats a la Joviat:</strong></p>
+                  <p>• {selectedStudent.studies || 'Estudis no informats'}</p>
+                  {selectedStudent.role && <p>• {selectedStudent.role}</p>}
+                  {selectedStudent.promotionYear && <p><strong>Promoció {selectedStudent.promotionYear}</strong></p>}
+                  <div className="restaurant-action-row">
+                    {isEditingStudent ? (
+                      <>
+                        <button type="button" className="pill-button" onClick={handleSaveStudentEdit}>💾 Desar</button>
+                        <button type="button" className="pill-button" onClick={() => setIsEditingStudent(false)}>↩ Cancel·lar</button>
+                      </>
+                    ) : (
+                      <>
+                        <button type="button" className="pill-button" onClick={startStudentEdit}>✎ Editar</button>
+                        <button type="button" className="pill-button danger" onClick={handleDeleteStudent}>🗑 Eliminar</button>
+                      </>
+                    )}
+                  </div>
+                  <button type="button" className="profile-link-button" onClick={openProfilePhotoPicker}>
+                    Canviar foto de perfil
+                  </button>
+                </div>
+              </div>
               <input
                 ref={profilePhotoInputRef}
                 type="file"
@@ -1412,27 +1916,24 @@ function App() {
                 onChange={handleProfilePhotoChange}
               />
               {profilePhotoStatus && <p>{profilePhotoStatus}</p>}
-              <h3>Fitxa personal</h3>
-              <p><strong>Nom i cognoms:</strong> {selectedStudent.fullName}</p>
-              <p><strong>On treballa:</strong> {selectedStudent.workplace}</p>
-              <p><strong>Rol a la feina:</strong> {selectedStudent.role}</p>
-              <p><strong>Correu electrònic:</strong> {selectedStudent.email || 'No disponible'}</p>
-              <p><strong>Telèfon:</strong> {selectedStudent.phone || 'No disponible'}</p>
-              <p>
-                <strong>LinkedIn:</strong>{' '}
-                {selectedStudent.linkedin && selectedStudent.linkedin !== 'No disponible' ? (
-                  <a
-                    href={normalizeLinkedinUrl(selectedStudent.linkedin)}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="profile-link-button"
-                  >
-                    {selectedStudent.linkedin}
-                  </a>
-                ) : (
-                  'No disponible'
-                )}
-              </p>
+              {studentProfileMessage && <p className="restaurant-profile-message">{studentProfileMessage}</p>}
+              {isEditingStudent && (
+                <section className="student-contact-grid">
+                  <div><strong>Nom complet</strong><input name="fullName" value={studentEditForm.fullName} onChange={handleStudentEditInputChange} /></div>
+                  <div><strong>Estudis</strong><input name="studies" value={studentEditForm.studies} onChange={handleStudentEditInputChange} /></div>
+                  <div><strong>Promoció</strong><input name="promotionYear" value={studentEditForm.promotionYear} onChange={handleStudentEditInputChange} /></div>
+                  <div><strong>Email</strong><input name="email" value={studentEditForm.email} onChange={handleStudentEditInputChange} /></div>
+                  <div><strong>Phone</strong><input name="phone" value={studentEditForm.phone} onChange={handleStudentEditInputChange} /></div>
+                  <div><strong>LinkedIn</strong><input name="linkedin" value={studentEditForm.linkedin} onChange={handleStudentEditInputChange} /></div>
+                  <div><strong>Instagram</strong><input name="instagram" value={studentEditForm.instagram} onChange={handleStudentEditInputChange} /></div>
+                </section>
+              )}
+              <section className="student-contact-grid">
+                <div><strong>Email</strong><p>{selectedStudent.email !== 'No disponible' ? <a href={`mailto:${selectedStudent.email}`}>{selectedStudent.email}</a> : 'No disponible'}</p></div>
+                <div><strong>Phone</strong><p>{selectedStudent.phone !== 'No disponible' ? <a href={`tel:${selectedStudent.phone}`}>{selectedStudent.phone}</a> : 'No disponible'}</p></div>
+                <div><strong>LinkedIn</strong><p>{selectedStudent.linkedin !== 'No disponible' ? <a href={normalizeLinkedinUrl(selectedStudent.linkedin)} target="_blank" rel="noreferrer">{selectedStudent.linkedin}</a> : 'No disponible'}</p></div>
+                <div><strong>Instagram</strong><p>{selectedStudent.instagram !== 'No disponible' ? <a href={`https://instagram.com/${String(selectedStudent.instagram).replace('@', '')}`} target="_blank" rel="noreferrer">{selectedStudent.instagram}</a> : 'No disponible'}</p></div>
+              </section>
               <h4>Restaurants on treballa o ha treballat</h4>
               {restaurantsForSelectedStudent.length > 0 ? (
                 <ul>
@@ -1489,11 +1990,11 @@ function App() {
         )}
 
         {activeSection === 'add-student' && (
-          <section className="admin-page">
+          <section className="admin-page restaurant-edit-page">
             <p className="admin-eyebrow">ADMINISTRACIO</p>
-            <h1>Afegir Alumne</h1>
+            <h1>Afegir Alumni</h1>
             <p className="admin-intro">
-              Dona d&apos;alta un alumne nou, desa la seva foto a storage i relaciona&apos;l amb tants restaurants com calgui.
+              Els camps marcats amb * corresponen al correu electrònic i la contrasenya; són obligatoris.
             </p>
 
             <div className="admin-top-grid">
@@ -1512,22 +2013,26 @@ function App() {
                   className="hidden-file-input"
                   onChange={handlePhotoUpload}
                 />
-                <h3>Pujar foto</h3>
-                <p>{adminPhotoPreview ? 'Clica per canviar la imatge' : 'Selecciona una imatge des del disc'}</p>
+                <h3>PUJAR FOTO</h3>
+                <p>{adminPhotoPreview ? 'Clica per canviar la imatge' : 'Puja una imatge'}</p>
 
-                <label htmlFor="student-status">Estat de l&apos;alumne</label>
-                <select
-                  id="student-status"
-                  value={adminStudentStatus}
-                  onChange={(event) => setAdminStudentStatus(event.target.value)}
-                >
-                  <option>Alumni (En actiu)</option>
-                  <option>Alumni (No actiu)</option>
-                </select>
+                <label>Estudis cursats a la Joviat *</label>
+                <button type="button" className="students-filter-collapse-btn" onClick={() => setIsStudiesOpenAddStudent((p) => !p)}>
+                  <span>{adminForm.studies.length ? `${adminForm.studies.length} seleccionats` : 'Selecciona els estudis'}</span><span>{isStudiesOpenAddStudent ? '⌃' : '⌄'}</span>
+                </button>
+                {isStudiesOpenAddStudent && (
+                  <div className="students-chip-grid">
+                    {addStudentStudyOptions.map((study) => (
+                      <button key={study} type="button" className={`students-filter-chip ${adminForm.studies.includes(study) ? 'active' : ''}`} onClick={() => setAdminForm((prev) => ({ ...prev, studies: prev.studies.includes(study) ? prev.studies.filter((s) => s !== study) : [...prev.studies, study] }))}>
+                        ☐ {study}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </article>
 
               <article className="admin-panel info-panel">
-                <h3>Informacio primaria</h3>
+                <h3>Informació primària</h3>
                 <label htmlFor="full-name">Nom complet</label>
                 <input
                   id="full-name"
@@ -1540,7 +2045,7 @@ function App() {
 
                 <div className="admin-two-columns">
                   <div>
-                    <label htmlFor="email">Correu electronic</label>
+                    <label htmlFor="email">Correu electrònic *</label>
                     <input
                       id="email"
                       name="email"
@@ -1551,7 +2056,14 @@ function App() {
                     />
                   </div>
                   <div>
-                    <label htmlFor="phone">Telefon de contacte</label>
+                    <label htmlFor="password">Contrasenya *</label>
+                    <input id="password" name="password" type="password" placeholder="********" value={adminForm.password} onChange={handleAdminInputChange} />
+                  </div>
+                </div>
+
+                <div className="admin-two-columns">
+                  <div>
+                    <label htmlFor="phone">Telèfon de contacte</label>
                     <input
                       id="phone"
                       name="phone"
@@ -1561,8 +2073,17 @@ function App() {
                       onChange={handleAdminInputChange}
                     />
                   </div>
+                  <div>
+                    <label htmlFor="promotionYear">Any de promoció</label>
+                    <select id="promotionYear" name="promotionYear" value={adminForm.promotionYear} onChange={handleAdminInputChange}>
+                      <option value="">Qualsevol any</option>
+                      {promotionYearFormOptions.map((year) => <option key={year} value={year}>{year}</option>)}
+                    </select>
+                  </div>
                 </div>
 
+                <label htmlFor="bio">Bio</label>
+                <textarea id="bio" name="bio" placeholder="Escriu una breu presentació de l'Alumni" value={adminForm.bio} onChange={handleAdminInputChange} rows={4} />
                 <label htmlFor="linkedin">Perfil Linkedin</label>
                 <input
                   id="linkedin"
@@ -1572,6 +2093,8 @@ function App() {
                   value={adminForm.linkedin}
                   onChange={handleAdminInputChange}
                 />
+                <label htmlFor="instagram">Perfil d&apos;Instagram</label>
+                <input id="instagram" name="instagram" type="text" placeholder="@usuari o instagram.com/usuari" value={adminForm.instagram} onChange={handleAdminInputChange} />
               </article>
             </div>
 
@@ -1652,34 +2175,34 @@ function App() {
         )}
 
         {activeSection === 'add-restaurant' && (
-          <section className="admin-page">
+          <section className="admin-page restaurant-edit-page">
             <p className="admin-eyebrow">ADMINISTRACIO</p>
-            <h1>Afegir Restaurant</h1>
-            <p className="admin-intro">Afegeix un restaurant nou amb les seves dades bàsiques.</p>
+            <h1>{isEditingRestaurant ? 'Editar Establiment' : 'Afegir Establiment'}</h1>
+            <p className="admin-intro">Cerca l&apos;establiment a Google Places, selecciona&apos;l del llistat i importa la seva informació per omplir la fitxa automàticament abans de desar-la a Firestore.</p>
 
-            <div className="admin-top-grid">
-              <article className="admin-panel photo-panel">
-                <button type="button" className="upload-circle upload-circle-button" onClick={openRestaurantPhotoPicker}>
-                  {restaurantPhotoPreview ? (
-                    <img src={restaurantPhotoPreview} alt="Previsualització del restaurant" className="upload-preview-image" />
-                  ) : (
-                    <span>+</span>
-                  )}
-                </button>
-                <input
-                  ref={restaurantPhotoInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden-file-input"
-                  onChange={handleRestaurantPhotoUpload}
-                />
-                <h3>Pujar foto</h3>
-                <p>{restaurantPhotoPreview ? 'Clica per canviar la imatge' : 'Selecciona una imatge des del disc'}</p>
-              </article>
+            <article className="admin-panel places-panel">
+              <h3>Cerca a Google Places</h3>
+              <p>Escriu el nom de l&apos;establiment i recupera els resultats disponibles.</p>
+              <label htmlFor="places-name">Nom de l&apos;establiment</label>
+              <div className="places-search-row">
+                <input id="places-name" type="text" value={restaurantForm.name} name="name" onChange={handleRestaurantInputChange} placeholder="Ex. Disfrutar Barcelona" />
+                <button type="button" className="manage-btn accept" onClick={handleSearchPlaces}>Buscar</button>
+              </div>
+              <label htmlFor="places-results">Resultats</label>
+              <div className="places-search-row">
+                <select id="places-results" value={selectedPlaceIndex} onChange={(event) => setSelectedPlaceIndex(event.target.value)}>
+                  <option value="">Encara no hi ha resultats</option>
+                  {placesResults.map((item, index) => <option key={`${item.placeId}-${index}`} value={index}>{item.displayName}</option>)}
+                </select>
+                <button type="button" className="manage-btn cancel" onClick={handleAutocompletePlace}>Autocompletar</button>
+              </div>
+            </article>
 
+            <div className="admin-top-grid restaurant-edit-form-grid">
               <article className="admin-panel info-panel">
-                <h3>Informacio primaria</h3>
-                <label htmlFor="restaurant-name">Nom del restaurant</label>
+                <h3>Dades de l&apos;establiment</h3>
+                <p className="edit-panel-helper">Revisa els camps importants i completa manualment el que Google no proporcioni.</p>
+                <label htmlFor="restaurant-name">Nom</label>
                 <input
                   id="restaurant-name"
                   name="name"
@@ -1689,7 +2212,7 @@ function App() {
                   onChange={handleRestaurantInputChange}
                 />
 
-                <label htmlFor="restaurant-specialty">Especialitat</label>
+                <label htmlFor="restaurant-specialty">Categoria</label>
                 <input
                   id="restaurant-specialty"
                   name="specialty"
@@ -1699,7 +2222,7 @@ function App() {
                   onChange={handleRestaurantInputChange}
                 />
 
-                <label htmlFor="restaurant-street">Carrer</label>
+                <label htmlFor="restaurant-street">Adreça</label>
                 <input
                   id="restaurant-street"
                   name="street"
@@ -1709,31 +2232,90 @@ function App() {
                   onChange={handleRestaurantInputChange}
                 />
 
-                <label htmlFor="restaurant-email">Correu electrònic</label>
-                <input
-                  id="restaurant-email"
-                  name="email"
-                  type="email"
-                  placeholder="contacte@restaurant.cat"
-                  value={restaurantForm.email || ''}
-                  onChange={handleRestaurantInputChange}
-                />
+                <div className="restaurant-edit-two-columns">
+                  <div>
+                    <label htmlFor="restaurant-phone">Phone</label>
+                    <input
+                      id="restaurant-phone"
+                      name="phone"
+                      type="text"
+                      placeholder="+34 600 000 000"
+                      value={restaurantForm.phone || ''}
+                      onChange={handleRestaurantInputChange}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="restaurant-email">Email</label>
+                    <input
+                      id="restaurant-email"
+                      name="email"
+                      type="email"
+                      placeholder="contacte@restaurant.com"
+                      value={restaurantForm.email || ''}
+                      onChange={handleRestaurantInputChange}
+                    />
+                  </div>
+                </div>
+                <div className="restaurant-edit-two-columns">
+                  <div>
+                    <label htmlFor="restaurant-web">Web</label>
+                    <input id="restaurant-web" name="web" type="text" placeholder="https://restaurant.com" value={restaurantForm.web || ''} onChange={handleRestaurantInputChange} />
+                  </div>
+                  <div>
+                    <label htmlFor="restaurant-map-url">Google Maps URL</label>
+                    <input id="restaurant-map-url" name="googleMapsUrl" type="text" placeholder="https://maps.google.com/..." value={restaurantForm.googleMapsUrl || ''} onChange={handleRestaurantInputChange} />
+                  </div>
+                </div>
+                <div className="restaurant-edit-two-columns">
+                  <div>
+                    <label htmlFor="restaurant-lat">Latitud</label>
+                    <input id="restaurant-lat" name="latitude" type="text" placeholder="41.390000" value={restaurantForm.latitude || ''} onChange={handleRestaurantInputChange} />
+                  </div>
+                  <div>
+                    <label htmlFor="restaurant-lng">Longitud</label>
+                    <input id="restaurant-lng" name="longitude" type="text" placeholder="2.150000" value={restaurantForm.longitude || ''} onChange={handleRestaurantInputChange} />
+                  </div>
+                </div>
+                <div className="restaurant-edit-two-columns">
+                  <div>
+                    <label htmlFor="restaurant-rating">Rating</label>
+                    <input id="restaurant-rating" name="rating" type="text" placeholder="4.8" value={restaurantForm.rating || ''} onChange={handleRestaurantInputChange} />
+                  </div>
+                  <div>
+                    <label htmlFor="restaurant-business-status">Estat del negoci</label>
+                    <input id="restaurant-business-status" name="businessStatus" type="text" placeholder="OPERATIONAL" value={restaurantForm.businessStatus || ''} onChange={handleRestaurantInputChange} />
+                  </div>
+                </div>
 
-                <label htmlFor="restaurant-phone">Telèfon</label>
-                <input
-                  id="restaurant-phone"
-                  name="phone"
-                  type="text"
-                  placeholder="+34 600 000 000"
-                  value={restaurantForm.phone || ''}
-                  onChange={handleRestaurantInputChange}
-                />
+                <>
+                    <label htmlFor="restaurant-photo-url">Foto URL</label>
+                    <input
+                      id="restaurant-photo-url"
+                      name="imageUrl"
+                      type="text"
+                      placeholder="https://..."
+                      value={restaurantPhotoPreview || ''}
+                      onChange={(event) => setRestaurantPhotoPreview(event.target.value)}
+                    />
+                    <label htmlFor="restaurant-place-id">Google Place ID</label>
+                    <input id="restaurant-place-id" type="text" placeholder="ChIJ..." />
+                    <div className="restaurant-edit-preview-grid">
+                      <article>
+                        <h4>Previsualització de foto</h4>
+                        <img src={restaurantPhotoPreview || WHITE_AVATAR_IMAGE} alt="Previsualització de foto del restaurant" />
+                      </article>
+                      <article>
+                        <h4>Previsualització del mapa</h4>
+                        <iframe title="Previsualització del mapa" src={restaurantEditPreviewMapUrl} loading="lazy" />
+                      </article>
+                    </div>
+                </>
               </article>
             </div>
 
             <div className="save-student-row">
               <button type="button" className="pill-button save-student-button" onClick={handleSaveRestaurant}>
-                Guardar restaurant
+                {isEditingRestaurant ? 'Desar canvis' : 'Guardar restaurant'}
               </button>
               {saveRestaurantError && <p className="save-student-error">{saveRestaurantError}</p>}
               {saveRestaurantSuccess && <p className="save-student-success">{saveRestaurantSuccess}</p>}
@@ -1744,8 +2326,9 @@ function App() {
         {activeSection === 'manage-entries' && (
           <section className="admin-page">
             <p className="admin-eyebrow">ADMINISTRACIO</p>
-            <h1>Gestionar altes</h1>
+            <h1>{ui('manageEntriesTitle')}</h1>
             <p className="admin-intro">Revisa les sol·licituds pendents i decideix si vols donar d&apos;alta l&apos;usuari o cancel·lar-la.</p>
+            {manageActionMessage && <p className="manage-success">{manageActionMessage}</p>}
 
             <article className="manage-entries-panel">
               <div className="manage-entries-toggle" role="tablist" aria-label="Visualització d'altes">
